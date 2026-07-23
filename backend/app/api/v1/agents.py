@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.core.dependencies.auth_deps import get_current_user
@@ -33,15 +33,21 @@ async def execute_multi_agent_workflow(
     }
 
 
-@router.get("/stream", status_code=status.HTTP_200_OK)
+@router.get("/stream")
 async def stream_multi_agent_events(
-    goal: str,
+    goal: str = Query(..., description="High-level goal to execute"),
     current_user: User = Depends(get_current_user)
 ):
     """
     Stream live Server-Sent Events (SSE) of active agent thoughts and graph state transitions.
+    Each LangGraph agent node emits its inner reasoning token-by-token in real time.
     """
     return StreamingResponse(
         multi_agent_orchestrator.stream_graph_events(goal),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        }
     )
