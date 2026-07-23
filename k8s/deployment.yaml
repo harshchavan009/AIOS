@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aios-backend
+  namespace: aios-production
+  labels:
+    app.kubernetes.io/name: aios-backend
+    app.kubernetes.io/part-of: aios-platform
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aios-backend
+  template:
+    metadata:
+      labels:
+        app: aios-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/harshchavan009/aios-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: aios-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aios-frontend
+  namespace: aios-production
+  labels:
+    app.kubernetes.io/name: aios-frontend
+    app.kubernetes.io/part-of: aios-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aios-frontend
+  template:
+    metadata:
+      labels:
+        app: aios-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/harshchavan009/aios-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

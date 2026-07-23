@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aios-config
+  namespace: aios-production
+data:
+  ENVIRONMENT: "production"
+  DATABASE_URL: "postgresql+asyncpg://aios_user:aios_secure_pass_2026@postgres.aios-production.svc.cluster.local:5432/aios_db"
+  REDIS_URL: "redis://redis.aios-production.svc.cluster.local:6379/0"
+  QDRANT_HOST: "qdrant.aios-production.svc.cluster.local"
+  NEO4J_URI: "bolt://neo4j.aios-production.svc.cluster.local:7687"

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aios-backend-service
+  namespace: aios-production
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: aios-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aios-frontend-service
+  namespace: aios-production
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: aios-frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aios-ingress
+  namespace: aios-production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - aios.enterprise
+      secretName: aios-tls-secret
+  rules:
+    - host: aios.enterprise
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: aios-backend-service
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: aios-frontend-service
+                port:
+                  number: 80
