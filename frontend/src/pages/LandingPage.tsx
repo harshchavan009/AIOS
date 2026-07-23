@@ -5,20 +5,10 @@ import {
   Sparkles,
   Bot,
   Network,
-  Cpu,
-  ShieldCheck,
-  Zap,
-  ArrowRight,
-  Terminal,
-  Layers,
   Database,
-  Lock,
-  GitBranch,
-  Code2,
-  FileText,
-  Search,
-  CheckCircle2,
-  Activity
+  ArrowRight,
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 import { AuroraBackground } from '../components/common/AuroraBackground';
 import { NeuralCanvas } from '../components/common/NeuralCanvas';
@@ -55,8 +45,8 @@ export const LandingPage: React.FC = () => {
           <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
             Sign In
           </Button>
-          <Button variant="gradient" size="sm" onClick={() => navigate('/dashboard')} rightIcon={<ArrowRight className="w-4 h-4" />}>
-            Launch Platform
+          <Button variant="gradient" size="sm" onClick={() => navigate('/register')} rightIcon={<ArrowRight className="w-4 h-4" />}>
+            Get Started
           </Button>
         </div>
       </header>
@@ -81,20 +71,20 @@ export const LandingPage: React.FC = () => {
           <Button
             variant="gradient"
             size="lg"
-            onClick={() => navigate('/dashboard')}
-            rightIcon={<ArrowRight className="w-5 h-5" />}
+            onClick={() => navigate('/register')}
+            rightIcon={<UserPlus className="w-5 h-5" />}
             className="w-full sm:w-auto shadow-2xl"
           >
-            Explore Live Dashboard
+            Create Enterprise Account
           </Button>
           <Button
             variant="glass"
             size="lg"
-            onClick={() => navigate('/agents')}
-            leftIcon={<Bot className="w-5 h-5 text-indigo-400" />}
+            onClick={() => navigate('/login')}
+            leftIcon={<ShieldCheck className="w-5 h-5 text-indigo-400" />}
             className="w-full sm:w-auto"
           >
-            Agent Studio Workspace
+            Sign In to Workspace
           </Button>
         </div>
 
@@ -109,7 +99,7 @@ export const LandingPage: React.FC = () => {
                 <span className="text-xs font-mono text-gray-400 ml-2">aios-cluster-node-01 // active-dag: #89201</span>
               </div>
               <Badge variant="success" pulse>
-                CLUSTER OPTIMAL (178ms)
+                SYSTEM OPTIMAL (178ms)
               </Badge>
             </div>
 
