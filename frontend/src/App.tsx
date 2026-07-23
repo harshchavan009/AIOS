@@ -6,6 +6,14 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PlaygroundPage } from './pages/PlaygroundPage';
+import { PromptStudioPage } from './pages/PromptStudioPage';
+import { AgentBuilderPage } from './pages/AgentBuilderPage';
+import { ModelManagementPage } from './pages/ModelManagementPage';
+import { EvaluationStudioPage } from './pages/EvaluationStudioPage';
+import { KnowledgeManagementPage } from './pages/KnowledgeManagementPage';
+import { AgentMarketplacePage } from './pages/AgentMarketplacePage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { GraphRAGPage } from './pages/GraphRAGPage';
 import { AutoDevPage } from './pages/AutoDevPage';
@@ -15,7 +23,6 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { AppLayout } from './components/layouts/AppLayout';
 import { useAuthStore } from './store/useAuthStore';
 
-// Protected Route Guard Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
@@ -55,7 +62,7 @@ export const App: React.FC = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Protected Enterprise Routes */}
+        {/* Protected AI Platform Studio Routes */}
         <Route
           element={
             <ProtectedRoute>
@@ -64,6 +71,15 @@ export const App: React.FC = () => {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/playground" element={<PlaygroundPage />} />
+          <Route path="/prompt-studio" element={<PromptStudioPage />} />
+          <Route path="/agent-builder" element={<AgentBuilderPage />} />
+          <Route path="/models" element={<ModelManagementPage />} />
+          <Route path="/evaluation" element={<EvaluationStudioPage />} />
+          <Route path="/knowledge" element={<KnowledgeManagementPage />} />
+          <Route path="/marketplace" element={<AgentMarketplacePage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          
           <Route path="/workspace" element={<AgentsPage />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/knowledge-graph" element={<GraphRAGPage />} />
