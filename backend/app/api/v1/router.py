@@ -8,6 +8,7 @@ from app.api.v1.api_keys import router as api_keys_router
 from app.api.v1.rag import router as rag_router
 from app.api.v1.agents import router as agents_router
 from app.api.v1.studio import router as studio_router
+from app.api.v1.apps import router as apps_router
 
 api_router = APIRouter()
 
@@ -20,3 +21,4 @@ api_router.include_router(api_keys_router)
 api_router.include_router(rag_router)
 api_router.include_router(agents_router)
 api_router.include_router(studio_router)
+api_router.include_router(apps_router)
