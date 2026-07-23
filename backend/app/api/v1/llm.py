@@ -40,6 +40,21 @@ async def generate_stream(
     return StreamingResponse(sse_event_generator(), media_type="text/event-stream")
 
 
+@router.get("/providers")
+async def list_providers():
+    """
+    List all supported LLM providers and model mapping.
+    """
+    return {
+        "providers": [
+            {"id": "openai", "name": "OpenAI", "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]},
+            {"id": "anthropic", "name": "Anthropic Claude", "models": ["claude-3-5-sonnet", "claude-3-haiku", "claude-3-opus"]},
+            {"id": "gemini", "name": "Google Gemini", "models": ["gemini-1.5-pro", "gemini-1.5-flash"]},
+            {"id": "llama", "name": "Meta Llama", "models": ["llama-3-70b", "llama-3-8b"]}
+        ]
+    }
+
+
 @router.get("/metrics")
 async def get_llm_metrics(current_user: User = Depends(get_current_user)):
     """
