@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Copy,
   Settings,
-  Code
+  Code,
+  Loader2
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -69,9 +70,34 @@ export const PlaygroundPage: React.FC = () => {
 
   const handleRunComparison = async () => {
     setIsComparing(true);
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('aios_access_token');
+      const response = await fetch('/api/v1/studio/playground/compare', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          system_prompt: systemPrompt,
+          user_prompt: userPrompt,
+          temperature,
+          top_p: topP,
+          max_tokens: maxTokens
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.comparison && data.comparison.length > 0) {
+          setModelOutputs(data.comparison);
+        }
+      }
+    } catch {
+      // Fallback
+    } finally {
       setIsComparing(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -90,7 +116,7 @@ export const PlaygroundPage: React.FC = () => {
             disabled={isComparing}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 flex items-center space-x-2 transition-all disabled:opacity-50"
           >
-            <Play className="w-4 h-4" />
+            {isComparing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             <span>{isComparing ? 'Running Comparison...' : 'Run Multi-Model Comparison'}</span>
           </button>
           <button
