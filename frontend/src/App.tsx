@@ -1,8 +1,10 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { GraphRAGPage } from './pages/GraphRAGPage';
@@ -11,22 +13,64 @@ import { SecondBrainPage } from './pages/SecondBrainPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AppLayout } from './components/layouts/AppLayout';
+import { useAuthStore } from './store/useAuthStore';
+
+// Protected Route Guard Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#07090e] flex items-center justify-center font-sans text-white">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Validating Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
 
 export const App: React.FC = () => {
+  const { initAuth } = useAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, [initAuth]);
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Pages */}
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Application Shell Routes */}
-        <Route element={<AppLayout />}>
+        {/* Protected Enterprise Routes */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/workspace" element={<AgentsPage />} />
           <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/knowledge-graph" element={<GraphRAGPage />} />
           <Route path="/graph-rag" element={<GraphRAGPage />} />
+          <Route path="/repositories" element={<AutoDevPage />} />
           <Route path="/autodev" element={<AutoDevPage />} />
+          <Route path="/documents" element={<SecondBrainPage />} />
           <Route path="/second-brain" element={<SecondBrainPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

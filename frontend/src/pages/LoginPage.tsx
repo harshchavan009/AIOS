@@ -39,14 +39,14 @@ export const LoginPage: React.FC = () => {
 
       if (!loginRes.ok) {
         const errData = await loginRes.json();
-        throw new Error(errData?.error?.message || 'Invalid credentials.');
+        throw new Error(errData?.error?.message || errData?.detail || 'Invalid email or password.');
       }
 
       const data = await loginRes.json();
-      setAuth(data.user, data.access_token);
-      navigate('/');
+      setAuth(data.user, data.access_token, data.refresh_token);
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Error authenticating.');
+      setError(err.message || 'Error authenticating with backend.');
     } finally {
       setLoading(false);
     }
@@ -153,9 +153,13 @@ export const LoginPage: React.FC = () => {
                   <input type="checkbox" defaultChecked className="rounded border-gray-700 bg-gray-900 text-primary" />
                   <span>Remember me</span>
                 </label>
-                <a href="#forgot" className="text-primary hover:underline font-semibold">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-primary hover:underline font-semibold"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
 
               <Button
@@ -182,7 +186,7 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard')}
                 className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Globe className="w-4 h-4 text-blue-400" />
@@ -190,7 +194,7 @@ export const LoginPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard')}
                 className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Github className="w-4 h-4 text-white" />

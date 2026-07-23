@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const RegisterPage: React.FC = () => {
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState('Senior AI Systems Engineer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,22 +24,34 @@ export const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/signup', {
+      // 1. Register User
+      const signupRes = await fetch('/api/v1/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, full_name: fullName, role: 'engineer' }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data?.error?.message || 'Registration failed.');
+      if (!signupRes.ok) {
+        const data = await signupRes.json();
+        throw new Error(data?.error?.message || data?.detail || 'Registration failed.');
       }
 
-      const data = await response.json();
-      setAuth(data, 'mock_jwt_token_2026');
-      navigate('/login');
+      // 2. Automatically Log In
+      const loginRes = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (loginRes.ok) {
+        const loginData = await loginRes.json();
+        setAuth(loginData.user, loginData.access_token, loginData.refresh_token);
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
     } catch (err: any) {
-      setError(err.message || 'Error connecting to service.');
+      setError(err.message || 'Error creating account.');
     } finally {
       setLoading(false);
     }
@@ -174,7 +186,7 @@ export const RegisterPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard')}
                 className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Globe className="w-4 h-4 text-blue-400" />
@@ -182,7 +194,7 @@ export const RegisterPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard')}
                 className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Github className="w-4 h-4 text-white" />
