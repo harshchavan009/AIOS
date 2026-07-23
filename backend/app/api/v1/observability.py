@@ -23,6 +23,14 @@ async def get_system_observability_metrics(current_user: User = Depends(get_curr
     return telemetry_service.get_metrics_summary()
 
 
+@router.get("/system-telemetry", status_code=status.HTTP_200_OK)
+async def get_live_system_telemetry(current_user: User = Depends(get_current_user)):
+    """
+    Get real-time hardware telemetry (CPU, RAM, GPU, Disk), Docker containers, Redis, Postgres, Neo4j, Qdrant, and provider latencies.
+    """
+    return telemetry_service.get_live_system_telemetry()
+
+
 @router.get("/traces", status_code=status.HTTP_200_OK)
 async def get_opentelemetry_traces(current_user: User = Depends(get_current_user)):
     """
