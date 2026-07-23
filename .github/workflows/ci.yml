@@ -1,0 +1,65 @@
+name: AIOS Continuous Integration (CI)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aios_user
+          POSTGRES_PASSWORD: aios_secure_pass_2026
+          POSTGRES_DB: aios_db
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run Backend Test Suite
+        env:
+          ENVIRONMENT: testing
+          DATABASE_URL: postgresql+asyncpg://aios_user:aios_secure_pass_2026@localhost:5432/aios_db
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd backend
+          PYTHONPATH=. pytest tests/ -v --cov=app
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies & Build Vite Bundle
+        run: |
+          cd frontend
+          npm ci
+          npm run build
