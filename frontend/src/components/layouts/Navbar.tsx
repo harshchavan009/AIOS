@@ -67,10 +67,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
 
   return (
     <header
-      className={`h-16 sticky top-0 z-30 flex items-center justify-between px-6 transition-colors duration-300 backdrop-blur-[18px] ${
+      className={`h-16 sticky top-0 z-30 flex items-center justify-between px-6 transition-colors duration-300 backdrop-blur-[24px] ${
         isLight
           ? 'bg-white/90 border-b border-[#E5E7EB] text-[#111827]'
-          : 'bg-[#0F1117]/85 border-b border-white/[0.06] text-[#F8FAFC]'
+          : 'bg-[#0E121B]/82 border-b border-white/[0.08] text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
       }`}
     >
       {/* Left: Organization / Workspace Switcher & Global Search */}
@@ -80,13 +80,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
           className={`hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${
             isLight
               ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827]'
-              : 'bg-[#1F2937] border-white/[0.05] text-[#CBD5E1]'
+              : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200'
           }`}
         >
-          <Building2 className="w-3.5 h-3.5 text-blue-600" />
+          <Building2 className="w-3.5 h-3.5 text-[#0B84FF]" />
           <span className="font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
           <span className="font-mono opacity-50">/</span>
-          <span className="text-blue-500 font-mono">{currentWorkspace?.name || 'Production'}</span>
+          <span className="text-sky-400 font-mono">{currentWorkspace?.name || 'Production'}</span>
         </div>
 
         {/* Global Search Trigger */}
@@ -96,18 +96,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
           className={`flex items-center space-x-3 px-3.5 py-1.5 rounded-xl border text-sm transition-all w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
             isLight
               ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-600'
-              : 'bg-[#1F2937] hover:bg-[#273549] border-white/[0.05] text-[#94A3B8]'
+              : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-400'
           }`}
         >
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
+            <Search className="w-4 h-4 group-hover:text-[#0B84FF] transition-colors" />
             <span className="text-xs">Search AIOS...</span>
           </div>
           <kbd
             className={`hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono border rounded ${
               isLight
                 ? 'bg-white border-[#E5E7EB] text-gray-600'
-                : 'bg-[#07090D] border-white/[0.05] text-[#94A3B8]'
+                : 'bg-[#0B0E17] border-white/[0.08] text-gray-400'
             }`}
           >
             ⌘K
@@ -132,17 +132,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
             toggleTheme();
           }}
           aria-label={`Switch to ${theme === 'graphite' ? 'Light' : 'Graphite'} theme (⌘+Shift+D)`}
-          title={`Switch to ${theme === 'graphite' ? 'Light Enterprise' : 'Graphite Enterprise'} theme (⌘+Shift+D)`}
+          title={`Switch to ${theme === 'graphite' ? 'Light Enterprise' : 'Apple Pro Obsidian'} theme (⌘+Shift+D)`}
           className={`p-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
             isLight
               ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-800'
-              : 'bg-[#1F2937] hover:bg-[#273549] border-white/[0.06] text-[#94A3B8] hover:text-[#F8FAFC]'
+              : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-400 hover:text-white'
           }`}
         >
           {theme === 'graphite' ? (
             <Sun className="w-4 h-4 text-amber-400" />
           ) : (
-            <Moon className="w-4 h-4 text-blue-600" />
+            <Moon className="w-4 h-4 text-blue-500" />
           )}
         </button>
 

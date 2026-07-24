@@ -47,24 +47,30 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 z-40 ${
-        isLight ? 'bg-[#FAFAFA] border-r border-[#E5E7EB]' : 'bg-[#0F1117] border-r border-white/[0.06]'
+      className={`h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 z-40 backdrop-blur-[30px] ${
+        isLight
+          ? 'bg-[#FAFAFA]/90 border-r border-[#E5E7EB]'
+          : 'bg-[#0E121B]/85 border-r border-white/[0.08] shadow-[1px_0_30px_rgba(0,0,0,0.4)]'
       } ${collapsed ? 'w-20' : 'w-64'}`}
     >
       <div>
         {/* Brand Header */}
-        <div className={`h-16 flex items-center justify-between px-4 border-b ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`}>
+        <div
+          className={`h-16 flex items-center justify-between px-4 border-b ${
+            isLight ? 'border-[#E5E7EB]' : 'border-white/[0.08]'
+          }`}
+        >
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 shrink-0 border border-white/20">
               <BrainCircuit className="w-6 h-6 text-white" />
             </div>
             {!collapsed && (
               <div className="flex flex-col">
-                <span className={`font-extrabold text-base tracking-wider ${isLight ? 'text-[#111827]' : 'text-[#F8FAFC]'}`}>
+                <span className={`font-extrabold text-base tracking-wider ${isLight ? 'text-[#111827]' : 'text-white'}`}>
                   AIOS
                 </span>
-                <span className={`text-[10px] font-mono -mt-1 uppercase ${isLight ? 'text-gray-500' : 'text-[#94A3B8]'}`}>
-                  Enterprise Platform
+                <span className={`text-[10px] font-mono -mt-1 uppercase ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Apple Pro Studio
                 </span>
               </div>
             )}
@@ -75,7 +81,7 @@ export const Sidebar: React.FC = () => {
             className={`p-1.5 rounded-lg border transition-colors ${
               isLight
                 ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
-                : 'border-white/[0.06] hover:bg-[#172033] text-[#94A3B8]'
+                : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
             }`}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -94,16 +100,16 @@ export const Sidebar: React.FC = () => {
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                     isActive
                       ? isLight
-                        ? 'bg-[#2563EB] text-white shadow-sm'
-                        : 'bg-[#1E293B] text-[#F8FAFC] border border-white/[0.06] shadow-sm'
+                        ? 'bg-[#0B84FF] text-white shadow-md shadow-blue-500/20'
+                        : 'bg-gradient-to-r from-[#0B84FF] to-[#0066CC] text-white border border-white/20 shadow-lg shadow-blue-500/25'
                       : isLight
                       ? 'text-gray-700 hover:bg-[#F3F4F6] hover:text-black'
-                      : 'text-[#CBD5E1] hover:bg-[#172033] hover:text-[#F8FAFC]'
+                      : 'text-gray-300 hover:bg-white/[0.06] hover:text-white'
                   }`
                 }
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-4 h-4 shrink-0 ${isLight ? 'text-blue-600' : 'text-[#3B82F6]'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </div>
                 {!collapsed && item.badge && (
@@ -118,7 +124,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer Sign Out */}
-      <div className={`p-3 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`}>
+      <div className={`p-3 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.08]'}`}>
         <button
           type="button"
           onClick={logout}
