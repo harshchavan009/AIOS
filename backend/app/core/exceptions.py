@@ -18,6 +18,14 @@ class AIOSException(Exception):
         super().__init__(self.message)
 
 
+class BadRequestException(AIOSException):
+    def __init__(self, message: str = "Invalid request parameters."):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+
 class EntityNotFoundException(AIOSException):
     def __init__(self, entity_name: str, entity_id: Any):
         super().__init__(

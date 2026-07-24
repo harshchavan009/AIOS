@@ -25,8 +25,8 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Live Ping Latency & Real Metric Counters
-  const [livePingMs, setLivePingMs] = useState<number>(14);
-  const [neo4jNodesCount, setNeo4jNodesCount] = useState<number>(14820);
+  const [livePingMs, setLivePingMs] = useState<number>(0);
+  const [neo4jNodesCount, setNeo4jNodesCount] = useState<number>(0);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
 
   // Agent Execution Pipeline Sequence
@@ -110,19 +110,19 @@ export const LandingPage: React.FC = () => {
           setLivePingMs(Math.max(1, Math.round(end - start)));
         }
       } catch {
-        setLivePingMs(18);
+        setLivePingMs(0);
       }
 
       // Fetch Real Metrics from backend
       try {
         const token = localStorage.getItem('aios_access_token');
-        const metricsRes = await fetch('/api/v1/observability/metrics', {
+        const metricsRes = await fetch('/api/v1/observability/system-telemetry', {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         if (metricsRes.ok) {
           const metricsData = await metricsRes.json();
-          if (metricsData.total_tokens_processed) {
-            setNeo4jNodesCount(14820 + (metricsData.total_tokens_processed % 1000));
+          if (metricsData.infrastructure?.neo4j_nodes_count !== undefined) {
+            setNeo4jNodesCount(metricsData.infrastructure.neo4j_nodes_count);
           }
         }
       } catch {

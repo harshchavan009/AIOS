@@ -1,38 +1,55 @@
 import { create } from 'zustand';
 
-type Theme = 'dark' | 'light';
+export type ThemeMode = 'graphite' | 'light';
 
 interface ThemeState {
-  theme: Theme;
+  theme: ThemeMode;
   toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: ThemeMode) => void;
+  initTheme: () => void;
 }
 
-const getInitialTheme = (): Theme => {
-  const saved = localStorage.getItem('aios_theme') as Theme;
-  if (saved) return saved;
-  return 'dark';
+const getInitialTheme = (): ThemeMode => {
+  const saved = localStorage.getItem('aios_theme') as ThemeMode;
+  if (saved === 'light' || saved === 'graphite') return saved;
+  return 'graphite';
 };
 
-export const useThemeStore = create<ThemeState>((set) => ({
+const applyThemeToDOM = (theme: ThemeMode) => {
+  const root = document.documentElement;
+  root.classList.remove('graphite', 'dark', 'light');
+  
+  if (theme === 'graphite') {
+    root.classList.add('graphite', 'dark');
+    root.setAttribute('data-theme', 'graphite');
+  } else {
+    root.classList.add('light');
+    root.setAttribute('data-theme', 'light');
+  }
+};
+
+export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: getInitialTheme(),
-  toggleTheme: () => set((state) => {
-    const next = state.theme === 'dark' ? 'light' : 'dark';
+  
+  toggleTheme: () => {
+    const current = get().theme;
+    const next: ThemeMode = current === 'graphite' ? 'light' : 'graphite';
     localStorage.setItem('aios_theme', next);
-    if (next === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    return { theme: next };
-  }),
-  setTheme: (theme: Theme) => {
+    applyThemeToDOM(next);
+    set({ theme: next });
+  },
+
+  setTheme: (theme: ThemeMode) => {
     localStorage.setItem('aios_theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyThemeToDOM(theme);
     set({ theme });
   },
+
+  initTheme: () => {
+    const current = getInitialTheme();
+    applyThemeToDOM(current);
+  }
 }));
+
+// Auto-initialize theme on load
+useThemeStore.getState().initTheme();

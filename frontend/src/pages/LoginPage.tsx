@@ -7,7 +7,9 @@ import {
   ArrowRight,
   ShieldCheck,
   Github,
-  Globe
+  Globe,
+  Monitor,
+  UserCheck
 } from 'lucide-react';
 import { AuroraBackground } from '../components/common/AuroraBackground';
 import { NeuralCanvas } from '../components/common/NeuralCanvas';
@@ -17,13 +19,14 @@ import { Badge } from '../components/ui/Badge';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('engineer@aios.enterprise');
-  const [password, setPassword] = useState('SecurePassword123!');
+  const [email, setEmail] = useState('admin@aios.dev');
+  const [password, setPassword] = useState('Admin@12345');
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { setAuth, oauthLogin } = useAuthStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +37,12 @@ export const LoginPage: React.FC = () => {
       const loginRes = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember_me: rememberMe }),
       });
 
       if (!loginRes.ok) {
         const errData = await loginRes.json();
-        throw new Error(errData?.error?.message || errData?.detail || 'Invalid email or password.');
+        throw new Error(errData?.detail || errData?.error?.message || 'Invalid email or password.');
       }
 
       const data = await loginRes.json();
@@ -50,6 +53,25 @@ export const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOAuth = async (provider: 'google' | 'github' | 'microsoft') => {
+    setLoading(true);
+    await oauthLogin(provider, rememberMe);
+    setLoading(false);
+    navigate('/dashboard');
+  };
+
+  const fillQuickAdmin = () => {
+    setEmail('admin@aios.dev');
+    setPassword('Admin@12345');
+    setError('');
+  };
+
+  const fillQuickEngineer = () => {
+    setEmail('engineer@aios.enterprise');
+    setPassword('Engineer@12345');
+    setError('');
   };
 
   return (
@@ -89,6 +111,30 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="relative z-10 pt-12 space-y-4">
+            {/* Quick Login Accounts Bar */}
+            <div className="p-3 rounded-2xl bg-[#111827]/80 border border-white/10 space-y-2 backdrop-blur-md">
+              <div className="text-[10px] text-gray-400 font-mono uppercase tracking-wider flex items-center space-x-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+                <span>Development Admin Credentials</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={fillQuickAdmin}
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-xs font-semibold text-blue-300 transition-colors text-left truncate"
+                >
+                  admin@aios.dev
+                </button>
+                <button
+                  type="button"
+                  onClick={fillQuickEngineer}
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-xs font-semibold text-indigo-300 transition-colors text-left truncate"
+                >
+                  engineer@aios.enterprise
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center space-x-2 text-xs text-gray-400">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>SOC-2 Type II Certified • OAuth2 & RBAC Enforced</span>
@@ -134,7 +180,7 @@ export const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 leftIcon={<Mail className="w-4 h-4" />}
-                placeholder="engineer@aios.enterprise"
+                placeholder="admin@aios.dev"
                 required
               />
 
@@ -150,8 +196,13 @@ export const LoginPage: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs">
                 <label className="flex items-center space-x-2 text-muted-foreground cursor-pointer">
-                  <input type="checkbox" defaultChecked className="rounded border-gray-700 bg-gray-900 text-primary" />
-                  <span>Remember me</span>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded border-gray-700 bg-gray-900 text-primary"
+                  />
+                  <span>Remember me (30 Days)</span>
                 </label>
                 <button
                   type="button"
@@ -183,22 +234,30 @@ export const LoginPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
+                onClick={() => handleOAuth('google')}
+                className="flex items-center justify-center space-x-1.5 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Globe className="w-4 h-4 text-blue-400" />
                 <span>Google</span>
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
+                onClick={() => handleOAuth('github')}
+                className="flex items-center justify-center space-x-1.5 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
               >
                 <Github className="w-4 h-4 text-white" />
                 <span>GitHub</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOAuth('microsoft')}
+                className="flex items-center justify-center space-x-1.5 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
+              >
+                <Monitor className="w-4 h-4 text-cyan-400" />
+                <span>Microsoft</span>
               </button>
             </div>
           </div>

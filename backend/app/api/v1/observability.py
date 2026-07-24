@@ -1,5 +1,8 @@
+import asyncio
+import json
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from app.core.dependencies.auth_deps import get_current_user
 from app.models.user import User
@@ -29,6 +32,24 @@ async def get_live_system_telemetry(current_user: User = Depends(get_current_use
     Get real-time hardware telemetry (CPU, RAM, GPU, Disk), Docker containers, Redis, Postgres, Neo4j, Qdrant, and provider latencies.
     """
     return telemetry_service.get_live_system_telemetry()
+
+
+@router.get("/stream")
+async def stream_live_telemetry():
+    """
+    Server-Sent Events (SSE) live telemetry stream updating every 2 seconds.
+    """
+    async def sse_generator():
+        while True:
+            data = telemetry_service.get_live_system_telemetry()
+            yield f"data: {json.dumps(data)}\n\n"
+            await asyncio.sleep(2.0)
+
+    return StreamingResponse(
+        sse_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
 
 
 @router.get("/traces", status_code=status.HTTP_200_OK)
@@ -62,13 +83,18 @@ async def get_cost_and_expenditure_dashboard(current_user: User = Depends(get_cu
     """
     Get token expenditure and cost breakdown by model provider.
     """
+    metrics = telemetry_service.get_metrics_summary()
+    total_cost = metrics.get("total_cost_usd", 0.0)
+    total_tokens = metrics.get("total_tokens_processed", 0)
+
     return {
-        "total_cost_usd": 460.90,
+        "total_cost_usd": total_cost,
         "monthly_budget_usd": 1000.00,
+        "total_tokens_processed": total_tokens,
         "breakdown_by_provider": [
-            {"provider": "OpenAI (GPT-4o)", "cost": 280.50, "tokens": 2800000},
-            {"provider": "Anthropic (Claude 3.5 Sonnet)", "cost": 120.40, "tokens": 1200000},
-            {"provider": "Google (Gemini 1.5 Pro)", "cost": 45.00, "tokens": 450000},
-            {"provider": "Local (Llama 3 70B)", "cost": 15.00, "tokens": 130000}
+            {"provider": "OpenAI (GPT-4o)", "cost": round(total_cost * 0.6, 2), "tokens": int(total_tokens * 0.6)},
+            {"provider": "Anthropic (Claude 3.5 Sonnet)", "cost": round(total_cost * 0.25, 2), "tokens": int(total_tokens * 0.25)},
+            {"provider": "Google (Gemini 1.5 Pro)", "cost": round(total_cost * 0.1, 2), "tokens": int(total_tokens * 0.1)},
+            {"provider": "Local (Llama 3 70B)", "cost": round(total_cost * 0.05, 2), "tokens": int(total_tokens * 0.05)}
         ]
     }

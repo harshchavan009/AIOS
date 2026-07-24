@@ -29,8 +29,17 @@ import {
   BadgeCheck,
   AlertCircle,
   FileText,
-  Loader2
+  Loader2,
+  Folder,
+  FolderPlus,
+  MessageSquare,
+  BarChart2,
+  Activity,
+  Coins,
+  Check,
+  Zap
 } from 'lucide-react';
+import { Badge } from '../components/ui/Badge';
 
 // ──────────────────────────────────────────────
 // Types
@@ -47,20 +56,45 @@ interface PromptVersion {
   abScore?: number;
 }
 
+interface TeamComment {
+  id: string;
+  author: string;
+  role: string;
+  avatar: string;
+  timestamp: string;
+  content: string;
+}
+
+interface ExecutionLog {
+  id: string;
+  timestamp: string;
+  model: string;
+  latency_ms: number;
+  tokens: number;
+  cost: number;
+  faithfulness: number;
+  groundedness: number;
+  relevance: number;
+  status: 'success' | 'failed';
+}
+
 interface PromptTemplate {
   id: string;
   title: string;
-  category: string;
+  collection: string;
+  folder: string;
   author: string;
   status: 'approved' | 'review' | 'draft';
   variables: string[];
   versions: PromptVersion[];
   publishedVersion: string;
   tags: string[];
+  comments: TeamComment[];
+  executionHistory: ExecutionLog[];
 }
 
 interface ABTest {
-  variantA: string; // version string
+  variantA: string;
   variantB: string;
   results: { a: number; b: number } | null;
   running: boolean;
@@ -73,7 +107,8 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
   {
     id: 'p-101',
     title: 'SOC-2 Compliance Analyzer',
-    category: 'Security & Audit',
+    collection: 'Security & Compliance',
+    folder: 'Audit Workflows',
     author: 'Senior AI Architect',
     status: 'approved',
     tags: ['compliance', 'security', 'audit'],
@@ -98,18 +133,42 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
       },
       {
         version: 'v3',
-        content: `You are a SOC-2 Type II compliance auditor specialized in {{industry}} operations.\n\nCompany: {{company}}\nJurisdiction: {{country}}\n\nTask:\n1. Identify all applicable SOC-2 trust service criteria\n2. Map existing controls to each criterion with pass/fail status\n3. Flag high-severity gaps with remediation recommendations\n4. Generate an executive summary suitable for board-level review\n\nFormat output as structured JSON with citations from AICPA 2017 guidelines.`,
+        content: `You are a SOC-2 Type II compliance auditor specialized in {{industry}} operations.\n\nCompany: {{company}}\nJurisdiction: {{country}}\n\nTask:\n1. Identify all applicable SOC-2 trust service criteria\n2. Map existing controls to each criterion with pass/fail status\n3. Flag high-severity gaps with remediation recommendations\n4. Generate an executive summary suitable for board-level review\n\nFormat output as structured JSON with citations from AICPA guidelines.`,
         createdAt: '2026-07-20T11:00:00Z',
         author: 'Senior AI Architect',
         changeNote: 'Full rewrite with JSON output, AICPA citations, board-level summary',
         faithfulness: 0.99, groundedness: 0.98, relevance: 0.97,
       }
+    ],
+    comments: [
+      {
+        id: 'c-1',
+        author: 'Sarah Chen',
+        role: 'Lead Security Auditor',
+        avatar: 'SC',
+        timestamp: '2026-07-21T10:15:00Z',
+        content: 'v3 prompt structure produces compliant AICPA citations. Approved for production deployment.'
+      },
+      {
+        id: 'c-2',
+        author: 'Alex Mercer',
+        role: 'DevOps Lead',
+        avatar: 'AM',
+        timestamp: '2026-07-21T14:20:00Z',
+        content: 'Added token ceiling caps for large multi-page SOC-2 documents.'
+      }
+    ],
+    executionHistory: [
+      { id: 'ex-1', timestamp: '2026-07-24 16:45:10', model: 'gpt-4o', latency_ms: 145, tokens: 420, cost: 0.0042, faithfulness: 0.99, groundedness: 0.98, relevance: 0.97, status: 'success' },
+      { id: 'ex-2', timestamp: '2026-07-24 15:20:04', model: 'claude-3-5-sonnet', latency_ms: 162, tokens: 480, cost: 0.0072, faithfulness: 0.98, groundedness: 0.97, relevance: 0.98, status: 'success' },
+      { id: 'ex-3', timestamp: '2026-07-24 12:10:33', model: 'gemini-1.5-pro', latency_ms: 128, tokens: 390, cost: 0.0027, faithfulness: 0.96, groundedness: 0.95, relevance: 0.96, status: 'success' }
     ]
   },
   {
     id: 'p-102',
     title: 'Neo4j Cypher Query Synthesizer',
-    category: 'Graph RAG',
+    collection: 'Graph RAG & Data',
+    folder: 'Cypher Pipelines',
     author: 'MLOps Lead',
     status: 'approved',
     tags: ['neo4j', 'graphrag', 'cypher'],
@@ -132,12 +191,26 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
         changeNote: 'Added APOC procedures, index recommendations, complexity analysis',
         faithfulness: 0.97, groundedness: 0.99, relevance: 0.96,
       }
+    ],
+    comments: [
+      {
+        id: 'c-3',
+        author: 'David Vance',
+        role: 'Database Engineer',
+        avatar: 'DV',
+        timestamp: '2026-07-19T08:30:00Z',
+        content: 'APOC procedure inclusion reduced query execution time from 1.2s to 45ms.'
+      }
+    ],
+    executionHistory: [
+      { id: 'ex-4', timestamp: '2026-07-24 14:10:00', model: 'gpt-4o', latency_ms: 110, tokens: 310, cost: 0.0031, faithfulness: 0.97, groundedness: 0.99, relevance: 0.96, status: 'success' }
     ]
   },
   {
     id: 'p-103',
     title: 'Financial Report Summarizer',
-    category: 'Finance',
+    collection: 'Finance & Analytics',
+    folder: 'Earnings Reports',
     author: 'Data Scientist',
     status: 'draft',
     tags: ['finance', 'summarization'],
@@ -152,7 +225,9 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
         changeNote: 'Initial draft',
         faithfulness: 0.88, groundedness: 0.85, relevance: 0.90,
       }
-    ]
+    ],
+    comments: [],
+    executionHistory: []
   }
 ];
 
@@ -162,9 +237,6 @@ const DEFAULT_VARIABLE_VALUES: Record<string, Record<string, string>> = {
   'p-103': { company: 'Tesla Inc', quarter: '2', country: 'USA' }
 };
 
-// ──────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────
 function interpolate(content: string, values: Record<string, string>): string {
   return content.replace(/\{\{(\w+)\}\}/g, (_, key) =>
     values[key] !== undefined && values[key] !== '' ? values[key] : `{{${key}}}`
@@ -198,15 +270,13 @@ function timeAgo(iso: string): string {
   return hrs > 0 ? `${hrs}h ago` : 'just now';
 }
 
-// ──────────────────────────────────────────────
-// Main Component
-// ──────────────────────────────────────────────
 export const PromptStudioPage: React.FC = () => {
   const [templates, setTemplates] = useState<PromptTemplate[]>(INITIAL_TEMPLATES);
   const [selectedId, setSelectedId] = useState<string>('p-101');
   const [activeVersionIdx, setActiveVersionIdx] = useState<number>(2);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'editor' | 'history' | 'ab' | 'variables' | 'review'>('editor');
+  const [selectedCollection, setSelectedCollection] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'editor' | 'variables' | 'history' | 'ab' | 'review' | 'comments' | 'analytics'>('editor');
   const [variableValues, setVariableValues] = useState<Record<string, string>>(DEFAULT_VARIABLE_VALUES['p-101']);
   const [editingContent, setEditingContent] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
@@ -216,11 +286,17 @@ export const PromptStudioPage: React.FC = () => {
   const [copiedId, setCopiedId] = useState('');
   const [newPromptModal, setNewPromptModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newCollection, setNewCollection] = useState('Security & Compliance');
+  const [newComment, setNewComment] = useState('');
   const [historyExpanded, setHistoryExpanded] = useState<string | null>(null);
 
   const selected = useMemo(() => templates.find(t => t.id === selectedId)!, [templates, selectedId]);
   const activeVersion = useMemo(() => selected?.versions[activeVersionIdx] ?? selected?.versions[selected.versions.length - 1], [selected, activeVersionIdx]);
   const interpolated = useMemo(() => interpolate(activeVersion?.content || '', variableValues), [activeVersion, variableValues]);
+
+  const collectionsList = useMemo(() => {
+    return Array.from(new Set(templates.map(t => t.collection)));
+  }, [templates]);
 
   // Switch prompt
   const selectTemplate = useCallback((id: string) => {
@@ -254,9 +330,9 @@ export const PromptStudioPage: React.FC = () => {
         createdAt: new Date().toISOString(),
         author: 'You',
         changeNote: newChangeNote,
-        faithfulness: +(0.85 + Math.random() * 0.14).toFixed(2),
-        groundedness: +(0.85 + Math.random() * 0.14).toFixed(2),
-        relevance: +(0.85 + Math.random() * 0.14).toFixed(2),
+        faithfulness: +(0.92 + (editingContent.length % 7) * 0.01).toFixed(2),
+        groundedness: +(0.91 + (editingContent.length % 6) * 0.01).toFixed(2),
+        relevance: +(0.94 + (editingContent.length % 5) * 0.01).toFixed(2),
       };
       setTemplates(prev => prev.map(t => t.id === selectedId
         ? { ...t, versions: [...t.versions, newVer], variables: detectedVars }
@@ -265,7 +341,7 @@ export const PromptStudioPage: React.FC = () => {
       setActiveVersionIdx(selected.versions.length);
       setIsEditing(false);
       setSavingVersion(false);
-    }, 800);
+    }, 600);
   };
 
   // Rollback to version
@@ -274,32 +350,20 @@ export const PromptStudioPage: React.FC = () => {
     setIsEditing(false);
   };
 
-  // Fork template
-  const forkTemplate = () => {
-    const forked: PromptTemplate = {
+  // Fork / Clone Template
+  const cloneTemplate = () => {
+    const cloned: PromptTemplate = {
       ...selected,
-      id: `p-fork-${Date.now()}`,
-      title: `${selected.title} (Fork)`,
+      id: `p-clone-${Date.now()}`,
+      title: `${selected.title} (Clone)`,
       status: 'draft',
-      versions: [{ ...activeVersion, version: 'v1', author: 'You', createdAt: new Date().toISOString(), changeNote: `Forked from ${activeVersion.version}` }],
-      publishedVersion: 'v1'
+      versions: [{ ...activeVersion, version: 'v1', author: 'You', createdAt: new Date().toISOString(), changeNote: `Cloned from ${selected.title} ${activeVersion.version}` }],
+      publishedVersion: 'v1',
+      comments: [],
+      executionHistory: []
     };
-    setTemplates(prev => [forked, ...prev]);
-    selectTemplate(forked.id);
-  };
-
-  // Duplicate version as new prompt
-  const duplicateAsNew = () => {
-    const duped: PromptTemplate = {
-      ...selected,
-      id: `p-dup-${Date.now()}`,
-      title: `${selected.title} (Copy)`,
-      status: 'draft',
-      versions: [{ ...activeVersion, version: 'v1', author: 'You', createdAt: new Date().toISOString(), changeNote: 'Duplicated' }],
-      publishedVersion: 'v1'
-    };
-    setTemplates(prev => [duped, ...prev]);
-    selectTemplate(duped.id);
+    setTemplates(prev => [cloned, ...prev]);
+    selectTemplate(cloned.id);
   };
 
   // Publish
@@ -315,6 +379,21 @@ export const PromptStudioPage: React.FC = () => {
     setTemplates(prev => prev.map(t => t.id === selectedId ? { ...t, status: 'review' } : t));
   };
 
+  // Add Comment
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    const commentObj: TeamComment = {
+      id: `c_${Date.now()}`,
+      author: 'You',
+      role: 'Enterprise Member',
+      avatar: 'YOU',
+      timestamp: new Date().toISOString(),
+      content: newComment
+    };
+    setTemplates(prev => prev.map(t => t.id === selectedId ? { ...t, comments: [...t.comments, commentObj] } : t));
+    setNewComment('');
+  };
+
   // Run A/B Test
   const runABTest = () => {
     setAb(prev => ({ ...prev, running: true, results: null }));
@@ -323,14 +402,13 @@ export const PromptStudioPage: React.FC = () => {
         ...prev,
         running: false,
         results: {
-          a: +(60 + Math.random() * 30).toFixed(1),
-          b: +(60 + Math.random() * 30).toFixed(1)
+          a: +(75.0 + (selected.title.length % 15)).toFixed(1),
+          b: +(82.0 + (selected.title.length % 10)).toFixed(1)
         }
       }));
-    }, 1800);
+    }, 1500);
   };
 
-  // Copy interpolated
   const copyInterpolated = () => {
     navigator.clipboard.writeText(interpolated);
     setCopiedId('interpolated');
@@ -343,10 +421,11 @@ export const PromptStudioPage: React.FC = () => {
     const blank: PromptTemplate = {
       id: `p-new-${Date.now()}`,
       title: newTitle,
-      category: 'Custom',
+      collection: newCollection,
+      folder: 'Custom Prompts',
       author: 'You',
       status: 'draft',
-      tags: [],
+      tags: ['custom'],
       variables: ['company', 'industry', 'country'],
       publishedVersion: 'v1',
       versions: [{
@@ -355,8 +434,10 @@ export const PromptStudioPage: React.FC = () => {
         createdAt: new Date().toISOString(),
         author: 'You',
         changeNote: 'Created from scratch',
-        faithfulness: 0.00, groundedness: 0.00, relevance: 0.00,
-      }]
+        faithfulness: 0.90, groundedness: 0.90, relevance: 0.90,
+      }],
+      comments: [],
+      executionHistory: []
     };
     setTemplates(prev => [blank, ...prev]);
     DEFAULT_VARIABLE_VALUES[blank.id] = { company: '', industry: '', country: '' };
@@ -365,17 +446,22 @@ export const PromptStudioPage: React.FC = () => {
     selectTemplate(blank.id);
   };
 
-  const filteredTemplates = templates.filter(t =>
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTemplates = templates.filter(t => {
+    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.collection.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCollection = selectedCollection === 'all' || t.collection === selectedCollection;
+    return matchesSearch && matchesCollection;
+  });
 
   const tabs = [
     { id: 'editor', label: 'Editor', icon: <Pencil className="w-3.5 h-3.5" /> },
     { id: 'variables', label: 'Variables', icon: <Tag className="w-3.5 h-3.5" /> },
-    { id: 'history', label: 'History', icon: <History className="w-3.5 h-3.5" /> },
+    { id: 'history', label: 'Version History', icon: <History className="w-3.5 h-3.5" /> },
     { id: 'ab', label: 'A/B Test', icon: <SplitSquareHorizontal className="w-3.5 h-3.5" /> },
-    { id: 'review', label: 'Approval', icon: <BadgeCheck className="w-3.5 h-3.5" /> },
+    { id: 'review', label: 'Approval Workflow', icon: <BadgeCheck className="w-3.5 h-3.5" /> },
+    { id: 'comments', label: 'Team Comments', icon: <MessageSquare className="w-3.5 h-3.5" /> },
+    { id: 'analytics', label: 'Execution Logs', icon: <BarChart2 className="w-3.5 h-3.5" /> },
   ] as const;
 
   return (
@@ -385,10 +471,10 @@ export const PromptStudioPage: React.FC = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
             <BookMarked className="w-7 h-7 text-primary" />
-            <span>Prompt Studio</span>
+            <span>Enterprise Prompt Studio</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Version-controlled prompt engineering with A/B testing, live variable interpolation, approval workflows, and publishing.
+            Prompt version control, rollbacks, approval workflows, A/B testing, team comments, and execution history.
           </p>
         </div>
         <button
@@ -401,14 +487,37 @@ export const PromptStudioPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ────────────────── LEFT: Library ────────────────── */}
+        {/* ────────────────── LEFT: Collections & Library Sidebar ────────────────── */}
         <div className="lg:col-span-4 space-y-4">
+          {/* Collection Filter */}
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 font-mono text-xs">
+            <button
+              onClick={() => setSelectedCollection('all')}
+              className={`px-3 py-1.5 rounded-xl border transition-all ${
+                selectedCollection === 'all' ? 'bg-primary text-white border-primary' : 'bg-card text-muted-foreground border-border/60 hover:bg-muted'
+              }`}
+            >
+              All Prompts
+            </button>
+            {collectionsList.map(c => (
+              <button
+                key={c}
+                onClick={() => setSelectedCollection(c)}
+                className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap ${
+                  selectedCollection === c ? 'bg-primary text-white border-primary' : 'bg-card text-muted-foreground border-border/60 hover:bg-muted'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search prompts..."
+              placeholder="Search by title, tag, or collection..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
@@ -418,7 +527,10 @@ export const PromptStudioPage: React.FC = () => {
           {/* Template List */}
           <div className="glass-card p-4 rounded-2xl space-y-2">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Prompt Library</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center space-x-1.5">
+                <Folder className="w-3.5 h-3.5 text-primary" />
+                <span>Prompt Collections</span>
+              </span>
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono">{filteredTemplates.length}</span>
             </div>
 
@@ -435,7 +547,7 @@ export const PromptStudioPage: React.FC = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-foreground truncate">{tmpl.title}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{tmpl.category}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{tmpl.collection} / {tmpl.folder}</div>
                   </div>
                   <span className={`flex-shrink-0 flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColor(tmpl.status)}`}>
                     {statusIcon(tmpl.status)}
@@ -444,7 +556,7 @@ export const PromptStudioPage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex flex-wrap gap-1">
-                    {tmpl.tags.slice(0, 2).map(tag => (
+                    {tmpl.tags.map(tag => (
                       <span key={tag} className="px-1.5 py-0.5 rounded bg-muted text-[9px] font-mono text-muted-foreground">#{tag}</span>
                     ))}
                   </div>
@@ -457,9 +569,10 @@ export const PromptStudioPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ────────────────── RIGHT: Editor ────────────────── */}
+        {/* ────────────────── RIGHT: Prompt Workspace ────────────────── */}
         <div className="lg:col-span-8 space-y-5">
-          {/* Title + Actions Bar */}
+          
+          {/* Header Bar */}
           <div className="glass-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-3 min-w-0">
               <div>
@@ -468,8 +581,8 @@ export const PromptStudioPage: React.FC = () => {
                   <User className="w-3 h-3" />
                   <span>{selected.author}</span>
                   <span>·</span>
-                  <GitBranch className="w-3 h-3" />
-                  <span>{selected.versions.length} versions</span>
+                  <Folder className="w-3 h-3 text-primary" />
+                  <span>{selected.collection}</span>
                   <span>·</span>
                   <span className={`flex items-center space-x-1 ${statusColor(selected.status)} px-1.5 py-0.5 rounded-full border`}>
                     {statusIcon(selected.status)}
@@ -478,8 +591,9 @@ export const PromptStudioPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center space-x-2 flex-shrink-0">
-              {/* Version selector */}
+              {/* Version Picker */}
               <div className="flex items-center space-x-1">
                 {selected.versions.map((v, i) => (
                   <button
@@ -499,23 +613,20 @@ export const PromptStudioPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Action buttons */}
-              <button onClick={forkTemplate} title="Fork" className="p-2 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/60 transition-all">
-                <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
-              <button onClick={duplicateAsNew} title="Duplicate" className="p-2 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/60 transition-all">
-                <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+              <button onClick={cloneTemplate} title="Clone Prompt" className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-semibold hover:bg-muted/70 transition-all">
+                <GitBranch className="w-3.5 h-3.5 text-primary" />
+                <span>Clone</span>
               </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex items-center space-x-1 p-1 rounded-xl bg-muted/30 border border-border/40 w-fit">
+          {/* Navigation Tabs */}
+          <div className="flex items-center space-x-1 p-1 rounded-xl bg-muted/30 border border-border/40 overflow-x-auto">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   activeTab === tab.id
                     ? 'bg-primary text-white shadow shadow-primary/30'
                     : 'text-muted-foreground hover:text-foreground'
@@ -527,15 +638,15 @@ export const PromptStudioPage: React.FC = () => {
             ))}
           </div>
 
-          {/* ── Tab: EDITOR ── */}
+          {/* ── TAB 1: EDITOR ── */}
           {activeTab === 'editor' && (
             <div className="space-y-4">
-              {/* Eval Scores */}
+              {/* Evaluation Scores Bar */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Faithfulness', value: activeVersion.faithfulness, color: 'text-emerald-400', bar: 'bg-emerald-500' },
-                  { label: 'Groundedness', value: activeVersion.groundedness, color: 'text-blue-400', bar: 'bg-blue-500' },
-                  { label: 'Relevance', value: activeVersion.relevance, color: 'text-indigo-400', bar: 'bg-indigo-500' },
+                  { label: 'Faithfulness Score', value: activeVersion.faithfulness, color: 'text-emerald-400', bar: 'bg-emerald-500' },
+                  { label: 'Groundedness Score', value: activeVersion.groundedness, color: 'text-blue-400', bar: 'bg-blue-500' },
+                  { label: 'Relevance Score', value: activeVersion.relevance, color: 'text-indigo-400', bar: 'bg-indigo-500' },
                 ].map(m => (
                   <div key={m.label} className="glass-card p-4 rounded-2xl space-y-2 text-center">
                     <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{m.label}</div>
@@ -547,12 +658,12 @@ export const PromptStudioPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Prompt Editor / Preview */}
+              {/* Editor Workspace */}
               <div className="glass-card p-5 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {isEditing ? 'Editing Draft' : `Prompt — ${activeVersion.version}`}
+                      {isEditing ? 'Drafting New Version' : `Prompt Content — ${activeVersion.version}`}
                     </span>
                     {!isEditing && (
                       <span className="text-[10px] font-mono text-muted-foreground/60">
@@ -592,7 +703,7 @@ export const PromptStudioPage: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <input
                         type="text"
-                        placeholder="Describe what changed in this version..."
+                        placeholder="Commit change note (e.g., added JSON formatting)..."
                         value={newChangeNote}
                         onChange={e => setNewChangeNote(e.target.value)}
                         className="flex-1 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
@@ -606,19 +717,9 @@ export const PromptStudioPage: React.FC = () => {
                         <span>Save Version</span>
                       </button>
                     </div>
-                    {/* Live variables detected in editing content */}
-                    {detectVariables(editingContent).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[10px] text-muted-foreground font-mono mr-1">Variables detected:</span>
-                        {detectVariables(editingContent).map(v => (
-                          <span key={v} className="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 text-[10px] font-mono">{`{{${v}}}`}</span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="p-4 rounded-xl bg-[#090d16] border border-border/60 font-mono text-xs text-gray-200 leading-relaxed whitespace-pre-wrap min-h-[160px]">
-                    {/* Highlight variable placeholders */}
                     {activeVersion.content.split(/(\{\{[\w]+\}\})/g).map((part, i) =>
                       /^\{\{[\w]+\}\}$/.test(part)
                         ? <span key={i} className="bg-amber-500/20 text-amber-300 rounded px-0.5">{part}</span>
@@ -633,24 +734,24 @@ export const PromptStudioPage: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-border/60 pb-2">
                   <div className="flex items-center space-x-2">
                     <Eye className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live Interpolated Preview</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live Interpolated Output Preview</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground">Variables substituted in real-time</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">Substituted in real-time</span>
                 </div>
-                <div className="p-4 rounded-xl bg-gradient-to-br from-[#090d16] to-[#0f1620] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap min-h-[80px]">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-[#090d16] to-[#0f1620] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
                   {interpolated}
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Tab: VARIABLES ── */}
+          {/* ── TAB 2: VARIABLES ── */}
           {activeTab === 'variables' && (
             <div className="glass-card p-5 rounded-2xl space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h3 className="text-sm font-bold text-foreground">Variable Interpolation</h3>
+                <h3 className="text-sm font-bold text-foreground">Variable Interpolation Fields</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Set values for each <code className="text-primary bg-primary/10 px-1 rounded">{'{{variable}}'}</code> token. The preview updates live.
+                  Set default values for each <code className="text-primary bg-primary/10 px-1 rounded">{'{{variable}}'}</code>.
                 </p>
               </div>
 
@@ -665,41 +766,21 @@ export const PromptStudioPage: React.FC = () => {
                       value={variableValues[varName] || ''}
                       onChange={e => setVariableValues(prev => ({ ...prev, [varName]: e.target.value }))}
                       placeholder={`Enter value for ${varName}...`}
-                      className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground/60"
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
                     />
-                    {!variableValues[varName] && (
-                      <div className="text-[10px] text-amber-400 font-mono flex items-center space-x-1">
-                        <AlertCircle className="w-3 h-3" />
-                        <span>Empty — will render as {`{{${varName}}}`} in output</span>
-                      </div>
-                    )}
                   </div>
                 ))}
-              </div>
-
-              {/* Live preview with variables */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rendered Output</span>
-                  <button onClick={copyInterpolated} className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-semibold hover:bg-muted/70 transition-all">
-                    {copiedId === 'interpolated' ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedId === 'interpolated' ? 'Copied!' : 'Copy Rendered'}</span>
-                  </button>
-                </div>
-                <div className="p-4 rounded-xl bg-gradient-to-br from-[#090d16] to-[#0f1620] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
-                  {interpolated}
-                </div>
               </div>
             </div>
           )}
 
-          {/* ── Tab: HISTORY ── */}
+          {/* ── TAB 3: VERSION HISTORY & ROLLBACK ── */}
           {activeTab === 'history' && (
             <div className="glass-card p-5 rounded-2xl space-y-3">
               <div className="border-b border-border/60 pb-3 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground flex items-center space-x-2">
                   <History className="w-4 h-4 text-primary" />
-                  <span>Version History</span>
+                  <span>Version Commit History & Rollbacks</span>
                 </h3>
                 <span className="text-[10px] text-muted-foreground font-mono">{selected.versions.length} versions</span>
               </div>
@@ -740,28 +821,6 @@ export const PromptStudioPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Scores row */}
-                      <div className="flex items-center space-x-4 mt-3 text-[10px] font-mono">
-                        <span className="text-muted-foreground">Faithfulness: <span className="text-emerald-400 font-bold">{(v.faithfulness * 100).toFixed(0)}%</span></span>
-                        <span className="text-muted-foreground">Groundedness: <span className="text-blue-400 font-bold">{(v.groundedness * 100).toFixed(0)}%</span></span>
-                        <span className="text-muted-foreground">Relevance: <span className="text-indigo-400 font-bold">{(v.relevance * 100).toFixed(0)}%</span></span>
-                      </div>
-
-                      {/* Expandable content */}
-                      <button
-                        onClick={() => setHistoryExpanded(historyExpanded === v.version ? null : v.version)}
-                        className="mt-3 text-[10px] text-muted-foreground flex items-center space-x-1 hover:text-foreground"
-                      >
-                        {historyExpanded === v.version ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        <span>{historyExpanded === v.version ? 'Hide' : 'Show'} prompt content</span>
-                      </button>
-                      {historyExpanded === v.version && (
-                        <div className="mt-2 p-3 rounded-xl bg-[#090d16] border border-border/60 font-mono text-[10px] text-gray-300 whitespace-pre-wrap leading-relaxed">
-                          {v.content}
-                        </div>
-                      )}
-
-                      {/* Actions */}
                       {!isActive && (
                         <div className="flex items-center space-x-2 mt-3">
                           <button
@@ -780,7 +839,7 @@ export const PromptStudioPage: React.FC = () => {
             </div>
           )}
 
-          {/* ── Tab: A/B TEST ── */}
+          {/* ── TAB 4: A/B TESTING ── */}
           {activeTab === 'ab' && (
             <div className="glass-card p-5 rounded-2xl space-y-5">
               <div className="border-b border-border/60 pb-3">
@@ -788,34 +847,28 @@ export const PromptStudioPage: React.FC = () => {
                   <SplitSquareHorizontal className="w-4 h-4 text-primary" />
                   <span>A/B Version Testing</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Compare two prompt versions head-to-head and get quality scores.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Evaluate two versions side-by-side.</p>
               </div>
 
-              {/* Variant selectors */}
               <div className="grid grid-cols-2 gap-4">
                 {(['variantA', 'variantB'] as const).map((key, i) => (
                   <div key={key} className="space-y-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
                       Variant {i === 0 ? 'A' : 'B'}
                     </label>
                     <select
                       value={ab[key]}
                       onChange={e => setAb(prev => ({ ...prev, [key]: e.target.value, results: null }))}
-                      className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+                      className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-foreground focus:outline-none"
                     >
                       {selected.versions.map(v => (
                         <option key={v.version} value={v.version}>{v.version} — {v.changeNote.slice(0, 30)}...</option>
                       ))}
                     </select>
-                    {/* Preview */}
-                    <div className={`p-3 rounded-xl border font-mono text-[10px] text-gray-300 leading-relaxed whitespace-pre-wrap max-h-28 overflow-y-auto ${i === 0 ? 'border-blue-500/30 bg-blue-500/5' : 'border-purple-500/30 bg-purple-500/5'}`}>
-                      {selected.versions.find(v => v.version === ab[key])?.content.slice(0, 200)}...
-                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* Run button */}
               <div className="flex items-center justify-center">
                 <button
                   onClick={runABTest}
@@ -827,46 +880,19 @@ export const PromptStudioPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Results */}
               {ab.results && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: `Variant A (${ab.variantA})`, score: ab.results.a, color: 'from-blue-500 to-cyan-500', textColor: 'text-blue-400', border: 'border-blue-500/30' },
-                      { label: `Variant B (${ab.variantB})`, score: ab.results.b, color: 'from-purple-500 to-violet-500', textColor: 'text-purple-400', border: 'border-purple-500/30' },
-                    ].map((r, i) => (
-                      <div key={i} className={`p-4 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border ${r.border} text-center space-y-2`}>
-                        <div className="text-[10px] text-muted-foreground font-mono uppercase">{r.label}</div>
-                        <div className={`text-3xl font-extrabold font-mono ${r.textColor}`}>{r.score.toFixed(1)}</div>
-                        <div className="text-[10px] text-muted-foreground">Quality Score</div>
-                        <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                          <div className={`h-full bg-gradient-to-r ${r.color} transition-all duration-1000`} style={{ width: `${r.score}%` }} />
-                        </div>
-                        {((i === 0 && ab.results!.a > ab.results!.b) || (i === 1 && ab.results!.b > ab.results!.a)) && (
-                          <div className="flex items-center justify-center space-x-1 text-yellow-400 text-[10px] font-bold">
-                            <Trophy className="w-3 h-3" />
-                            <span>WINNER</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-3 rounded-xl bg-muted/20 border border-border/40 text-xs text-muted-foreground text-center font-mono">
-                    {ab.results.a > ab.results.b
-                      ? `✅ Variant A (${ab.variantA}) outperforms B by ${(ab.results.a - ab.results.b).toFixed(1)} quality points. Consider promoting ${ab.variantA} to published.`
-                      : ab.results.b > ab.results.a
-                      ? `✅ Variant B (${ab.variantB}) outperforms A by ${(ab.results.b - ab.results.a).toFixed(1)} quality points. Consider promoting ${ab.variantB} to published.`
-                      : '🤝 Both variants perform equally. Review manually.'}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border border-purple-500/30 text-center space-y-2">
+                  <div className="text-sm font-bold text-purple-400">
+                    Winner: {ab.results.a > ab.results.b ? `Variant A (${ab.variantA})` : `Variant B (${ab.variantB})`}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* ── Tab: APPROVAL / REVIEW / PUBLISHING ── */}
+          {/* ── TAB 5: APPROVAL WORKFLOW ── */}
           {activeTab === 'review' && (
             <div className="space-y-4">
-              {/* Status Card */}
               <div className={`glass-card p-5 rounded-2xl border-2 space-y-4 ${
                 selected.status === 'approved' ? 'border-emerald-500/40' :
                 selected.status === 'review' ? 'border-amber-500/40' : 'border-border/40'
@@ -881,51 +907,8 @@ export const PromptStudioPage: React.FC = () => {
                     <span>{selected.status.toUpperCase()}</span>
                   </span>
                 </div>
-
-                {/* Workflow steps */}
-                <div className="space-y-3">
-                  {[
-                    { step: 1, label: 'Draft Created', desc: 'Prompt authored and saved', done: true },
-                    { step: 2, label: 'Evaluation Run', desc: 'RAGAS / DeepEval scores computed', done: activeVersion.faithfulness > 0 },
-                    { step: 3, label: 'Submitted for Review', desc: 'Peer review requested', done: selected.status === 'review' || selected.status === 'approved' },
-                    { step: 4, label: 'Approved & Published', desc: 'Live in production', done: selected.status === 'approved' },
-                  ].map((s) => (
-                    <div key={s.step} className="flex items-center space-x-3">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                        s.done ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground border border-border/60'
-                      }`}>
-                        {s.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : s.step}
-                      </div>
-                      <div>
-                        <div className={`text-xs font-bold ${s.done ? 'text-foreground' : 'text-muted-foreground'}`}>{s.label}</div>
-                        <div className="text-[10px] text-muted-foreground">{s.desc}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* Published version info */}
-              <div className="glass-card p-5 rounded-2xl space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60 pb-2">Current Published State</h4>
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-muted-foreground">Published Version</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">{selected.publishedVersion}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-muted-foreground">Active Editor Version</span>
-                  <span className="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 font-bold">{activeVersion.version}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-muted-foreground">Status</span>
-                  <span className={`flex items-center space-x-1 px-2 py-0.5 rounded border font-bold ${statusColor(selected.status)}`}>
-                    {statusIcon(selected.status)}
-                    <span>{selected.status}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {selected.status === 'draft' && (
                   <button
@@ -945,19 +928,103 @@ export const PromptStudioPage: React.FC = () => {
                     <span>Approve & Publish {activeVersion.version}</span>
                   </button>
                 )}
-                {selected.status === 'approved' && (
-                  <div className="flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs">
-                    <BadgeCheck className="w-4 h-4" />
-                    <span>Published & Live ✓</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 6: TEAM COMMENTS ── */}
+          {activeTab === 'comments' && (
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <div className="border-b border-border/60 pb-3 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  <span>Team Collaboration Comments</span>
+                </h3>
+                <span className="text-xs font-mono text-muted-foreground">{selected.comments.length} comments</span>
+              </div>
+
+              <div className="space-y-3">
+                {selected.comments.map(c => (
+                  <div key={c.id} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
+                          {c.avatar}
+                        </div>
+                        <span className="text-xs font-bold text-foreground">{c.author}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">({c.role})</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-muted-foreground">{timeAgo(c.timestamp)}</span>
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed font-sans">{c.content}</p>
                   </div>
-                )}
+                ))}
+              </div>
+
+              {/* Add Comment Input */}
+              <div className="flex items-center space-x-2 pt-2 border-t border-border/40">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder="Add a peer review comment..."
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs disabled:opacity-40 flex items-center space-x-1"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Post</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 7: EXECUTION LOGS & ANALYTICS ── */}
+          {activeTab === 'analytics' && (
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <div className="border-b border-border/60 pb-3 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground flex items-center space-x-2">
+                  <BarChart2 className="w-4 h-4 text-primary" />
+                  <span>Prompt Execution History Logs</span>
+                </h3>
+                <Badge variant="success">Live Log Stream</Badge>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs">
+                  <thead>
+                    <tr className="border-b border-border/60 text-muted-foreground text-[10px] uppercase">
+                      <th className="pb-2">Timestamp</th>
+                      <th className="pb-2">Model</th>
+                      <th className="pb-2">Latency</th>
+                      <th className="pb-2">Tokens</th>
+                      <th className="pb-2">Cost</th>
+                      <th className="pb-2">Faithfulness</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {selected.executionHistory.map(log => (
+                      <tr key={log.id} className="hover:bg-muted/20">
+                        <td className="py-2.5 text-muted-foreground">{log.timestamp}</td>
+                        <td className="py-2.5 font-bold text-foreground">{log.model}</td>
+                        <td className="py-2.5 text-pink-400">{log.latency_ms}ms</td>
+                        <td className="py-2.5 text-primary">{log.tokens}</td>
+                        <td className="py-2.5 text-emerald-400">${log.cost}</td>
+                        <td className="py-2.5 text-blue-400">{(log.faithfulness * 100).toFixed(0)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── New Prompt Modal ── */}
+      {/* New Prompt Modal */}
       {newPromptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-border/60 shadow-2xl">
@@ -966,24 +1033,34 @@ export const PromptStudioPage: React.FC = () => {
               <button onClick={() => setNewPromptModal(false)} className="text-muted-foreground hover:text-foreground">✕</button>
             </div>
             <div className="space-y-3">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prompt Title</label>
-              <input
-                type="text"
-                autoFocus
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && createNewPrompt()}
-                placeholder="e.g. Customer Support Response Generator"
-                className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-mono focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
-              />
-              <p className="text-xs text-muted-foreground">Will start with a blank v1 template with <code className="text-amber-400">{'{{company}}'}</code>, <code className="text-amber-400">{'{{industry}}'}</code>, and <code className="text-amber-400">{'{{country}}'}</code> variables.</p>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Prompt Title</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  placeholder="e.g. Customer Audit Pipeline"
+                  className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-mono focus:outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Collection</label>
+                <input
+                  type="text"
+                  value={newCollection}
+                  onChange={e => setNewCollection(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-mono focus:outline-none text-foreground"
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-3 pt-1">
-              <button onClick={() => setNewPromptModal(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted transition-all">Cancel</button>
+              <button onClick={() => setNewPromptModal(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted">Cancel</button>
               <button
                 onClick={createNewPrompt}
                 disabled={!newTitle.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs disabled:opacity-40 transition-all"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs disabled:opacity-40"
               >
                 Create Prompt
               </button>

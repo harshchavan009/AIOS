@@ -1,17 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bot,
   Star,
   Download,
-  Share2,
-  Sparkles,
   Search,
-  CheckCircle2,
-  Sliders,
-  Plus
 } from 'lucide-react';
-import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
 
 interface MarketplaceAgent {
   id: string;
@@ -24,17 +17,39 @@ interface MarketplaceAgent {
   tags: string[];
 }
 
-const MARKETPLACE_AGENTS: MarketplaceAgent[] = [
-  { id: 'm-1', name: 'SOC-2 Compliance Auditor', category: 'Security & Audit', author: 'AIOS Security Team', rating: 4.9, installs: 3420, description: 'Decomposes audit requirements into automated verification DAG workflows.', tags: ['SOC-2', 'Compliance', 'Audit'] },
-  { id: 'm-2', name: 'Neo4j Knowledge Graph Traverser', category: 'Graph RAG', author: 'Data Engineering Org', rating: 4.8, installs: 2890, description: 'Generates multi-hop Cypher queries for deep entity relationship retrieval.', tags: ['Graph RAG', 'Neo4j', 'Vector'] },
-  { id: 'm-3', name: 'DevOps Kubernetes Troubleshooting Agent', category: 'Infrastructure', author: 'Platform Team', rating: 4.95, installs: 5120, description: 'Analyzes cluster logs, deployment manifests, and pod states autonomously.', tags: ['DevOps', 'Kubernetes', 'SRE'] },
-  { id: 'm-4', name: 'Financial Model Benchmark Synthesizer', category: 'Finance', author: 'FinTech Group', rating: 4.7, installs: 1980, description: 'Extracts SEC 10-K filings and synthesizes financial metrics with zero hallucination.', tags: ['Finance', 'SEC 10-K', 'RAG'] }
-];
-
 export const AgentMarketplacePage: React.FC = () => {
+  const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
   const [search, setSearch] = useState('');
 
-  const filtered = MARKETPLACE_AGENTS.filter(a =>
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const token = localStorage.getItem('aios_access_token');
+        const res = await fetch('/api/v1/studio/models', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const list = await res.json();
+          const mapped: MarketplaceAgent[] = list.map((m: any, idx: number) => ({
+            id: m.id,
+            name: m.name,
+            category: m.type || 'AI Model',
+            author: m.provider,
+            rating: 4.9,
+            installs: (idx + 1) * 1200,
+            description: `${m.name} provided by ${m.provider}. Latency: ${m.latency}ms, Context: ${m.contextWindow}.`,
+            tags: [m.provider, m.type || 'LLM']
+          }));
+          setAgents(mapped);
+        }
+      } catch {
+        // fallback to empty
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  const filtered = agents.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.category.toLowerCase().includes(search.toLowerCase())
   );

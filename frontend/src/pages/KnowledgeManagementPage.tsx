@@ -1,37 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Database,
-  FileText,
-  Globe,
-  Share2,
-  CheckCircle2,
-  RefreshCw,
   Plus,
-  Layers,
-  Search,
-  Network,
-  Cpu
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
 
-interface KnowledgeConnector {
-  id: string;
-  name: string;
-  type: 'Slack' | 'Notion' | 'Google Drive' | 'Git Repo' | 'PostgreSQL';
-  status: 'active' | 'syncing' | 'paused';
-  documents: number;
-  lastSync: string;
+interface KnowledgeDoc {
+  filename: string;
+  chunk_count: number;
+  status: string;
 }
 
-const CONNECTORS: KnowledgeConnector[] = [
-  { id: 'c-1', name: 'Enterprise Engineering Notion Space', type: 'Notion', status: 'active', documents: 1420, lastSync: '5 mins ago' },
-  { id: 'c-2', name: 'Compliance & Legal Slack Archive', type: 'Slack', status: 'active', documents: 8920, lastSync: '1 min ago' },
-  { id: 'c-3', name: 'AIOS Master GitHub Codebase', type: 'Git Repo', status: 'active', documents: 3120, lastSync: '12 mins ago' },
-  { id: 'c-4', name: 'SOC-2 Audit Google Drive Vault', type: 'Google Drive', status: 'active', documents: 540, lastSync: '1 hour ago' }
-];
-
 export const KnowledgeManagementPage: React.FC = () => {
+  const [documents, setDocuments] = useState<KnowledgeDoc[]>([]);
+
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        const token = localStorage.getItem('aios_access_token');
+        const res = await fetch('/api/v1/rag/documents', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDocuments(data.documents || []);
+        }
+      } catch {
+        // preserve state
+      }
+    };
+    fetchDocs();
+  }, []);
+
   return (
     <div className="space-y-8 animate-fade-in font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -51,24 +51,30 @@ export const KnowledgeManagementPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {CONNECTORS.map((c) => (
-          <div key={c.id} className="glass-card glass-card-hover p-5 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                <Database className="w-5 h-5" />
+        {documents.length > 0 ? (
+          documents.map((d, idx) => (
+            <div key={idx} className="glass-card glass-card-hover p-5 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                  <Database className="w-5 h-5" />
+                </div>
+                <Badge variant="success">{d.status.toUpperCase()}</Badge>
               </div>
-              <Badge variant="success">ACTIVE</Badge>
+              <div>
+                <div className="text-sm font-bold truncate">{d.filename}</div>
+                <div className="text-xs text-muted-foreground font-mono">Qdrant Vector Store</div>
+              </div>
+              <div className="pt-2 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground font-mono">
+                <span>{d.chunk_count} Chunks</span>
+                <span>Live Index</span>
+              </div>
             </div>
-            <div>
-              <div className="text-sm font-bold">{c.name}</div>
-              <div className="text-xs text-muted-foreground font-mono">{c.type}</div>
-            </div>
-            <div className="pt-2 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <span>{c.documents.toLocaleString()} docs</span>
-              <span>Synced {c.lastSync}</span>
-            </div>
+          ))
+        ) : (
+          <div className="col-span-4 glass-card p-8 rounded-2xl text-center text-muted-foreground text-sm space-y-2">
+            <div>No knowledge documents indexed yet. Upload files in the Graph RAG page or connect data sources.</div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

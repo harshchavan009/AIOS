@@ -5,7 +5,9 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { DashboardPage } from './pages/DashboardPage';
+
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { PromptStudioPage } from './pages/PromptStudioPage';
 import { AgentBuilderPage } from './pages/AgentBuilderPage';
@@ -61,6 +63,8 @@ export const App: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+
 
         {/* Protected AI Platform Studio Routes */}
         <Route

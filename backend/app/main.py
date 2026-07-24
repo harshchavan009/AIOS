@@ -9,16 +9,18 @@ from app.core.config import settings
 from app.core.exceptions import AIOSException, aios_exception_handler, global_exception_handler
 from app.core.logging import logger
 from app.core.middleware.request_tracing import RequestTracingMiddleware
-from app.database.base import Base
+from app.database.init_db import init_db_and_seed
 from app.database.session import engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing AIOS Backend Platform...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database schemas initialized.")
+    logger.info("Initializing AIOS Backend Platform & Database...")
+    try:
+        await init_db_and_seed()
+        logger.info("Database schemas migrated and default accounts initialized.")
+    except Exception as e:
+        logger.exception(f"Database initialization warning: {e}")
     yield
     logger.info("Shutting down AIOS Backend Platform...")
     await engine.dispose()
