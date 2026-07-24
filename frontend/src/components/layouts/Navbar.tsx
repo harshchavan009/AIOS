@@ -18,10 +18,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
   const [activeDropdown, setActiveDropdown] = useState<'notifications' | 'profile' | 'health' | null>(null);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
+  const isLight = theme === 'light';
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore shortcut triggers if typing inside input fields or textareas
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
       
       // Esc: Close open dropdowns & modals
@@ -65,28 +66,50 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
   }, [toggleTheme, onOpenCommandPalette]);
 
   return (
-    <header className="h-16 border-b border-white/[0.06] bg-[#0F1117]/85 backdrop-blur-[18px] sticky top-0 z-30 flex items-center justify-between px-6 transition-colors">
+    <header
+      className={`h-16 sticky top-0 z-30 flex items-center justify-between px-6 transition-colors duration-300 backdrop-blur-[18px] ${
+        isLight
+          ? 'bg-white/90 border-b border-[#E5E7EB] text-[#111827]'
+          : 'bg-[#0F1117]/85 border-b border-white/[0.06] text-[#F8FAFC]'
+      }`}
+    >
       {/* Left: Organization / Workspace Switcher & Global Search */}
       <div className="flex items-center space-x-4">
         {/* Workspace Switcher */}
-        <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#1F2937] border border-white/[0.05] text-xs font-semibold text-[#CBD5E1]">
-          <Building2 className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[#F8FAFC] font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
-          <span className="text-[#94A3B8] font-mono">/</span>
-          <span className="text-sky-400 font-mono">{currentWorkspace?.name || 'Production'}</span>
+        <div
+          className={`hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${
+            isLight
+              ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827]'
+              : 'bg-[#1F2937] border-white/[0.05] text-[#CBD5E1]'
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5 text-blue-600" />
+          <span className="font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
+          <span className="font-mono opacity-50">/</span>
+          <span className="text-blue-500 font-mono">{currentWorkspace?.name || 'Production'}</span>
         </div>
 
         {/* Global Search Trigger */}
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="flex items-center space-x-3 px-3.5 py-1.5 rounded-xl bg-[#1F2937] hover:bg-[#273549] border border-white/[0.05] text-[#94A3B8] text-sm transition-all w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          className={`flex items-center space-x-3 px-3.5 py-1.5 rounded-xl border text-sm transition-all w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+            isLight
+              ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-600'
+              : 'bg-[#1F2937] hover:bg-[#273549] border-white/[0.05] text-[#94A3B8]'
+          }`}
         >
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-[#94A3B8] group-hover:text-blue-400 transition-colors" />
-            <span className="text-xs text-[#CBD5E1]">Search AIOS...</span>
+            <Search className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
+            <span className="text-xs">Search AIOS...</span>
           </div>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-[#07090D] border border-white/[0.05] rounded text-[#94A3B8]">
+          <kbd
+            className={`hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono border rounded ${
+              isLight
+                ? 'bg-white border-[#E5E7EB] text-gray-600'
+                : 'bg-[#07090D] border-white/[0.05] text-[#94A3B8]'
+            }`}
+          >
             ⌘K
           </kbd>
         </button>
@@ -104,12 +127,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
         {/* 2. Global Theme Toggle */}
         <button
           type="button"
-          onClick={toggleTheme}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleTheme();
+          }}
           aria-label={`Switch to ${theme === 'graphite' ? 'Light' : 'Graphite'} theme (⌘+Shift+D)`}
           title={`Switch to ${theme === 'graphite' ? 'Light Enterprise' : 'Graphite Enterprise'} theme (⌘+Shift+D)`}
-          className="p-2 rounded-xl border border-white/[0.06] bg-[#1F2937] hover:bg-[#273549] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          className={`p-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+            isLight
+              ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-800'
+              : 'bg-[#1F2937] hover:bg-[#273549] border-white/[0.06] text-[#94A3B8] hover:text-[#F8FAFC]'
+          }`}
         >
-          {theme === 'graphite' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+          {theme === 'graphite' ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-blue-600" />
+          )}
         </button>
 
         {/* 3. Notification Center */}
