@@ -12,11 +12,15 @@ import {
 } from 'recharts';
 import { Badge } from '../components/ui/Badge';
 import { PageSkeleton } from '../components/ui/Skeleton';
+import { EnterpriseChartContainer } from '../components/common/EnterpriseChartContainer';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
+import { DollarSign, BarChart3 } from 'lucide-react';
 
 export const AnalyticsPage: React.FC = () => {
   const { summary, dailyTrends, streamRateTokensSec } = useLiveTelemetryStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [expenditureTimeRange, setExpenditureTimeRange] = useState('7D');
+  const [volumeTimeRange, setVolumeTimeRange] = useState('7D');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 450);
@@ -72,53 +76,67 @@ export const AnalyticsPage: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-card p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-base font-bold">Daily Expenditure Trend ($)</h3>
-              <p className="text-xs text-muted-foreground">Cumulative LLM token expenditure by day</p>
-            </div>
-            <span className="text-xs font-mono text-emerald-400 animate-pulse">Live Updating</span>
-          </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyTrends}>
-                <defs>
-                  <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="day" stroke="#9ca3af" fontSize={11} />
-                <YAxis stroke="#9ca3af" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
-                <Area type="monotone" dataKey="cost" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#costGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* Daily Expenditure Trend Chart */}
+        <EnterpriseChartContainer
+          title="Daily Expenditure Trend ($)"
+          subtitle="Cumulative LLM token expenditure by day"
+          icon={DollarSign}
+          data={dailyTrends}
+          csvFilename="daily_expenditure_analytics.csv"
+          activeTimeRange={expenditureTimeRange}
+          onTimeRangeChange={(r) => setExpenditureTimeRange(r)}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={dailyTrends}>
+              <defs>
+                <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="day" stroke="#9ca3af" fontSize={11} />
+              <YAxis stroke="#9ca3af" fontSize={11} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#0E121B',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  fontSize: '12px'
+                }}
+              />
+              <Area type="monotone" dataKey="cost" name="Expenditure ($)" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#costGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </EnterpriseChartContainer>
 
-        <div className="glass-card p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-base font-bold">Token Processing Volume</h3>
-              <p className="text-xs text-muted-foreground">Daily processed tokens across active cluster nodes</p>
-            </div>
-            <span className="text-xs font-mono text-blue-400 animate-pulse">Live Volume</span>
-          </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="day" stroke="#9ca3af" fontSize={11} />
-                <YAxis stroke="#9ca3af" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
-                <Bar dataKey="tokens" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* Token Processing Volume Chart */}
+        <EnterpriseChartContainer
+          title="Token Processing Volume"
+          subtitle="Daily processed tokens across active cluster nodes"
+          icon={BarChart3}
+          data={dailyTrends}
+          csvFilename="token_processing_volume.csv"
+          activeTimeRange={volumeTimeRange}
+          onTimeRangeChange={(r) => setVolumeTimeRange(r)}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dailyTrends}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="day" stroke="#9ca3af" fontSize={11} />
+              <YAxis stroke="#9ca3af" fontSize={11} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#0E121B',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  fontSize: '12px'
+                }}
+              />
+              <Bar dataKey="tokens" name="Tokens" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </EnterpriseChartContainer>
       </div>
     </div>
   );
