@@ -6,6 +6,7 @@ import { CommandPalette } from '../common/CommandPalette';
 import { ToastContainer } from '../common/ToastContainer';
 import { OnboardingModal } from '../common/OnboardingModal';
 import { AICopilotWidget } from '../common/AICopilotWidget';
+import { PageTransition } from '../common/PageTransition';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 
@@ -107,7 +108,9 @@ export const AppLayout: React.FC = () => {
 
         {/* Dynamic Page Content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
 
