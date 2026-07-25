@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,10 +11,21 @@ import {
   Bar
 } from 'recharts';
 import { Badge } from '../components/ui/Badge';
+import { PageSkeleton } from '../components/ui/Skeleton';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
 export const AnalyticsPage: React.FC = () => {
   const { summary, dailyTrends, streamRateTokensSec } = useLiveTelemetryStore();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PageSkeleton title="Loading Executive Analytics..." />;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in font-sans">

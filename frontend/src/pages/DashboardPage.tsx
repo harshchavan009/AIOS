@@ -29,11 +29,18 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { Badge } from '../components/ui/Badge';
+import { PageSkeleton } from '../components/ui/Skeleton';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
 export const DashboardPage: React.FC = () => {
   const { summary, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
   const [pipelineActiveNode, setPipelineActiveNode] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 450);
+    return () => clearTimeout(timer);
+  }, []);
 
   const pipelineNodes = [
     { name: 'FastAPI', role: 'REST Gateway', detail: 'Async Request Routing', color: 'from-blue-500 to-indigo-500', textColor: 'text-blue-400' },
@@ -51,6 +58,10 @@ export const DashboardPage: React.FC = () => {
     }, 1200);
     return () => clearInterval(pipelineInterval);
   }, [pipelineNodes.length]);
+
+  if (isLoading) {
+    return <PageSkeleton title="Loading Enterprise Infrastructure Dashboard..." />;
+  }
 
   const metricCards = [
     { label: 'Active Agents', value: `${summary.active_agents}/6`, sub: 'LangGraph Worker Swarm', icon: Bot, color: 'text-blue-400', bg: 'bg-blue-500/10' },
