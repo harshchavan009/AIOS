@@ -34,7 +34,7 @@ interface CommandItem {
   id: string;
   title: string;
   subtitle?: string;
-  category: 'Actions' | 'Pages' | 'Agents & Models' | 'Settings';
+  category: 'Pages' | 'Models' | 'Agents' | 'Prompts' | 'Workflows' | 'Documents' | 'Actions';
   icon: React.ComponentType<{ className?: string }>;
   shortcut?: string;
   action: () => void;
@@ -55,7 +55,223 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   };
 
   const COMMANDS: CommandItem[] = [
-    // Quick Actions
+    // ── Pages ─────────────────────────────────────────────────────────────────
+    {
+      id: 'page-graph-rag',
+      title: 'Graph RAG',
+      subtitle: 'Neo4j Knowledge Graph & Entity Relations',
+      category: 'Pages',
+      icon: Network,
+      shortcut: '⌘4',
+      action: () => handleNavigate('/knowledge-graph'),
+    },
+    {
+      id: 'page-knowledge-base',
+      title: 'Knowledge Base',
+      subtitle: 'Neo4j & Qdrant Knowledge Management Store',
+      category: 'Pages',
+      icon: Brain,
+      action: () => handleNavigate('/knowledge'),
+    },
+    {
+      id: 'page-dashboard',
+      title: 'Enterprise Dashboard',
+      subtitle: 'Real-time telemetry, 17 system metrics, and Docker status',
+      category: 'Pages',
+      icon: Cpu,
+      shortcut: '⌘1',
+      action: () => handleNavigate('/dashboard'),
+    },
+    {
+      id: 'page-playground',
+      title: 'Playground',
+      subtitle: 'Multi-LLM comparative generation sandbox',
+      category: 'Pages',
+      icon: Play,
+      shortcut: '⌘2',
+      action: () => handleNavigate('/playground'),
+    },
+    {
+      id: 'page-prompt-studio',
+      title: 'Prompt Studio',
+      subtitle: 'Prompt engineering, registry, and versioning',
+      category: 'Pages',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'page-agent-builder',
+      title: 'Agent Builder',
+      subtitle: 'Build custom multi-agent LangGraph nodes',
+      category: 'Pages',
+      icon: Bot,
+      action: () => handleNavigate('/agent-builder'),
+    },
+    {
+      id: 'page-models',
+      title: 'Model Management',
+      subtitle: 'LLM providers, rate limits, and latencies',
+      category: 'Pages',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'page-analytics',
+      title: 'Executive Analytics',
+      subtitle: 'Token usage volume, expenditures, and latency trends',
+      category: 'Pages',
+      icon: BarChart3,
+      shortcut: '⌘3',
+      action: () => handleNavigate('/analytics'),
+    },
+
+    // ── Models ────────────────────────────────────────────────────────────────
+    {
+      id: 'model-neo4j-retriever',
+      title: 'Neo4j Retriever',
+      subtitle: 'Graph-aware vector retrieval model adapter for Neo4j',
+      category: 'Models',
+      icon: Network,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-gpt4o',
+      title: 'OpenAI GPT-4o',
+      subtitle: 'Flagship multi-modal LLM router engine (128K ctx)',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-claude',
+      title: 'Claude 3.5 Sonnet',
+      subtitle: 'High precision reasoning & code synthesis model',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-gemini',
+      title: 'Gemini 1.5 Pro',
+      subtitle: '2 Million token context window & multi-modal RAG',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-llama3',
+      title: 'Llama 3 70B (Groq)',
+      subtitle: 'Ultra-low latency LPU inference engine',
+      category: 'Models',
+      icon: Terminal,
+      action: () => handleNavigate('/models'),
+    },
+
+    // ── Agents ────────────────────────────────────────────────────────────────
+    {
+      id: 'agent-planner',
+      title: 'Planner Agent',
+      subtitle: 'LangGraph task decomposition and topology planner',
+      category: 'Agents',
+      icon: Brain,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'agent-retriever',
+      title: 'Retriever Agent',
+      subtitle: 'Neo4j graph traversal and Qdrant vector search worker',
+      category: 'Agents',
+      icon: Network,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'agent-tool',
+      title: 'Python Tool Agent',
+      subtitle: 'MCP tool execution & sandboxed Python runtime',
+      category: 'Agents',
+      icon: Terminal,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'agent-critic',
+      title: 'Critic Agent',
+      subtitle: 'RAGAS quality evaluator & faithfulness validator',
+      category: 'Agents',
+      icon: Shield,
+      action: () => handleNavigate('/agents'),
+    },
+
+    // ── Prompts ───────────────────────────────────────────────────────────────
+    {
+      id: 'prompt-neo4j-cypher',
+      title: 'Neo4j Cypher Generator',
+      subtitle: 'Generate Cypher graph queries from natural language goals',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'prompt-rag-synthesizer',
+      title: 'Enterprise RAG Synthesizer',
+      subtitle: 'Grounded response generation with full source citations',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'prompt-task-planner',
+      title: 'Multi-Agent Task Decomposition Prompt',
+      subtitle: 'Structured JSON system prompt for atomic task breakdown',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+
+    // ── Workflows ─────────────────────────────────────────────────────────────
+    {
+      id: 'wf-neo4j-indexing',
+      title: 'Neo4j Knowledge Graph Indexing Workflow',
+      subtitle: 'Automated entity extraction and Cypher graph sync pipeline',
+      category: 'Workflows',
+      icon: Layers,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'wf-compliance-audit',
+      title: 'Enterprise Financial Compliance Audit',
+      subtitle: 'Multi-agent LangGraph audit DAG with tool verification',
+      category: 'Workflows',
+      icon: Layers,
+      action: () => handleNavigate('/agents'),
+    },
+
+    // ── Documents ─────────────────────────────────────────────────────────────
+    {
+      id: 'doc-neo4j-arch',
+      title: 'Neo4j_Graph_Architecture_v4.pdf',
+      subtitle: 'Indexed in Qdrant & Neo4j vector store (128 vectors)',
+      category: 'Documents',
+      icon: FileText,
+      action: () => handleNavigate('/second-brain'),
+    },
+    {
+      id: 'doc-aios-spec',
+      title: 'AIOS_Enterprise_Spec_v3.pdf',
+      subtitle: 'System architecture and API gateway spec',
+      category: 'Documents',
+      icon: FileText,
+      action: () => handleNavigate('/second-brain'),
+    },
+    {
+      id: 'doc-rag-benchmarks',
+      title: 'RAG_Benchmark_Results_2026.csv',
+      subtitle: 'RAGAS evaluation dataset across 500 test cases',
+      category: 'Documents',
+      icon: FileText,
+      action: () => handleNavigate('/second-brain'),
+    },
+
+    // ── Quick Actions ─────────────────────────────────────────────────────────
     {
       id: 'create-prompt',
       title: 'Create Prompt',
@@ -82,107 +298,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       icon: Upload,
       shortcut: '⌘U',
       action: () => handleNavigate('/second-brain'),
-    },
-    {
-      id: 'run-command',
-      title: 'Run Command / Workflow',
-      subtitle: 'Execute multi-agent LangGraph workflow',
-      category: 'Actions',
-      icon: Terminal,
-      shortcut: '⌘R',
-      action: () => handleNavigate('/agents'),
-    },
-
-    // Navigation Pages
-    {
-      id: 'open-dashboard',
-      title: 'Open Dashboard',
-      subtitle: 'Real-time telemetry, 17 system metrics, and Docker status',
-      category: 'Pages',
-      icon: Cpu,
-      shortcut: '⌘1',
-      action: () => handleNavigate('/dashboard'),
-    },
-    {
-      id: 'open-playground',
-      title: 'Open Playground',
-      subtitle: 'Multi-LLM comparative generation sandbox',
-      category: 'Pages',
-      icon: Play,
-      shortcut: '⌘2',
-      action: () => handleNavigate('/playground'),
-    },
-    {
-      id: 'open-analytics',
-      title: 'Open Executive Analytics',
-      subtitle: 'Token usage volume, expenditures, and latency trends',
-      category: 'Pages',
-      icon: BarChart3,
-      shortcut: '⌘3',
-      action: () => handleNavigate('/analytics'),
-    },
-    {
-      id: 'open-knowledge-graph',
-      title: 'Open Knowledge Graph (GraphRAG)',
-      subtitle: 'Neo4j entity-relation graph and vector retrieval',
-      category: 'Pages',
-      icon: Network,
-      shortcut: '⌘4',
-      action: () => handleNavigate('/knowledge-graph'),
-    },
-    {
-      id: 'open-autodev',
-      title: 'Open AutoDev Repositories',
-      subtitle: 'Autonomous codebase synthesis and repository agents',
-      category: 'Pages',
-      icon: Code2,
-      shortcut: '⌘5',
-      action: () => handleNavigate('/repositories'),
-    },
-    {
-      id: 'open-second-brain',
-      title: 'Open Second Brain Documents',
-      subtitle: 'Document management, semantic chunks, and vector store',
-      category: 'Pages',
-      icon: Brain,
-      action: () => handleNavigate('/second-brain'),
-    },
-    {
-      id: 'open-marketplace',
-      title: 'Open Agent Marketplace',
-      subtitle: 'Browse and deploy pre-built agent templates',
-      category: 'Pages',
-      icon: Compass,
-      action: () => handleNavigate('/marketplace'),
-    },
-
-    // Search Agents & Models
-    {
-      id: 'search-agents',
-      title: 'Search & Orchestrate Agents',
-      subtitle: 'Manage Planner, Retriever, Tool, Reasoning, and Critic agents',
-      category: 'Agents & Models',
-      icon: Layers,
-      action: () => handleNavigate('/agents'),
-    },
-    {
-      id: 'search-models',
-      title: 'Search Models & Provider Gateway',
-      subtitle: 'GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, Llama 3 70B',
-      category: 'Agents & Models',
-      icon: Database,
-      action: () => handleNavigate('/models'),
-    },
-
-    // Settings
-    {
-      id: 'settings',
-      title: 'Settings & Security Governance',
-      subtitle: 'API keys, organization workspace, RBAC roles, and themes',
-      category: 'Settings',
-      icon: SlidersHorizontal,
-      shortcut: '⌘,',
-      action: () => handleNavigate('/settings'),
     },
   ];
 
@@ -226,7 +341,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   // Group commands by category for display
-  const categories: Array<CommandItem['category']> = ['Actions', 'Pages', 'Agents & Models', 'Settings'];
+  const categories: Array<CommandItem['category']> = [
+    'Pages',
+    'Models',
+    'Agents',
+    'Prompts',
+    'Workflows',
+    'Documents',
+    'Actions',
+  ];
 
   return (
     <div
