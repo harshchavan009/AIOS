@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bot,
   Star,
   Download,
   Search,
 } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface MarketplaceAgent {
   id: string;
@@ -20,6 +22,7 @@ interface MarketplaceAgent {
 export const AgentMarketplacePage: React.FC = () => {
   const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -78,52 +81,68 @@ export const AgentMarketplacePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filtered.map((agent) => (
-          <div key={agent.id} className="glass-card glass-card-hover p-6 rounded-2xl space-y-4 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-border/60">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                    <Bot className="w-6 h-6" />
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={Bot}
+          title="No Agents Found"
+          description={
+            search
+              ? `No marketplace agents matching "${search}". Try clearing your search query or create a new custom agent.`
+              : "No active marketplace templates found. Create your first agent worker node."
+          }
+          actionLabel="Create Agent"
+          onAction={() => navigate('/agent-builder')}
+          secondaryLabel={search ? 'Clear Search' : undefined}
+          onSecondaryAction={search ? () => setSearch('') : undefined}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filtered.map((agent) => (
+            <div key={agent.id} className="glass-card glass-card-hover p-6 rounded-2xl space-y-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-xl bg-primary/10 text-primary">
+                      <Bot className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold">{agent.name}</h3>
+                      <div className="text-xs text-muted-foreground font-mono">{agent.author}</div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold">{agent.name}</h3>
-                    <div className="text-xs text-muted-foreground font-mono">{agent.author}</div>
+                  <div className="flex items-center space-x-1 text-amber-400 font-bold text-xs">
+                    <Star className="w-4 h-4 fill-amber-400" />
+                    <span>{agent.rating}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1 text-amber-400 font-bold text-xs">
-                  <Star className="w-4 h-4 fill-amber-400" />
-                  <span>{agent.rating}</span>
+
+                <p className="text-xs text-muted-foreground leading-relaxed mt-3">
+                  {agent.description}
+                </p>
+
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {agent.tags.map(t => (
+                    <span key={t} className="px-2.5 py-0.5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground border border-border/40">
+                      #{t}
+                    </span>
+                  ))}
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground leading-relaxed mt-3">
-                {agent.description}
-              </p>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                {agent.tags.map(t => (
-                  <span key={t} className="px-2.5 py-0.5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground border border-border/40">
-                    #{t}
-                  </span>
-                ))}
+              <div className="pt-3 border-t border-border/40 flex items-center justify-between">
+                <span className="text-xs font-mono text-muted-foreground">{agent.installs.toLocaleString()} Installs</span>
+                <button
+                  onClick={() => alert(`Cloned ${agent.name} into your workspace!`)}
+                  className="px-4 py-2 rounded-xl bg-primary text-white font-semibold text-xs shadow-md shadow-primary/20 hover:bg-primary/90 transition-colors flex items-center space-x-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Install Agent</span>
+                </button>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-border/40 flex items-center justify-between">
-              <span className="text-xs font-mono text-muted-foreground">{agent.installs.toLocaleString()} Installs</span>
-              <button
-                onClick={() => alert(`Cloned ${agent.name} into your workspace!`)}
-                className="px-4 py-2 rounded-xl bg-primary text-white font-semibold text-xs shadow-md shadow-primary/20 hover:bg-primary/90 transition-colors flex items-center space-x-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Install Agent</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
