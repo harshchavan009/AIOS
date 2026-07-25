@@ -13,6 +13,7 @@ import {
 import { Badge } from '../components/ui/Badge';
 import { PageSkeleton } from '../components/ui/Skeleton';
 import { EnterpriseChartContainer } from '../components/common/EnterpriseChartContainer';
+import { ConsoleLogViewer } from '../components/common/ConsoleLogViewer';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 import { DollarSign, BarChart3 } from 'lucide-react';
 
@@ -138,6 +139,9 @@ export const AnalyticsPage: React.FC = () => {
           </ResponsiveContainer>
         </EnterpriseChartContainer>
       </div>
+
+      {/* Live Console Execution Log Viewer */}
+      <ConsoleLogViewer />
     </div>
   );
 };
