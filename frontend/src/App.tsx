@@ -21,6 +21,7 @@ import { GraphRAGPage } from './pages/GraphRAGPage';
 import { AutoDevPage } from './pages/AutoDevPage';
 import { SecondBrainPage } from './pages/SecondBrainPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ApiExplorerPage } from './pages/ApiExplorerPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ServerErrorPage } from './pages/ServerErrorPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -96,6 +97,8 @@ export const App: React.FC = () => {
             <Route path="/documents" element={<SecondBrainPage />} />
             <Route path="/second-brain" element={<SecondBrainPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/api-explorer" element={<ApiExplorerPage />} />
+            <Route path="/docs/api" element={<ApiExplorerPage />} />
           </Route>
 
           {/* 404 Fallback */}

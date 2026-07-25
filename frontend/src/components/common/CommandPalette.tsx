@@ -55,7 +55,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   };
 
   const COMMANDS: CommandItem[] = [
-    // ── Pages ─────────────────────────────────────────────────────────────────
+    {
+      id: 'page-api-explorer',
+      title: 'REST API Explorer',
+      subtitle: 'OpenAPI REST endpoints documentation and cURL / Python examples',
+      category: 'Pages',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
+    },
     {
       id: 'page-graph-rag',
       title: 'Graph RAG',

@@ -18,7 +18,8 @@ import {
   Award,
   Database,
   ShoppingBag,
-  BarChart2
+  BarChart2,
+  Code2,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -43,6 +44,7 @@ export const Sidebar: React.FC = () => {
     { label: 'Evaluation Studio', icon: Award, path: '/evaluation' },
     { label: 'Knowledge Base', icon: Database, path: '/knowledge' },
     { label: 'Agent Marketplace', icon: ShoppingBag, path: '/marketplace' },
+    { label: 'REST API Explorer', icon: Code2, path: '/api-explorer', badge: 'v1.0' },
     { label: 'Enterprise Analytics', icon: BarChart2, path: '/analytics' },
     { label: 'System Settings', icon: SlidersHorizontal, path: '/settings' },
   ];
