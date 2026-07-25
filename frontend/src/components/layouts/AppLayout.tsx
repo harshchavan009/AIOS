@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { CommandPalette } from '../common/CommandPalette';
 import { ToastContainer } from '../common/ToastContainer';
 import { OnboardingModal } from '../common/OnboardingModal';
+import { AICopilotWidget } from '../common/AICopilotWidget';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 
@@ -121,6 +122,9 @@ export const AppLayout: React.FC = () => {
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
       />
+
+      {/* Floating AI Copilot Assistant Widget */}
+      <AICopilotWidget />
 
       {/* Real-time Toast Notifications Banner */}
       <ToastContainer />
