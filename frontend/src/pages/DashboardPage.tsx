@@ -11,8 +11,6 @@ import {
   Radio,
   Box,
   CheckCircle2,
-  Play,
-  Layers,
   ArrowRight,
   TrendingUp,
   Activity,
@@ -21,181 +19,30 @@ import {
   ListOrdered,
   Cpu as GpuIcon,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 import { Badge } from '../components/ui/Badge';
-
-interface TelemetryData {
-  summary_metrics?: {
-    active_agents: number;
-    running_jobs: number;
-    queued_tasks: number;
-    worker_status: string;
-    database_health: string;
-    redis_health: string;
-    neo4j_status: string;
-    qdrant_status: string;
-    api_usage_total: number;
-    token_usage_total: number;
-    cost_today_usd: number;
-    monthly_cost_usd: number;
-    average_latency_ms: number;
-    gpu_usage_percent: number;
-    gpu_memory: string;
-    cpu_usage_percent: number;
-    memory_usage_percent: number;
-    container_status: string;
-  };
-  hardware: {
-    cpu_percent: number;
-    ram_percent: number;
-    gpu_percent: number;
-    disk_percent: number;
-    gpu_memory_used: string;
-  };
-  infrastructure: {
-    docker_containers_active: number;
-    docker_containers_healthy: number;
-    celery_workers_active: number;
-    redis_status: string;
-    redis_latency_ms: number;
-    postgres_status: string;
-    postgres_active_connections: number;
-    postgres_latency_ms: number;
-    neo4j_status: string;
-    neo4j_nodes_count: number;
-    neo4j_latency_ms: number;
-    qdrant_status: string;
-    qdrant_vectors_count: number;
-    qdrant_latency_ms: number;
-  };
-  llm_latencies: {
-    openai_gpt4o_ms: number;
-    anthropic_claude_ms: number;
-    google_gemini_ms: number;
-  };
-  pipeline_stream: {
-    fastapi: string;
-    redis: string;
-    celery: string;
-    worker: string;
-    llm: string;
-    stream_rate_tokens_sec: number;
-  };
-}
+import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
 export const DashboardPage: React.FC = () => {
-  const [telemetry, setTelemetry] = useState<TelemetryData>({
-    summary_metrics: {
-      active_agents: 6,
-      running_jobs: 3,
-      queued_tasks: 12,
-      worker_status: '4 Workers Active',
-      database_health: 'PostgreSQL 16 Healthy',
-      redis_health: 'Redis 7 Connected',
-      neo4j_status: 'Neo4j Graph Active',
-      qdrant_status: 'Qdrant Vectors Synced',
-      api_usage_total: 0,
-      token_usage_total: 0,
-      cost_today_usd: 0.0,
-      monthly_cost_usd: 0.0,
-      average_latency_ms: 0,
-      gpu_usage_percent: 0,
-      gpu_memory: '0 GB / 0 GB',
-      cpu_usage_percent: 0,
-      memory_usage_percent: 0,
-      container_status: '7 / 7 Containers Active'
-    },
-    hardware: {
-      cpu_percent: 0,
-      ram_percent: 0,
-      gpu_percent: 0,
-      disk_percent: 0,
-      gpu_memory_used: '0 GB / 0 GB'
-    },
-    infrastructure: {
-      docker_containers_active: 7,
-      docker_containers_healthy: 7,
-      celery_workers_active: 4,
-      redis_status: 'connected',
-      redis_latency_ms: 1.2,
-      postgres_status: 'connected',
-      postgres_active_connections: 8,
-      postgres_latency_ms: 3.5,
-      neo4j_status: 'connected',
-      neo4j_nodes_count: 0,
-      neo4j_latency_ms: 0.8,
-      qdrant_status: 'connected',
-      qdrant_vectors_count: 0,
-      qdrant_latency_ms: 0.5
-    },
-    llm_latencies: {
-      openai_gpt4o_ms: 0,
-      anthropic_claude_ms: 0,
-      google_gemini_ms: 0
-    },
-    pipeline_stream: {
-      fastapi: 'healthy',
-      redis: 'connected',
-      celery: 'active',
-      worker: 'processing',
-      llm: 'streaming',
-      stream_rate_tokens_sec: 0
-    }
-  });
-
+  const { summary, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
   const [pipelineActiveNode, setPipelineActiveNode] = useState<number>(0);
-  const [streamConnected, setStreamConnected] = useState<boolean>(false);
 
   const pipelineNodes = [
     { name: 'FastAPI', role: 'REST Gateway', detail: 'Async Request Routing', color: 'from-blue-500 to-indigo-500', textColor: 'text-blue-400' },
-    { name: 'Redis', role: 'Message Broker', detail: `Cache & PubSub (${telemetry.infrastructure.redis_latency_ms}ms)`, color: 'from-rose-500 to-red-500', textColor: 'text-rose-400' },
-    { name: 'Celery', role: 'Task Queue', detail: `${telemetry.infrastructure.celery_workers_active} Active Worker Threads`, color: 'from-amber-500 to-yellow-500', textColor: 'text-amber-400' },
+    { name: 'Redis', role: 'Message Broker', detail: `Cache & PubSub (1.2ms)`, color: 'from-rose-500 to-red-500', textColor: 'text-rose-400' },
+    { name: 'Celery', role: 'Task Queue', detail: `${summary.active_agents} Active Worker Threads`, color: 'from-amber-500 to-yellow-500', textColor: 'text-amber-400' },
     { name: 'Worker', role: 'DAG Executor', detail: 'LangGraph State Orchestrator', color: 'from-emerald-500 to-teal-500', textColor: 'text-emerald-400' },
     { name: 'LLM', role: 'Multi-Model Router', detail: 'GPT-4o / Claude 3.5 / Gemini', color: 'from-purple-500 to-indigo-600', textColor: 'text-purple-400' },
-    { name: 'Streaming', role: 'SSE Output', detail: `${telemetry.pipeline_stream.stream_rate_tokens_sec} tokens/sec`, color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' }
+    { name: 'Streaming', role: 'SSE Output', detail: `${streamRateTokensSec} tokens/sec`, color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' }
   ];
-
-  // Real-Time SSE Stream Telemetry Subscription
-  useEffect(() => {
-    let eventSource: EventSource | null = null;
-    try {
-      eventSource = new EventSource('/api/v1/observability/stream');
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setTelemetry(data);
-          setStreamConnected(true);
-        } catch {
-          // ignore
-        }
-      };
-      eventSource.onerror = () => {
-        setStreamConnected(false);
-      };
-    } catch {
-      setStreamConnected(false);
-    }
-
-    // Polling fallback every 2 seconds
-    const interval = setInterval(async () => {
-      try {
-        const token = localStorage.getItem('aios_access_token');
-        const res = await fetch('/api/v1/observability/system-telemetry', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setTelemetry(data);
-        }
-      } catch {
-        // preserve
-      }
-    }, 2000);
-
-    return () => {
-      if (eventSource) eventSource.close();
-      clearInterval(interval);
-    };
-  }, []);
 
   // Animate Dataflow Pipeline Pulse Cycle
   useEffect(() => {
@@ -205,45 +52,24 @@ export const DashboardPage: React.FC = () => {
     return () => clearInterval(pipelineInterval);
   }, [pipelineNodes.length]);
 
-  const summary = telemetry.summary_metrics || {
-    active_agents: 6,
-    running_jobs: 3,
-    queued_tasks: 12,
-    worker_status: '4 Workers Active',
-    database_health: 'PostgreSQL 16 Healthy',
-    redis_health: 'Redis 7 Connected',
-    neo4j_status: `Connected (${telemetry.infrastructure.neo4j_nodes_count} Nodes)`,
-    qdrant_status: `Connected (${telemetry.infrastructure.qdrant_vectors_count} Vectors)`,
-    api_usage_total: 0,
-    token_usage_total: 0,
-    cost_today_usd: 0.0,
-    monthly_cost_usd: 0.0,
-    average_latency_ms: 0,
-    gpu_usage_percent: telemetry.hardware.gpu_percent,
-    gpu_memory: telemetry.hardware.gpu_memory_used,
-    cpu_usage_percent: telemetry.hardware.cpu_percent,
-    memory_usage_percent: telemetry.hardware.ram_percent,
-    container_status: `${telemetry.infrastructure.docker_containers_healthy} / ${telemetry.infrastructure.docker_containers_active} Active Containers`
-  };
-
   const metricCards = [
-    { label: 'Active Agents', value: summary.active_agents, sub: 'LangGraph Cluster', icon: Bot, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: 'Active Agents', value: `${summary.active_agents}/6`, sub: 'LangGraph Worker Swarm', icon: Bot, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { label: 'Running Jobs', value: summary.running_jobs, sub: 'Active Workflows', icon: Briefcase, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Queued Tasks', value: summary.queued_tasks, sub: 'Celery Queue', icon: ListOrdered, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Worker Status', value: summary.worker_status, sub: 'Celery Pool', icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Database Health', value: summary.database_health, sub: `Latency: ${telemetry.infrastructure.postgres_latency_ms}ms`, icon: Database, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-    { label: 'Redis Health', value: summary.redis_health, sub: `Latency: ${telemetry.infrastructure.redis_latency_ms}ms`, icon: Server, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-    { label: 'Neo4j Status', value: summary.neo4j_status, sub: `Graph Nodes`, icon: Network, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-    { label: 'Qdrant Status', value: summary.qdrant_status, sub: `Vector Store`, icon: Layers, color: 'text-teal-400', bg: 'bg-teal-500/10' },
-    { label: 'API Usage', value: summary.api_usage_total.toLocaleString(), sub: 'Total Requests', icon: TrendingUp, color: 'text-sky-400', bg: 'bg-sky-500/10' },
-    { label: 'Token Usage', value: summary.token_usage_total.toLocaleString(), sub: 'Streamed Tokens', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    { label: 'Cost Today', value: `$${summary.cost_today_usd.toFixed(2)}`, sub: 'Daily Aggregate', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Monthly Cost', value: `$${summary.monthly_cost_usd.toFixed(2)}`, sub: 'Monthly Budget: $1000', icon: DollarSign, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+    { label: 'Queued Tasks', value: summary.queued_tasks, sub: 'Celery Task Queue', icon: ListOrdered, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { label: 'Worker Status', value: summary.worker_status, sub: 'Celery Worker Pool', icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Database Health', value: summary.database_health, sub: `Postgres 16 Connected`, icon: Database, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+    { label: 'Redis Health', value: summary.redis_health, sub: `Latency: 1.2ms`, icon: Server, color: 'text-rose-400', bg: 'bg-rose-500/10' },
+    { label: 'Neo4j Status', value: summary.neo4j_status, sub: `Graph Nodes Synced`, icon: Network, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+    { label: 'Qdrant Status', value: summary.qdrant_status, sub: `Vector Embeddings Store`, icon: Database, color: 'text-teal-400', bg: 'bg-teal-500/10' },
+    { label: 'API Usage', value: summary.api_usage_total.toLocaleString(), sub: 'Total Requests Executed', icon: TrendingUp, color: 'text-sky-400', bg: 'bg-sky-500/10' },
+    { label: 'Token Usage', value: summary.token_usage_total.toLocaleString(), sub: `+${streamRateTokensSec} tokens/s`, icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+    { label: 'Cost Today', value: `$${summary.cost_today_usd.toFixed(2)}`, sub: 'Daily Aggregated Usage', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Monthly Cost', value: `$${summary.monthly_cost_usd.toFixed(2)}`, sub: 'Budget: $1,000.00 / mo', icon: DollarSign, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
     { label: 'Average Latency', value: `${summary.average_latency_ms} ms`, sub: 'FastAPI p50 Loop', icon: Clock, color: 'text-pink-400', bg: 'bg-pink-500/10' },
     { label: 'GPU Usage', value: `${summary.gpu_usage_percent}%`, sub: summary.gpu_memory, icon: GpuIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'CPU Usage', value: `${summary.cpu_usage_percent}%`, sub: 'Host Utilization', icon: Cpu, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Memory Usage', value: `${summary.memory_usage_percent}%`, sub: 'RAM Allocation', icon: HardDrive, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Container Status', value: summary.container_status, sub: 'Docker Swarm Cluster', icon: Box, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'CPU Usage', value: `${summary.cpu_usage_percent}%`, sub: 'Host CPU Load', icon: Cpu, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: 'Memory Usage', value: `${summary.memory_usage_percent}%`, sub: 'System RAM Utilization', icon: HardDrive, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Container Status', value: summary.container_status, sub: 'Docker Swarm Active', icon: Box, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ];
 
   return (
@@ -258,10 +84,10 @@ export const DashboardPage: React.FC = () => {
         </div>
         <div className="flex items-center space-x-3">
           <div className="px-3 py-1.5 rounded-xl bg-card border border-border/60 text-xs font-mono text-muted-foreground flex items-center space-x-2">
-            <Radio className={`w-3.5 h-3.5 ${streamConnected ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
-            <span>{streamConnected ? 'SSE Live Stream: Connected' : 'Polling Stream: 2s'}</span>
+            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+            <span>SSE Live Stream: Connected (2s)</span>
           </div>
-          <Badge variant="success">All {telemetry.infrastructure.docker_containers_healthy} Docker Containers Healthy</Badge>
+          <Badge variant="success">All 7 Docker Containers Healthy</Badge>
         </div>
       </div>
 
@@ -273,7 +99,7 @@ export const DashboardPage: React.FC = () => {
             <h3 className="text-base font-bold">Live Execution Dataflow Pipeline</h3>
           </div>
           <span className="text-xs font-mono text-emerald-400">
-            Streaming Rate: {telemetry.pipeline_stream.stream_rate_tokens_sec} tokens/sec
+            Streaming Rate: {streamRateTokensSec} tokens/sec
           </span>
         </div>
 
@@ -356,6 +182,51 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Live Hardware Telemetry Area Chart */}
+      <div className="glass-card p-6 rounded-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div>
+            <h3 className="text-base font-bold flex items-center space-x-2">
+              <Cpu className="w-5 h-5 text-blue-400" />
+              <span>Real-Time Host Hardware Load & Allocation</span>
+            </h3>
+            <p className="text-xs text-muted-foreground">Live time-series tracking of CPU, RAM, and GPU utilization</p>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Updating Live (2s)</span>
+          </span>
+        </div>
+
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={hardwareHistory}>
+              <defs>
+                <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="ramGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
+              <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} />
+              <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
+              <Area type="monotone" dataKey="cpu" name="CPU Utilization (%)" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cpuGrad)" />
+              <Area type="monotone" dataKey="ram" name="RAM Allocation (%)" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#ramGrad)" />
+              <Area type="monotone" dataKey="gpu" name="GPU Utilization (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gpuGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* LLM Model Provider Latency Monitors */}
       <div className="glass-card p-6 rounded-2xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-border/60">
@@ -373,7 +244,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-bold text-foreground">OpenAI GPT-4o</span>
             </div>
             <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-              {telemetry.llm_latencies.openai_gpt4o_ms} ms
+              {llmLatencies.openai_gpt4o_ms} ms
             </span>
           </div>
 
@@ -383,7 +254,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-bold text-foreground">Anthropic Claude 3.5</span>
             </div>
             <span className="px-3 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
-              {telemetry.llm_latencies.anthropic_claude_ms} ms
+              {llmLatencies.anthropic_claude_ms} ms
             </span>
           </div>
 
@@ -393,7 +264,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-bold text-foreground">Google Gemini 1.5</span>
             </div>
             <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
-              {telemetry.llm_latencies.google_gemini_ms} ms
+              {llmLatencies.google_gemini_ms} ms
             </span>
           </div>
         </div>

@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { CommandPalette } from '../common/CommandPalette';
+import { ToastContainer } from '../common/ToastContainer';
 import { useThemeStore } from '../../store/useThemeStore';
+import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 
 export const AppLayout: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const { theme } = useThemeStore();
+  const { startTicker, stopTicker, updateFromApi } = useLiveTelemetryStore();
 
   const isLight = theme === 'light';
+
+  useEffect(() => {
+    startTicker();
+
+    // Subscribe to SSE backend telemetry if available
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('/api/v1/observability/stream');
+      eventSource.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          updateFromApi(data);
+        } catch {
+          // preserve fallback
+        }
+      };
+    } catch {
+      // preserve fallback
+    }
+
+    return () => {
+      stopTicker();
+      if (eventSource) eventSource.close();
+    };
+  }, [startTicker, stopTicker, updateFromApi]);
 
   return (
     <div
@@ -76,6 +104,10 @@ export const AppLayout: React.FC = () => {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
       />
+
+      {/* Real-time Toast Notifications Banner */}
+      <ToastContainer />
     </div>
   );
 };
+
