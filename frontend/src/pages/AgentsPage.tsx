@@ -206,18 +206,24 @@ function AgentCard({
         </div>
 
         <div className="flex items-center space-x-2 flex-shrink-0">
-          {/* Status indicator */}
+          {/* Explicit Status Indicators requested by user */}
           {state.status === 'running' && (
-            <span
-              style={{ background: agent.color }}
-              className="w-2 h-2 rounded-full animate-ping"
-            />
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>🟢 Running</span>
+            </div>
           )}
           {state.status === 'done' && (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>✓ Completed</span>
+            </div>
           )}
           {(state.status === 'idle' || state.status === 'pending') && (
-            <span className="w-2 h-2 rounded-full bg-gray-700" />
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 font-mono text-[10px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-gray-500/60" />
+              <span>⚪ Waiting</span>
+            </div>
           )}
 
           {state.thoughts && (
