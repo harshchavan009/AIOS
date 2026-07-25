@@ -22,58 +22,58 @@ interface NotificationState {
 const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n-1',
-    type: 'login',
-    title: 'Login Successful',
-    description: 'Admin signed in from 127.0.0.1 (Mac OS Chrome)',
+    type: 'knowledge',
+    title: 'Graph Synced',
+    description: 'Neo4j Knowledge Graph synced 1,420 nodes & 3,890 relationships',
     timestamp: 'Just now',
     isRead: false
   },
   {
     id: 'n-2',
-    type: 'workflow',
-    title: 'Workflow Completed',
-    description: 'Enterprise RAG Indexing Pipeline #4092 executed in 1.4s',
-    timestamp: '5 mins ago',
+    type: 'agent',
+    title: 'Claude disconnected',
+    description: 'Provider socket re-established via fallback router (Anthropic Claude 3.5 Sonnet)',
+    timestamp: '30 sec ago',
     isRead: false
   },
   {
     id: 'n-3',
-    type: 'agent',
-    title: 'Agent Deployed',
-    description: 'Code Architect Agent v2.4 initialized with 6 sub-workers',
-    timestamp: '25 mins ago',
+    type: 'workflow',
+    title: '✓ DAG Executed Successfully',
+    description: 'LangGraph DAG compliance audit workflow completed (4/4 nodes verified in 1.2s)',
+    timestamp: '2 min ago',
     isRead: false
   },
   {
     id: 'n-4',
     type: 'document',
-    title: 'Document Indexed',
-    description: 'Architecture_Spec_v3.pdf chunked and stored in Qdrant (128 vectors)',
-    timestamp: '1 hour ago',
+    title: 'New Prompt Published',
+    description: 'Prompt version v3.8 ("Enterprise RAG Synthesizer") published to production registry',
+    timestamp: 'Today',
     isRead: true
   },
   {
     id: 'n-5',
-    type: 'eval',
-    title: 'Evaluation Finished',
-    description: 'Benchmark score: 94.8% accuracy across 500 test cases',
-    timestamp: '2 hours ago',
+    type: 'agent',
+    title: 'Agent Deployed',
+    description: 'Code Architect Agent v2.4 initialized with 6 sub-workers',
+    timestamp: '10 mins ago',
     isRead: true
   },
   {
     id: 'n-6',
-    type: 'key',
-    title: 'New API Key Created',
-    description: 'Production-Gateway-Key-2026 issued for Acme Workspace',
-    timestamp: '4 hours ago',
+    type: 'eval',
+    title: 'Evaluation Finished',
+    description: 'DeepEval benchmark score: 98.4% accuracy across 500 test cases',
+    timestamp: '2 hours ago',
     isRead: true
   },
   {
     id: 'n-7',
-    type: 'knowledge',
-    title: 'Knowledge Base Synced',
-    description: 'Neo4j Graph RAG synced 1,420 entity nodes and 3,890 relationships',
-    timestamp: '1 day ago',
+    type: 'key',
+    title: 'New API Key Issued',
+    description: 'Production-Gateway-Key-2026 issued for Acme Workspace',
+    timestamp: 'Today',
     isRead: true
   }
 ];
