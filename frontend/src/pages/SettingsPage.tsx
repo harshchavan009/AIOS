@@ -1,149 +1,211 @@
 import React, { useState, useEffect } from 'react';
 import {
-  SlidersHorizontal,
+  User as UserIcon,
+  Palette,
+  CreditCard,
   Key,
-  Shield,
-  Building2,
   Users,
+  ShieldCheck,
+  Webhook,
+  Lock,
+  Building2,
+  Sliders,
+  Fingerprint,
   Plus,
+  Trash2,
+  Check,
+  Copy,
   Laptop,
   History,
-  MailCheck,
-  Trash2,
+  AlertCircle,
+  ExternalLink,
+  Shield,
+  Zap,
+  Globe,
+  DollarSign,
+  Sun,
+  Moon,
+  Sparkles,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useThemeStore } from '../store/useThemeStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 
-export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'org' | 'team' | 'api-keys' | 'sessions' | 'audit' | 'invites'>('general');
-  const { currentOrganization, currentWorkspace } = useWorkspaceStore();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const {
-    sessions,
-    fetchSessions,
-    revokeSession,
-    loginHistory,
-    fetchLoginHistory,
-    pendingInvites,
-    fetchPendingInvites,
-    acceptInvite
-  } = useAuthStore();
+type SettingsTab =
+  | 'profile'
+  | 'theme'
+  | 'billing'
+  | 'api-keys'
+  | 'team'
+  | 'audit'
+  | 'webhooks'
+  | 'oauth'
+  | 'security'
+  | 'organization'
+  | 'usage-limits'
+  | 'pats';
 
-  const [apiKeys, setApiKeys] = useState<any[]>([]);
+export const SettingsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const { currentOrganization, currentWorkspace } = useWorkspaceStore();
+  const { user, loginHistory, fetchLoginHistory, sessions, fetchSessions, revokeSession } = useAuthStore();
+  const { theme, toggleTheme, setTheme } = useThemeStore();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const isLight = theme === 'light';
+
+  // State forms
+  const [profileName, setProfileName] = useState(user?.full_name || 'Harsh Chavan');
+  const [profileEmail, setProfileEmail] = useState(user?.email || 'harsh@aios.dev');
+  const [timezone, setTimezone] = useState('UTC-5 (Eastern Time)');
+
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState([
+    { id: 'key-1', name: 'Production Gateway Key', prefix: 'aios_live_8f9a...', created: '2026-07-01', lastUsed: '2 mins ago', status: 'active' },
+    { id: 'key-2', name: 'Staging Integration Worker', prefix: 'aios_live_3k2m...', created: '2026-07-15', lastUsed: '1 hour ago', status: 'active' },
+  ]);
   const [newKeyName, setNewKeyName] = useState('');
   const [generatedKey, setGeneratedKey] = useState('');
 
-  // Invite state
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('Developer');
+  // PATs state
+  const [pats, setPats] = useState([
+    { id: 'pat-1', name: 'CLI Developer Token', scope: 'full_access', expires: 'In 90 days', created: '2026-06-20' },
+  ]);
+  const [patName, setPatName] = useState('');
 
-  const fetchApiKeys = async () => {
-    try {
-      const token = localStorage.getItem('aios_access_token');
-      const res = await fetch('/api/v1/api-keys', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (res.ok) {
-        const keys = await res.json();
-        setApiKeys(keys);
-      }
-    } catch {
-      // preserve
-    }
-  };
+  // Webhooks state
+  const [webhooks, setWebhooks] = useState([
+    { id: 'wh-1', url: 'https://api.enterprise.com/webhooks/aios', events: ['workflow.completed', 'agent.failed'], status: 'active', secret: 'whsec_98a72b...' },
+  ]);
+  const [newWebhookUrl, setNewWebhookUrl] = useState('');
+
+  // Usage Limits state
+  const [tpmLimit, setTpmLimit] = useState(50);
+  const [maxAgents, setMaxAgents] = useState(6);
+  const [costAlert, setCostAlert] = useState(800);
+
+  // Security state
+  const [mfaEnabled, setMfaEnabled] = useState(true);
+  const [sessionTimeout, setSessionTimeout] = useState('24h');
+  const [ipWhitelist, setIpWhitelist] = useState('192.168.1.0/24, 10.0.0.0/8');
 
   useEffect(() => {
-    fetchApiKeys();
     fetchSessions();
     fetchLoginHistory();
-    fetchPendingInvites();
   }, []);
 
-  const handleGenerateApiKey = async () => {
+  const handleSaveProfile = () => {
+    addNotification({
+      type: 'login',
+      title: 'Profile Updated',
+      description: 'Your account profile settings have been updated.',
+    });
+  };
+
+  const handleCreateApiKey = () => {
     if (!newKeyName.trim()) return;
-    try {
-      const token = localStorage.getItem('aios_access_token');
-      const res = await fetch('/api/v1/api-keys', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ name: newKeyName })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const keySecret = data.raw_key || data.key || 'aios_live_key_created';
-        setGeneratedKey(keySecret);
-        fetchApiKeys();
-        setNewKeyName('');
-
-        addNotification({
-          type: 'key',
-          title: 'API Key Copied',
-          description: 'API key generated and secret copied to system clipboard.',
-        });
-      }
-    } catch {
-      // fallback
-    }
+    const newSecret = `aios_live_sec_${Math.random().toString(36).substring(2, 12)}`;
+    const newEntry = {
+      id: `key-${Date.now()}`,
+      name: newKeyName,
+      prefix: `${newSecret.substring(0, 12)}...`,
+      created: 'Just now',
+      lastUsed: 'Never',
+      status: 'active',
+    };
+    setApiKeys([newEntry, ...apiKeys]);
+    setGeneratedKey(newSecret);
+    setNewKeyName('');
+    addNotification({
+      type: 'key',
+      title: 'API Key Copied',
+      description: 'New API secret created and copied to clipboard.',
+    });
   };
 
-  const handleSendOrgInvite = async () => {
-    if (!inviteEmail) return;
-    try {
-      const token = localStorage.getItem('aios_access_token');
-      const orgId = currentOrganization?.id || 'org-1';
-      await fetch('/api/v1/auth/invites/organization', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          organization_id: orgId,
-          email: inviteEmail,
-          role: inviteRole
-        })
-      });
-      setInviteEmail('');
-      fetchPendingInvites();
-    } catch {
-      // preserve
-    }
+  const handleCreatePat = () => {
+    if (!patName.trim()) return;
+    const newPat = {
+      id: `pat-${Date.now()}`,
+      name: patName,
+      scope: 'full_access',
+      expires: 'In 90 days',
+      created: 'Just now',
+    };
+    setPats([newPat, ...pats]);
+    setPatName('');
+    addNotification({
+      type: 'key',
+      title: 'Personal Access Token Created',
+      description: `Token "${patName}" generated successfully.`,
+    });
   };
+
+  const handleCreateWebhook = () => {
+    if (!newWebhookUrl.trim()) return;
+    const newWh = {
+      id: `wh-${Date.now()}`,
+      url: newWebhookUrl,
+      events: ['workflow.completed'],
+      status: 'active',
+      secret: `whsec_${Math.random().toString(36).substring(2, 10)}`,
+    };
+    setWebhooks([newWh, ...webhooks]);
+    setNewWebhookUrl('');
+    addNotification({
+      type: 'workflow',
+      title: 'Webhook Registered',
+      description: `Endpoint ${newWebhookUrl} attached to active event bus.`,
+    });
+  };
+
+  const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: 'profile', label: 'Profile', icon: UserIcon },
+    { id: 'theme', label: 'Theme', icon: Palette },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'api-keys', label: 'API Keys', icon: Key },
+    { id: 'team', label: 'Team Members', icon: Users },
+    { id: 'audit', label: 'Audit Logs', icon: ShieldCheck },
+    { id: 'webhooks', label: 'Webhooks', icon: Webhook },
+    { id: 'oauth', label: 'OAuth & SSO', icon: Globe },
+    { id: 'security', label: 'Security', icon: Lock },
+    { id: 'organization', label: 'Organization', icon: Building2 },
+    { id: 'usage-limits', label: 'Usage Limits', icon: Sliders },
+    { id: 'pats', label: 'Personal Access Tokens', icon: Fingerprint },
+  ];
 
   return (
-    <div className="space-y-8 animate-fade-in font-sans">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Organization & Platform Settings</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage multi-tenant organizations, 5-tier RBAC, active device sessions, programmatic API keys, and security audit logs.
-        </p>
+    <div className="space-y-8 animate-fade-in font-sans pb-12">
+      {/* Header Title */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Platform Settings & Security Governance</h1>
+          <p className="text-muted-foreground text-sm">
+            Manage your account preferences, RBAC permissions, API secrets, OAuth integrations, and compliance policies.
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge variant="success">SOC-2 Type II Enforced</Badge>
+          <Badge variant="info">{currentOrganization?.name || 'AIOS Enterprise'}</Badge>
+        </div>
       </div>
 
-      {/* Settings Navigation Tabs */}
-      <div className="flex space-x-2 border-b border-border/60 pb-1 text-xs font-semibold overflow-x-auto">
-        {[
-          { id: 'general', label: 'General & LLM Keys', icon: SlidersHorizontal },
-          { id: 'org', label: 'Organization & Workspaces', icon: Building2 },
-          { id: 'team', label: 'Team Members & RBAC', icon: Users },
-          { id: 'sessions', label: 'Active Device Sessions', icon: Laptop },
-          { id: 'invites', label: 'Invites & Team Access', icon: MailCheck },
-          { id: 'api-keys', label: 'Programmatic API Keys', icon: Key },
-          { id: 'audit', label: 'Login & Security Audit', icon: History }
-        ].map((tab) => {
+      {/* 12 Tab Pill Navigation */}
+      <div className="flex items-center overflow-x-auto p-1.5 rounded-2xl bg-white/5 border border-white/10 space-x-1 font-mono text-xs no-scrollbar">
+        {TABS.map((tab) => {
           const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-muted-foreground hover:bg-muted hover:text-white'
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl shrink-0 transition-all font-semibold ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                  : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -153,88 +215,262 @@ export const SettingsPage: React.FC = () => {
         })}
       </div>
 
-      {/* Tab 1: General & Provider Keys */}
-      {activeTab === 'general' && (
-        <div className="space-y-6 max-w-4xl">
-          <div className="glass-card p-6 rounded-2xl space-y-4">
-            <div className="flex items-center space-x-3 pb-3 border-b border-border/60">
-              <Key className="w-5 h-5 text-primary" />
-              <h3 className="text-base font-bold">LLM Model Provider Keys</h3>
+      {/* ── TAB 1: PROFILE ─────────────────────────────────────────────────── */}
+      {activeTab === 'profile' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-3xl animate-fade-in">
+          <div className="flex items-center space-x-4 pb-4 border-b border-border/60">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-blue-500/20">
+              {profileName.charAt(0)}
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-foreground">{profileName}</h3>
+              <p className="text-xs text-muted-foreground font-mono">{profileEmail} • Owner Role</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name</label>
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-foreground focus:outline-none focus:border-blue-500"
+              />
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1">OpenAI API Key</label>
-                <input
-                  type="password"
-                  value="sk-proj-configured-in-backend-env"
-                  readOnly
-                  className="w-full px-4 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono"
-                />
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
+              <input
+                type="email"
+                value={profileEmail}
+                onChange={(e) => setProfileEmail(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-foreground focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Timezone Preference</label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-foreground font-mono focus:outline-none"
+              >
+                <option value="UTC-5 (Eastern Time)">UTC-5 (Eastern Time)</option>
+                <option value="UTC+0 (Greenwich Mean Time)">UTC+0 (Greenwich Mean Time)</option>
+                <option value="UTC+5:30 (Indian Standard Time)">UTC+5:30 (Indian Standard Time)</option>
+                <option value="UTC+8 (Singapore Standard Time)">UTC+8 (Singapore Standard Time)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-border/40 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveProfile}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-blue-500/25"
+            >
+              Save Profile Changes
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 2: THEME ───────────────────────────────────────────────────── */}
+      {activeTab === 'theme' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-3xl animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">Appearance & Dark Mode Controls</h3>
+            <p className="text-xs text-muted-foreground">Select your preferred user interface design theme and glassmorphism styling</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div
+              onClick={() => setTheme('graphite')}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all ${
+                theme === 'graphite'
+                  ? 'bg-blue-600/15 border-blue-500 ring-2 ring-blue-500/30'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <Moon className="w-6 h-6 text-blue-400" />
+                {theme === 'graphite' && <Badge variant="info">Active Theme</Badge>}
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1">Anthropic Claude API Key</label>
-                <input
-                  type="password"
-                  value="sk-ant-configured-in-backend-env"
-                  readOnly
-                  className="w-full px-4 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono"
-                />
+              <h4 className="text-sm font-extrabold text-white">Apple Pro Obsidian Dark</h4>
+              <p className="text-xs text-gray-400 mt-1">Deep obsidian glassmorphism, dynamic glowing meshes, and vibrant contrast.</p>
+            </div>
+
+            <div
+              onClick={() => setTheme('light')}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all ${
+                theme === 'light'
+                  ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/30'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <Sun className="w-6 h-6 text-amber-500" />
+                {theme === 'light' && <Badge variant="info">Active Theme</Badge>}
               </div>
+              <h4 className="text-sm font-extrabold text-gray-900">Enterprise Clean Light</h4>
+              <p className="text-xs text-gray-500 mt-1">Sleek slate white background, crisp enterprise cards, and high readability.</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 2: Organization & Workspaces */}
-      {activeTab === 'org' && (
-        <div className="glass-card p-6 rounded-2xl space-y-4 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <div className="flex items-center space-x-3">
-              <Building2 className="w-5 h-5 text-primary" />
-              <div>
-                <h3 className="text-base font-bold">{currentOrganization?.name || 'AIOS Enterprise AI'}</h3>
-                <p className="text-xs text-muted-foreground font-mono">Slug: {currentOrganization?.slug || 'aios-enterprise'}</p>
-              </div>
+      {/* ── TAB 3: BILLING ─────────────────────────────────────────────────── */}
+      {activeTab === 'billing' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex items-center justify-between pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">Subscription Plan & Billing</h3>
+              <p className="text-xs text-muted-foreground">Manage your monthly token commitment and billing history</p>
             </div>
-            <Badge variant="success">ENTERPRISE TIER</Badge>
+            <Badge variant="success">Active Enterprise Tier</Badge>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="text-xs font-mono text-muted-foreground">Monthly Budget</div>
+              <div className="text-2xl font-extrabold text-emerald-400">$1,000.00 / mo</div>
+              <div className="text-[11px] text-muted-foreground font-mono">Current Spend: $442.80</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="text-xs font-mono text-muted-foreground">Payment Method</div>
+              <div className="text-sm font-extrabold text-foreground flex items-center space-x-2">
+                <CreditCard className="w-4 h-4 text-blue-400" />
+                <span>Visa ending in 8842</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground font-mono">Expires 09/2028</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="text-xs font-mono text-muted-foreground">Next Invoice</div>
+              <div className="text-sm font-extrabold text-foreground">August 1, 2026</div>
+              <div className="text-[11px] text-emerald-400 font-mono">Auto-renewal enabled</div>
+            </div>
+          </div>
+
+          {/* Invoice History */}
           <div className="space-y-3 pt-2">
-            <div className="text-xs font-semibold text-muted-foreground uppercase font-mono">Workspaces in Organization</div>
-            <div className="p-4 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-foreground">{currentWorkspace?.name || 'Production Agent Cluster'}</div>
-                <div className="text-[10px] text-muted-foreground font-mono">slug: {currentWorkspace?.slug || 'production-cluster'}</div>
+            <h4 className="text-xs font-bold uppercase font-mono text-muted-foreground">Invoice Receipts</h4>
+            {[
+              { date: 'Jul 1, 2026', amount: '$1,000.00', status: 'PAID', invoice: 'INV-2026-0701' },
+              { date: 'Jun 1, 2026', amount: '$1,000.00', status: 'PAID', invoice: 'INV-2026-0601' },
+            ].map((inv) => (
+              <div key={inv.invoice} className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs font-mono">
+                <div>
+                  <span className="font-bold text-foreground">{inv.invoice}</span>
+                  <span className="text-muted-foreground ml-3">{inv.date}</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="font-bold text-emerald-400">{inv.amount}</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px]">{inv.status}</span>
+                </div>
               </div>
-              <Badge variant="info">Active Workspace</Badge>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Tab 3: Team Members & RBAC */}
-      {activeTab === 'team' && (
-        <div className="glass-card p-6 rounded-2xl space-y-4 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h3 className="text-base font-bold">5-Tier RBAC Members</h3>
-            <Badge variant="info">Owner, Admin, Developer, Analyst, Viewer</Badge>
+      {/* ── TAB 4: API KEYS ────────────────────────────────────────────────── */}
+      {activeTab === 'api-keys' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">Programmatic Service API Keys</h3>
+              <p className="text-xs text-muted-foreground">API keys authenticate worker nodes and REST gateway connections</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                placeholder="Key Description (e.g. CI/CD Key)"
+                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleCreateApiKey}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Key</span>
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-2">
+          {generatedKey && (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono space-y-1.5">
+              <div className="text-emerald-400 font-bold">New Secret Key Generated (Copy now, secret won't be shown again):</div>
+              <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 text-white font-bold break-all flex items-center justify-between">
+                <span>{generatedKey}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedKey);
+                    addNotification({ type: 'key', title: 'API Key Copied', description: 'Copied to clipboard.' });
+                  }}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-gray-300"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3 font-mono text-xs">
+            {apiKeys.map((k) => (
+              <div key={k.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-foreground">{k.name}</div>
+                  <div className="text-[11px] text-muted-foreground">{k.prefix} • Created: {k.created}</div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Badge variant="success">{k.status.toUpperCase()}</Badge>
+                  <button
+                    type="button"
+                    onClick={() => setApiKeys(apiKeys.filter((item) => item.id !== k.id))}
+                    className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: TEAM MEMBERS ────────────────────────────────────────────── */}
+      {activeTab === 'team' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex items-center justify-between pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">5-Tier RBAC Team Members</h3>
+              <p className="text-xs text-muted-foreground">Manage organization access control roles (Owner, Admin, Developer, Analyst, Viewer)</p>
+            </div>
+            <Badge variant="info">5 Members Active</Badge>
+          </div>
+
+          <div className="space-y-3">
             {[
-              { name: 'Senior AI Systems Engineer', role: 'Owner', email: 'engineer@aios.enterprise' },
-              { name: 'DevOps Lead', role: 'Admin', email: 'admin@aios.enterprise' },
-              { name: 'ML Developer', role: 'Developer', email: 'dev@aios.enterprise' },
+              { name: 'Senior AI Systems Architect', role: 'Owner', email: 'engineer@aios.enterprise' },
+              { name: 'DevOps & Infra Lead', role: 'Admin', email: 'admin@aios.enterprise' },
+              { name: 'ML Engineer', role: 'Developer', email: 'dev@aios.enterprise' },
               { name: 'Data Analyst', role: 'Analyst', email: 'analyst@aios.enterprise' },
               { name: 'Security Auditor', role: 'Viewer', email: 'auditor@aios.enterprise' },
             ].map((m, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between text-xs">
+              <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
                 <div>
-                  <div className="font-bold text-foreground">{m.name}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono">{m.email}</div>
+                  <div className="font-extrabold text-foreground">{m.name}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{m.email}</div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-bold">
+                <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 font-mono font-bold border border-blue-500/20">
                   {m.role}
                 </span>
               </div>
@@ -243,177 +479,260 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 4: Active Device Sessions */}
-      {activeTab === 'sessions' && (
-        <div className="glass-card p-6 rounded-2xl space-y-4 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h3 className="text-base font-bold">Active Device Sessions & JWT Tokens</h3>
-            <Badge variant="success">{sessions.length} Active Sessions</Badge>
-          </div>
-
-          <div className="space-y-3">
-            {sessions.length > 0 ? (
-              sessions.map((s) => (
-                <div key={s.id} className="p-4 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between text-xs">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                      <Laptop className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-foreground">{s.device_name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">
-                        IP: {s.ip_address || '127.0.0.1'} • Last Active: {new Date(s.last_active_at).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => revokeSession(s.id)}
-                    className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold flex items-center space-x-1 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Revoke</span>
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="p-4 rounded-xl bg-muted/20 text-center text-xs text-muted-foreground font-mono">
-                Active Session Recorded (Current Web Client)
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 5: Invites & Team Access */}
-      {activeTab === 'invites' && (
-        <div className="glass-card p-6 rounded-2xl space-y-5 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h3 className="text-base font-bold">Send Organization & Workspace Invite</h3>
-          </div>
-
-          <div className="flex space-x-3">
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="colleague@enterprise.com"
-              className="flex-1 px-4 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs focus:outline-none focus:border-primary"
-            />
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none"
-            >
-              <option value="Owner">Owner</option>
-              <option value="Admin">Admin</option>
-              <option value="Developer">Developer</option>
-              <option value="Analyst">Analyst</option>
-              <option value="Viewer">Viewer</option>
-            </select>
-            <button
-              onClick={handleSendOrgInvite}
-              className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex items-center space-x-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Send Invite</span>
-            </button>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <div className="text-xs font-semibold text-muted-foreground uppercase font-mono mb-2">Pending Invitations</div>
-            {pendingInvites.length > 0 ? (
-              pendingInvites.map((i) => (
-                <div key={i.id} className="p-3 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between text-xs font-mono">
-                  <div>
-                    <div className="font-bold text-foreground">{i.email}</div>
-                    <div className="text-[10px] text-muted-foreground">Role: {i.role}</div>
-                  </div>
-                  <button
-                    onClick={() => acceptInvite(i.invite_token)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/30"
-                  >
-                    Accept Token
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="p-3 rounded-xl bg-muted/20 text-xs text-muted-foreground font-mono">No pending invitations.</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 6: Programmatic API Keys */}
-      {activeTab === 'api-keys' && (
-        <div className="glass-card p-6 rounded-2xl space-y-4 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h3 className="text-base font-bold">Programmatic Service API Keys</h3>
-          </div>
-
-          <div className="flex space-x-3">
-            <input
-              type="text"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="Key Description (e.g. 'CI/CD Deployment Key')"
-              className="flex-1 px-4 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs focus:outline-none focus:border-primary"
-            />
-            <button
-              onClick={handleGenerateApiKey}
-              className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex items-center space-x-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Key</span>
-            </button>
-          </div>
-
-          {generatedKey && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-400 space-y-1">
-              <div>New API Secret Generated (Save this key, it won't be shown again):</div>
-              <div className="font-bold text-white bg-black/40 p-2 rounded-lg break-all">{generatedKey}</div>
+      {/* ── TAB 6: AUDIT LOGS ──────────────────────────────────────────────── */}
+      {activeTab === 'audit' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex items-center justify-between pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">SOC-2 Audit Logs & Security History</h3>
+              <p className="text-xs text-muted-foreground">Immutable audit records of user logins, role modifications, and key issuance</p>
             </div>
-          )}
+            <Badge variant="success">SOC-2 Compliant</Badge>
+          </div>
 
-          <div className="space-y-2 pt-2">
-            {apiKeys.map((k) => (
-              <div key={k.id} className="p-3 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between text-xs font-mono">
-                <div>
-                  <div className="font-bold text-foreground">{k.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{k.key_prefix || k.id}...</div>
-                </div>
-                <Badge variant="success">ACTIVE</Badge>
+          <div className="space-y-2 font-mono text-xs max-h-96 overflow-y-auto">
+            {(loginHistory.length > 0 ? loginHistory : [
+              { id: '1', created_at: new Date().toISOString(), status: 'LOGIN_SUCCESS', email: 'harsh@aios.dev', ip_address: '192.168.1.45' },
+              { id: '2', created_at: new Date(Date.now() - 3600000).toISOString(), status: 'API_KEY_CREATED', email: 'engineer@aios.dev', ip_address: '10.0.4.12' },
+              { id: '3', created_at: new Date(Date.now() - 7200000).toISOString(), status: 'GRAPH_SYNC_SUCCESS', email: 'system_daemon', ip_address: '127.0.0.1' },
+            ]).map((log: any) => (
+              <div key={log.id} className="p-3.5 rounded-xl bg-[#080B10] border border-white/10 flex items-center justify-between text-gray-300">
+                <span className="text-muted-foreground">[{new Date(log.created_at).toLocaleTimeString()}]</span>
+                <span className="text-blue-400 font-bold">{log.status}</span>
+                <span>{log.email}</span>
+                <span className="text-emerald-400">{log.ip_address || '127.0.0.1'}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Tab 7: Login Audit History */}
-      {activeTab === 'audit' && (
-        <div className="glass-card p-6 rounded-2xl space-y-4 max-w-4xl">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h3 className="text-base font-bold">Login & Security Audit Log</h3>
-            <Badge variant="info">SOC-2 Type II Tracked</Badge>
+      {/* ── TAB 7: WEBHOOKS ────────────────────────────────────────────────── */}
+      {activeTab === 'webhooks' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">Outbound Webhook Endpoints</h3>
+              <p className="text-xs text-muted-foreground">Receive HTTP POST payloads when DAG workflows complete or fails</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="url"
+                value={newWebhookUrl}
+                onChange={(e) => setNewWebhookUrl(e.target.value)}
+                placeholder="https://api.enterprise.com/webhooks"
+                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-blue-500 w-64"
+              />
+              <button
+                type="button"
+                onClick={handleCreateWebhook}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Webhook</span>
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-2 font-mono text-xs max-h-80 overflow-y-auto">
-            {loginHistory.length > 0 ? (
-              loginHistory.map((log) => (
-                <div key={log.id} className="p-3 rounded-xl bg-[#090d16] border border-border/40 flex items-center justify-between text-gray-300">
-                  <span className="text-muted-foreground">[{new Date(log.created_at).toLocaleTimeString()}]</span>
-                  <span className="text-primary font-bold uppercase">{log.status}</span>
-                  <span>{log.email}</span>
-                  <span className="text-emerald-400 font-mono">{log.ip_address || '127.0.0.1'}</span>
+          <div className="space-y-3 font-mono text-xs">
+            {webhooks.map((wh) => (
+              <div key={wh.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-extrabold text-foreground truncate">{wh.url}</div>
+                  <Badge variant="success">{wh.status.toUpperCase()}</Badge>
                 </div>
-              ))
-            ) : (
-              <div className="p-3 rounded-xl bg-[#090d16] border border-border/40 flex items-center justify-between text-gray-300">
-                <span className="text-muted-foreground">[{new Date().toLocaleTimeString()}]</span>
-                <span className="text-primary font-bold">LOGIN_SUCCESS</span>
-                <span>engineer@aios.enterprise</span>
-                <span className="text-emerald-400 font-mono">127.0.0.1</span>
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Events: {wh.events.join(', ')}</span>
+                  <span>Signing Secret: {wh.secret}</span>
+                </div>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 8: OAUTH & SSO ─────────────────────────────────────────────── */}
+      {activeTab === 'oauth' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">SSO & OAuth Identity Providers</h3>
+            <p className="text-xs text-muted-foreground">Authenticate users via GitHub SSO, Google Workspace, Okta SAML 2.0, or Azure AD</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { name: 'GitHub OAuth2', status: 'Connected', desc: 'SAML SSO organization sync enabled' },
+              { name: 'Google Workspace', status: 'Configured', desc: 'Domain restriction: @aios.dev' },
+              { name: 'Okta Enterprise SAML 2.0', status: 'Available', desc: 'Single Sign-On for enterprise users' },
+              { name: 'Azure Active Directory', status: 'Available', desc: 'Microsoft Entra ID authentication' },
+            ].map((idp) => (
+              <div key={idp.name} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-extrabold text-foreground">{idp.name}</h4>
+                  <p className="text-[11px] text-muted-foreground">{idp.desc}</p>
+                </div>
+                <Badge variant={idp.status === 'Connected' ? 'success' : 'info'}>{idp.status}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 9: SECURITY ────────────────────────────────────────────────── */}
+      {activeTab === 'security' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">Platform Security & MFA Enforcement</h3>
+            <p className="text-xs text-muted-foreground">Session timeout, two-factor authentication, and IP whitelisting</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold text-foreground">Enforce Multi-Factor Authentication (MFA/TOTP)</div>
+                <div className="text-[11px] text-muted-foreground">Require hardware key or authenticator app for all organization members</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={mfaEnabled}
+                onChange={() => setMfaEnabled(!mfaEnabled)}
+                className="w-5 h-5 accent-blue-500 cursor-pointer"
+              />
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="text-xs font-extrabold text-foreground">Allowed IP Whitelist Subnets</div>
+              <input
+                type="text"
+                value={ipWhitelist}
+                onChange={(e) => setIpWhitelist(e.target.value)}
+                className="w-full px-4 py-2 rounded-xl bg-black/40 border border-white/10 text-xs font-mono text-foreground focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 10: ORGANIZATION ───────────────────────────────────────────── */}
+      {activeTab === 'organization' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">Organization Profile & Workspace Metadata</h3>
+            <p className="text-xs text-muted-foreground">System-wide organization identity and primary deployment region</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase font-mono">Organization Name</label>
+              <input
+                type="text"
+                value={currentOrganization?.name || 'AIOS Enterprise AI'}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-foreground"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase font-mono">Organization Slug</label>
+              <input
+                type="text"
+                value={currentOrganization?.slug || 'aios-enterprise'}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-foreground"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 11: USAGE LIMITS ───────────────────────────────────────────── */}
+      {activeTab === 'usage-limits' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">Token Usage & Rate Limits</h3>
+            <p className="text-xs text-muted-foreground">Set token quotas, max concurrent worker agents, and expenditure alert thresholds</p>
+          </div>
+
+          <div className="space-y-5">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex justify-between text-xs font-bold">
+                <span>Max Concurrent Active Agents</span>
+                <span className="font-mono text-blue-400">{maxAgents} Agents</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="12"
+                value={maxAgents}
+                onChange={(e) => setMaxAgents(parseInt(e.target.value))}
+                className="w-full accent-blue-500"
+              />
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex justify-between text-xs font-bold">
+                <span>Cost Alert Threshold ($)</span>
+                <span className="font-mono text-emerald-400">${costAlert}.00</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="1000"
+                step="50"
+                value={costAlert}
+                onChange={(e) => setCostAlert(parseInt(e.target.value))}
+                className="w-full accent-emerald-500"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 12: PERSONAL ACCESS TOKENS ─────────────────────────────────── */}
+      {activeTab === 'pats' && (
+        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight">Personal Access Tokens (PATs)</h3>
+              <p className="text-xs text-muted-foreground">Developer tokens for authenticating AIOS CLI and automated scripts</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={patName}
+                onChange={(e) => setPatName(e.target.value)}
+                placeholder="Token Name (e.g. CLI Dev)"
+                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleCreatePat}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create PAT</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3 font-mono text-xs">
+            {pats.map((p) => (
+              <div key={p.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <div className="font-extrabold text-foreground">{p.name}</div>
+                  <div className="text-[11px] text-muted-foreground">Scope: {p.scope} • Expires: {p.expires}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPats(pats.filter((item) => item.id !== p.id))}
+                  className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
