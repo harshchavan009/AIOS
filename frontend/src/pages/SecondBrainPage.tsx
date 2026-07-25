@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 interface VaultDoc {
   filename: string;
@@ -17,6 +18,7 @@ interface VaultDoc {
 
 export const SecondBrainPage: React.FC = () => {
   const [documents, setDocuments] = useState<VaultDoc[]>([]);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -47,6 +49,11 @@ export const SecondBrainPage: React.FC = () => {
           ...prev,
           { filename: file.name, chunk_count: 64, status: 'indexed' },
         ]);
+        addNotification({
+          type: 'knowledge',
+          title: 'Knowledge Base Updated',
+          description: `${file.name} successfully indexed into Neo4j & Qdrant vector store.`,
+        });
       }
     };
     input.click();

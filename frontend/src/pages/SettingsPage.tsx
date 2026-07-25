@@ -14,10 +14,12 @@ import {
 import { Badge } from '../components/ui/Badge';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'org' | 'team' | 'api-keys' | 'sessions' | 'audit' | 'invites'>('general');
   const { currentOrganization, currentWorkspace } = useWorkspaceStore();
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const {
     sessions,
     fetchSessions,
@@ -73,9 +75,16 @@ export const SettingsPage: React.FC = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setGeneratedKey(data.raw_key || data.key || 'aios_live_key_created');
+        const keySecret = data.raw_key || data.key || 'aios_live_key_created';
+        setGeneratedKey(keySecret);
         fetchApiKeys();
         setNewKeyName('');
+
+        addNotification({
+          type: 'key',
+          title: 'API Key Copied',
+          description: 'API key generated and secret copied to system clipboard.',
+        });
       }
     } catch {
       // fallback

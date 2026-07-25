@@ -40,6 +40,7 @@ import {
   Zap
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 // ──────────────────────────────────────────────
 // Types
@@ -317,6 +318,8 @@ export const PromptStudioPage: React.FC = () => {
     setIsEditing(true);
   };
 
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   // Save new version
   const saveVersion = () => {
     if (!editingContent.trim() || !newChangeNote.trim()) return;
@@ -341,6 +344,11 @@ export const PromptStudioPage: React.FC = () => {
       setActiveVersionIdx(selected.versions.length);
       setIsEditing(false);
       setSavingVersion(false);
+      addNotification({
+        type: 'document',
+        title: 'Prompt Saved',
+        description: `Prompt version ${newVersionId} ("${selected.title}") saved to registry.`,
+      });
     }, 600);
   };
 
