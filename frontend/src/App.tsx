@@ -22,6 +22,8 @@ import { AutoDevPage } from './pages/AutoDevPage';
 import { SecondBrainPage } from './pages/SecondBrainPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ServerErrorPage } from './pages/ServerErrorPage';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AppLayout } from './components/layouts/AppLayout';
 import { useAuthStore } from './store/useAuthStore';
 
@@ -55,50 +57,52 @@ export const App: React.FC = () => {
   }, [initAuth]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/500" element={<ServerErrorPage />} />
 
+          {/* Protected AI Platform Studio Routes */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/playground" element={<PlaygroundPage />} />
+            <Route path="/prompt-studio" element={<PromptStudioPage />} />
+            <Route path="/agent-builder" element={<AgentBuilderPage />} />
+            <Route path="/models" element={<ModelManagementPage />} />
+            <Route path="/evaluation" element={<EvaluationStudioPage />} />
+            <Route path="/knowledge" element={<KnowledgeManagementPage />} />
+            <Route path="/marketplace" element={<AgentMarketplacePage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            
+            <Route path="/workspace" element={<AgentsPage />} />
+            <Route path="/agents" element={<AgentsPage />} />
+            <Route path="/knowledge-graph" element={<GraphRAGPage />} />
+            <Route path="/graph-rag" element={<GraphRAGPage />} />
+            <Route path="/repositories" element={<AutoDevPage />} />
+            <Route path="/autodev" element={<AutoDevPage />} />
+            <Route path="/documents" element={<SecondBrainPage />} />
+            <Route path="/second-brain" element={<SecondBrainPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
 
-        {/* Protected AI Platform Studio Routes */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/playground" element={<PlaygroundPage />} />
-          <Route path="/prompt-studio" element={<PromptStudioPage />} />
-          <Route path="/agent-builder" element={<AgentBuilderPage />} />
-          <Route path="/models" element={<ModelManagementPage />} />
-          <Route path="/evaluation" element={<EvaluationStudioPage />} />
-          <Route path="/knowledge" element={<KnowledgeManagementPage />} />
-          <Route path="/marketplace" element={<AgentMarketplacePage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          
-          <Route path="/workspace" element={<AgentsPage />} />
-          <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/knowledge-graph" element={<GraphRAGPage />} />
-          <Route path="/graph-rag" element={<GraphRAGPage />} />
-          <Route path="/repositories" element={<AutoDevPage />} />
-          <Route path="/autodev" element={<AutoDevPage />} />
-          <Route path="/documents" element={<SecondBrainPage />} />
-          <Route path="/second-brain" element={<SecondBrainPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-
-        {/* 404 Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+          {/* 404 Fallback */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 
