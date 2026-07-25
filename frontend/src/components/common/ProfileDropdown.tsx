@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
   Building2,
-  Sliders,
   Key,
   CreditCard,
   Keyboard,
@@ -12,6 +11,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Sparkles,
+  LifeBuoy,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -121,7 +121,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@aios.dev'}</p>
           </div>
 
-          {/* Menu Items */}
+          {/* User Avatar Menu Items */}
           <div className="p-2 space-y-0.5">
             <button
               type="button"
@@ -142,18 +142,18 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               }`}
             >
               <Building2 className="w-4 h-4 text-sky-500" />
-              <span>Workspace Management</span>
+              <span>Organization</span>
             </button>
 
             <button
               type="button"
-              onClick={() => handleNavigate('/settings')}
+              onClick={() => handleNavigate('/analytics')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <Sliders className="w-4 h-4 text-indigo-500" />
-              <span>Settings</span>
+              <CreditCard className="w-4 h-4 text-emerald-500" />
+              <span>Billing</span>
             </button>
 
             <button
@@ -169,13 +169,13 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
-              onClick={() => handleNavigate('/analytics')}
+              onClick={() => window.open('https://github.com/harshchavan009/AIOS', '_blank')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <CreditCard className="w-4 h-4 text-emerald-500" />
-              <span>Billing & Cost</span>
+              <LifeBuoy className="w-4 h-4 text-teal-500" />
+              <span>Support</span>
             </button>
 
             {onOpenOnboarding && (
@@ -190,7 +190,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-blue-500" />
-                <span>Guided Agent Onboarding</span>
+                <span>Guided Onboarding</span>
               </button>
             )}
 
@@ -215,19 +215,6 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </kbd>
             </button>
 
-            <a
-              href="/docs"
-              target="_blank"
-              rel="noreferrer"
-              onClick={onClose}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
-            >
-              <FileText className="w-4 h-4 text-teal-500" />
-              <span>Documentation</span>
-            </a>
-
             <div className={`my-1 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`} />
 
             <button
@@ -236,7 +223,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span>Log Out</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -244,3 +231,4 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     </div>
   );
 };
+
