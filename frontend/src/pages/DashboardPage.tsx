@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { Badge } from '../components/ui/Badge';
 import { PageSkeleton } from '../components/ui/Skeleton';
+import { ActivityTimelinePanel } from '../components/common/ActivityTimelinePanel';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
 export const DashboardPage: React.FC = () => {
@@ -193,49 +194,54 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Live Hardware Telemetry Area Chart */}
-      <div className="glass-card p-6 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div>
-            <h3 className="text-base font-bold flex items-center space-x-2">
-              <Cpu className="w-5 h-5 text-blue-400" />
-              <span>Real-Time Host Hardware Load & Allocation</span>
-            </h3>
-            <p className="text-xs text-muted-foreground">Live time-series tracking of CPU, RAM, and GPU utilization</p>
+      {/* Live Hardware Telemetry Area Chart & Activity Timeline Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="glass-card p-6 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div>
+              <h3 className="text-base font-bold flex items-center space-x-2">
+                <Cpu className="w-5 h-5 text-blue-400" />
+                <span>Real-Time Host Hardware Load</span>
+              </h3>
+              <p className="text-xs text-muted-foreground">CPU, RAM, and GPU time-series utilization</p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold flex items-center space-x-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Updating Live (2s)</span>
+            </span>
           </div>
-          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Updating Live (2s)</span>
-          </span>
+
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={hardwareHistory}>
+                <defs>
+                  <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="ramGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
+                <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} />
+                <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
+                <Area type="monotone" dataKey="cpu" name="CPU Utilization (%)" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cpuGrad)" />
+                <Area type="monotone" dataKey="ram" name="RAM Allocation (%)" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#ramGrad)" />
+                <Area type="monotone" dataKey="gpu" name="GPU Utilization (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gpuGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={hardwareHistory}>
-              <defs>
-                <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="ramGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
-              <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} />
-              <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
-              <Area type="monotone" dataKey="cpu" name="CPU Utilization (%)" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cpuGrad)" />
-              <Area type="monotone" dataKey="ram" name="RAM Allocation (%)" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#ramGrad)" />
-              <Area type="monotone" dataKey="gpu" name="GPU Utilization (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gpuGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Live Enterprise Activity Feed Timeline Panel */}
+        <ActivityTimelinePanel />
       </div>
 
       {/* LLM Model Provider Latency Monitors */}
