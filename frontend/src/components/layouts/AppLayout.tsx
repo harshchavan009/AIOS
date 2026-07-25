@@ -4,17 +4,25 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { CommandPalette } from '../common/CommandPalette';
 import { ToastContainer } from '../common/ToastContainer';
+import { OnboardingModal } from '../common/OnboardingModal';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 
 export const AppLayout: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const { theme } = useThemeStore();
   const { startTicker, stopTicker, updateFromApi } = useLiveTelemetryStore();
 
   const isLight = theme === 'light';
 
   useEffect(() => {
+    // Check if onboarding was completed
+    const completed = localStorage.getItem('aios_onboarding_completed');
+    if (!completed) {
+      setIsOnboardingOpen(true);
+    }
+
     startTicker();
 
     // Subscribe to SSE backend telemetry if available
@@ -91,7 +99,10 @@ export const AppLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 z-10 relative">
         {/* Sticky Header Navbar */}
-        <Navbar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+        <Navbar
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        />
 
         {/* Dynamic Page Content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
@@ -105,9 +116,16 @@ export const AppLayout: React.FC = () => {
         onClose={() => setIsCommandPaletteOpen(false)}
       />
 
+      {/* Interactive Guided Onboarding Wizard Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+      />
+
       {/* Real-time Toast Notifications Banner */}
       <ToastContainer />
     </div>
   );
 };
+
 

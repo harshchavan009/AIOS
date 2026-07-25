@@ -9,9 +9,10 @@ import { KeyboardShortcutsModal } from '../common/KeyboardShortcutsModal';
 
 interface NavbarProps {
   onOpenCommandPalette: () => void;
+  onOpenOnboarding?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette, onOpenOnboarding }) => {
   const { theme, toggleTheme } = useThemeStore();
   const { currentOrganization, currentWorkspace } = useWorkspaceStore();
 
@@ -159,6 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette }) => {
           onToggle={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')}
           onClose={() => setActiveDropdown(null)}
           onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          onOpenOnboarding={onOpenOnboarding}
         />
       </div>
 

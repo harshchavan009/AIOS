@@ -10,7 +10,8 @@ import {
   FileText,
   LogOut,
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -20,13 +21,15 @@ interface ProfileDropdownProps {
   onToggle: () => void;
   onClose: () => void;
   onOpenShortcuts: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   isOpen,
   onToggle,
   onClose,
-  onOpenShortcuts
+  onOpenShortcuts,
+  onOpenOnboarding
 }) => {
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
@@ -174,6 +177,22 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               <CreditCard className="w-4 h-4 text-emerald-500" />
               <span>Billing & Cost</span>
             </button>
+
+            {onOpenOnboarding && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenOnboarding();
+                }}
+                className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                  isLight ? 'text-blue-600 hover:bg-blue-50' : 'text-blue-400 hover:bg-blue-500/10'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-blue-500" />
+                <span>Guided Agent Onboarding</span>
+              </button>
+            )}
 
             <div className={`my-1 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`} />
 
