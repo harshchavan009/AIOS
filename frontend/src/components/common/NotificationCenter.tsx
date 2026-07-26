@@ -14,6 +14,13 @@ import {
   X,
   WifiOff,
   Sparkles,
+  Search,
+  ArrowDown,
+  Brain,
+  Network,
+  Play,
+  RotateCcw,
+  Clock,
 } from 'lucide-react';
 import { useNotificationStore, NotificationItem } from '../../store/useNotificationStore';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -29,10 +36,21 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   onToggle,
   onClose
 }) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotificationStore();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+    triggerSequence
+  } = useNotificationStore();
+
   const { theme } = useThemeStore();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+  const [filter, setFilter] = useState<'all' | 'unread' | 'agent' | 'workflow' | 'knowledge'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isLight = theme === 'light';
 
@@ -52,39 +70,47 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   }, [isOpen, onClose]);
 
   const filteredList = notifications.filter((item) => {
-    if (filter === 'unread') return !item.isRead;
+    if (filter === 'unread' && item.isRead) return false;
+    if (filter !== 'all' && filter !== 'unread' && item.type !== filter) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
+    }
+
     return true;
   });
 
   const getIcon = (item: NotificationItem) => {
-    if (item.title.includes('Claude disconnected') || item.title.includes('disconnected')) {
-      return <WifiOff className="w-4 h-4 text-rose-400" />;
+    if (item.title.toLowerCase().includes('planner')) {
+      return <Brain className="w-4 h-4 text-purple-400" />;
     }
-    if (item.title.includes('DAG Executed') || item.title.startsWith('✓')) {
-      return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+    if (item.title.toLowerCase().includes('retriever')) {
+      return <Database className="w-4 h-4 text-emerald-400" />;
     }
-    if (item.title.includes('Graph Synced')) {
-      return <Database className="w-4 h-4 text-teal-400" />;
+    if (item.title.toLowerCase().includes('neo4j') || item.title.toLowerCase().includes('graph')) {
+      return <Network className="w-4 h-4 text-teal-400" />;
     }
-    if (item.title.includes('Prompt Published')) {
-      return <Sparkles className="w-4 h-4 text-amber-400" />;
+    if (item.title.toLowerCase().includes('workflow') || item.title.toLowerCase().includes('deployed')) {
+      return <Zap className="w-4 h-4 text-blue-400" />;
+    }
+    if (item.title.toLowerCase().includes('api key') || item.title.toLowerCase().includes('key')) {
+      return <Key className="w-4 h-4 text-amber-400" />;
     }
 
     switch (item.type) {
-      case 'login':
-        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
       case 'workflow':
         return <Zap className="w-4 h-4 text-blue-400" />;
       case 'document':
         return <FileText className="w-4 h-4 text-amber-400" />;
       case 'agent':
-        return <Bot className="w-4 h-4 text-indigo-400" />;
+        return <Bot className="w-4 h-4 text-purple-400" />;
       case 'eval':
-        return <Award className="w-4 h-4 text-purple-400" />;
+        return <Award className="w-4 h-4 text-pink-400" />;
       case 'key':
-        return <Key className="w-4 h-4 text-sky-400" />;
+        return <Key className="w-4 h-4 text-amber-400" />;
       case 'knowledge':
-        return <Database className="w-4 h-4 text-teal-400" />;
+        return <Database className="w-4 h-4 text-emerald-400" />;
       default:
         return <Bell className="w-4 h-4 text-blue-400" />;
     }
@@ -115,32 +141,42 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         )}
       </button>
 
-      {/* Right-Side Dropdown Panel */}
+      {/* Enterprise Right-Side Dropdown Notification Center */}
       {isOpen && (
         <div
-          className={`absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl border shadow-2xl z-50 overflow-hidden transform transition-all duration-200 ease-out origin-top-right ${
+          className={`absolute right-0 mt-3 w-96 sm:w-[440px] rounded-2xl border shadow-2xl z-50 overflow-hidden transform transition-all duration-200 ease-out origin-top-right ${
             isLight
               ? 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111827]'
               : 'bg-[#0E121B] border-white/[0.08] text-[#F8FAFC]'
           }`}
         >
-          {/* Header */}
+          {/* Top Header */}
           <div
             className={`p-4 border-b flex items-center justify-between ${
               isLight ? 'bg-[#FAFAFA] border-[#E5E7EB]' : 'bg-[#0A0D14] border-white/[0.06]'
             }`}
           >
             <div className="flex items-center space-x-2">
-              <Bell className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-bold tracking-tight">Notification Center</h3>
+              <Bell className="w-4 h-4 text-blue-500 animate-bounce" />
+              <h3 className="text-sm font-bold tracking-tight">Enterprise Notification Center</h3>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   {unreadCount} new
                 </span>
               )}
             </div>
 
             <div className="flex items-center space-x-1">
+              <button
+                type="button"
+                onClick={triggerSequence}
+                title="Reset/Trigger Demo Swarm Sequence"
+                className="px-2 py-1 rounded-lg text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all flex items-center space-x-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Demo Swarm</span>
+              </button>
+
               {unreadCount > 0 && (
                 <button
                   type="button"
@@ -149,7 +185,6 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   className="p-1.5 rounded-lg text-xs text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-colors flex items-center space-x-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-[10px] font-medium">Read all</span>
                 </button>
               )}
               {notifications.length > 0 && (
@@ -172,45 +207,56 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className={`px-4 py-2 border-b flex items-center space-x-2 text-xs ${isLight ? 'bg-gray-50/50 border-[#E5E7EB]' : 'bg-[#080B10] border-white/[0.04]'}`}>
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-lg font-medium transition-colors ${
-                filter === 'all'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              All ({notifications.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter('unread')}
-              className={`px-3 py-1 rounded-lg font-medium transition-colors ${
-                filter === 'unread'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Unread ({unreadCount})
-            </button>
+          {/* Search & Filter Bar */}
+          <div className={`p-3 border-b space-y-2 ${isLight ? 'bg-gray-50/50 border-[#E5E7EB]' : 'bg-[#080B10] border-white/[0.04]'}`}>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search events (e.g., Planner, Neo4j, API Key)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-muted/40 border border-border/50 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
+              />
+            </div>
+
+            <div className="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'unread', label: `Unread (${unreadCount})` },
+                { id: 'agent', label: 'Agents' },
+                { id: 'workflow', label: 'Workflows' },
+                { id: 'knowledge', label: 'Knowledge' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setFilter(t.id as typeof filter)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-colors ${
+                    filter === t.id
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* List */}
-          <div className={`max-h-96 overflow-y-auto divide-y ${isLight ? 'divide-[#E5E7EB]' : 'divide-white/[0.06]'}`}>
+          {/* Event Timeline Sequence List */}
+          <div className={`max-h-[420px] overflow-y-auto divide-y ${isLight ? 'divide-[#E5E7EB]' : 'divide-white/[0.06]'}`}>
             {filteredList.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 space-y-2">
+              <div className="p-10 text-center text-gray-500 space-y-2 font-mono">
                 <Bell className="w-8 h-8 mx-auto text-gray-400 opacity-50" />
-                <p className="text-xs">No notifications in this view</p>
+                <p className="text-xs">No notifications matching filter criteria</p>
               </div>
             ) : (
-              filteredList.map((item) => (
+              filteredList.map((item, idx) => (
                 <div
                   key={item.id}
                   onClick={() => !item.isRead && markAsRead(item.id)}
-                  className={`p-3.5 flex items-start space-x-3.5 transition-all cursor-pointer group ${
+                  className={`p-3.5 flex items-start space-x-3.5 transition-all cursor-pointer group relative ${
                     !item.isRead
                       ? isLight
                         ? 'bg-blue-50/70 hover:bg-blue-50'
@@ -220,26 +266,27 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       : 'hover:bg-white/[0.02]'
                   }`}
                 >
-                  {/* Icon */}
+                  {/* Timeline Node Connector Line */}
+                  {idx < filteredList.length - 1 && (
+                    <div className="absolute left-[27px] top-[42px] bottom-0 w-[2px] bg-border/40" />
+                  )}
+
+                  {/* Event Icon Badge */}
                   <div
-                    className={`p-2 rounded-xl border shrink-0 mt-0.5 ${
-                      isLight ? 'bg-white border-[#E5E7EB]' : 'bg-white/[0.04] border-white/[0.08]'
+                    className={`p-2.5 rounded-xl border shrink-0 mt-0.5 shadow-md relative z-10 ${
+                      isLight ? 'bg-white border-[#E5E7EB]' : 'bg-[#090d16] border-white/[0.1]'
                     }`}
                   >
                     {getIcon(item)}
                   </div>
 
-                  {/* Content */}
+                  {/* Notification Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4
                         className={`text-xs font-bold truncate tracking-tight flex items-center space-x-1.5 ${
                           !item.isRead
-                            ? isLight
-                              ? 'text-gray-900 font-extrabold'
-                              : 'text-white font-extrabold'
-                            : isLight
-                            ? 'text-gray-700'
+                            ? 'text-white font-extrabold'
                             : 'text-gray-300'
                         }`}
                       >
@@ -248,17 +295,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                         )}
                       </h4>
-                      <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
-                        {item.timestamp}
+                      <span className="text-[9px] text-muted-foreground font-mono ml-2 shrink-0 flex items-center space-x-1">
+                        <Clock className="w-2.5 h-2.5 opacity-60" />
+                        <span>{item.timestamp}</span>
                       </span>
                     </div>
 
-                    <p className={`text-xs mt-1 leading-relaxed line-clamp-2 ${isLight ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <p className={`text-[11px] mt-1 leading-relaxed line-clamp-2 ${isLight ? 'text-gray-600' : 'text-gray-400'}`}>
                       {item.description}
                     </p>
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Actions */}
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                     {!item.isRead && (
                       <button
@@ -268,7 +316,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                           markAsRead(item.id);
                         }}
                         title="Mark as read"
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        className="p-1 text-gray-400 hover:text-blue-400 transition-colors"
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>
@@ -280,7 +328,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         deleteNotification(item.id);
                       }}
                       title="Delete notification"
-                      className="p-1 text-gray-400 hover:text-rose-500 transition-colors"
+                      className="p-1 text-gray-400 hover:text-rose-400 transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -292,17 +340,23 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
           {/* Footer */}
           <div
-            className={`p-2.5 border-t text-center ${
+            className={`p-3 border-t text-center flex items-center justify-between px-4 ${
               isLight ? 'bg-[#FAFAFA] border-[#E5E7EB]' : 'bg-[#0A0D14] border-white/[0.06]'
             }`}
           >
             <span className="text-[10px] text-muted-foreground font-mono">
-              AIOS Notification Service · {notifications.length} Total Events
+              AIOS Notification Bus · {notifications.length} Events Logged
             </span>
+
+            <button
+              onClick={() => markAllAsRead()}
+              className="text-[10px] font-mono text-primary hover:underline font-bold"
+            >
+              Clear Unread
+            </button>
           </div>
         </div>
       )}
     </div>
   );
 };
-

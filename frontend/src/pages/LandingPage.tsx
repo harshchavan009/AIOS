@@ -13,7 +13,13 @@ import {
   Activity,
   ArrowDown,
   CheckCircle2,
-  Cpu
+  Cpu,
+  Play,
+  RotateCcw,
+  Layers,
+  Zap,
+  Check,
+  Code2,
 } from 'lucide-react';
 import { AuroraBackground } from '../components/common/AuroraBackground';
 import { NeuralCanvas } from '../components/common/NeuralCanvas';
@@ -29,7 +35,11 @@ export const LandingPage: React.FC = () => {
   const [neo4jNodesCount, setNeo4jNodesCount] = useState<number>(0);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
 
-  // Agent Execution Pipeline Sequence
+  // Interactive Demo State
+  const [demoStepIndex, setDemoStepIndex] = useState<number>(0);
+  const [isWorkflowRunning, setIsWorkflowRunning] = useState<boolean>(false);
+
+  // 1. Live Agent Execution Pipeline Sequence for Hero
   const workflowSteps = [
     {
       id: 'planner',
@@ -99,7 +109,47 @@ export const LandingPage: React.FC = () => {
     }
   ];
 
-  // 1. Live Ping Latency Polling Interval (Pings backend every 3 seconds)
+  // 2. Interactive Sample Workflow Sequence requested by User
+  const sampleDemoSteps = [
+    {
+      name: 'Planner',
+      icon: BrainCircuit,
+      detail: 'DAG Topological Decomposition',
+      thought: 'Analyzing user prompt semantics... Breaking subgoals into atomic DAG execution nodes.'
+    },
+    {
+      name: 'Retriever',
+      icon: Network,
+      detail: 'Vector Dense Embedding Search',
+      thought: 'Generating query embeddings... Executing HNSW vector similarity search in Qdrant.'
+    },
+    {
+      name: 'Neo4j',
+      icon: Database,
+      detail: 'Knowledge Graph Traversal',
+      thought: 'Traversing 3-hop entity relationship graph... Matching 14,820 nodes with Cypher.'
+    },
+    {
+      name: 'Python',
+      icon: Terminal,
+      detail: 'Isolated MCP Sandbox Exec',
+      thought: 'Spawning sandboxed Python container... Running compliance auditing & numerical computations.'
+    },
+    {
+      name: 'GPT',
+      icon: Sparkles,
+      detail: 'Multi-Modal Reasoning Chain',
+      thought: 'Synthesizing multi-hop reasoning chain across retrieved context... Factual confidence: 99.4%.'
+    },
+    {
+      name: 'Response',
+      icon: Bot,
+      detail: 'Markdown & IEEE Citations',
+      thought: 'Composing structured executive summary... Appending IEEE source citations [1] [2].'
+    }
+  ];
+
+  // Live Ping Latency & Real Metrics Polling
   useEffect(() => {
     const fetchLivePingAndStats = async () => {
       const start = performance.now();
@@ -113,7 +163,6 @@ export const LandingPage: React.FC = () => {
         setLivePingMs(0);
       }
 
-      // Fetch Real Metrics from backend
       try {
         const token = localStorage.getItem('aios_access_token');
         const metricsRes = await fetch('/api/v1/observability/system-telemetry', {
@@ -135,13 +184,35 @@ export const LandingPage: React.FC = () => {
     return () => clearInterval(pingInterval);
   }, []);
 
-  // 2. Animated Agent Flow Timeline Cycle (Advances step every 1.5 seconds)
+  // Hero Animated Agent Flow Timeline Cycle
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setActiveStepIndex((prev) => (prev + 1) % workflowSteps.length);
     }, 1500);
     return () => clearInterval(stepInterval);
   }, [workflowSteps.length]);
+
+  // Interactive Demo Step Advancement
+  useEffect(() => {
+    if (!isWorkflowRunning) return;
+
+    const interval = setInterval(() => {
+      setDemoStepIndex((prev) => {
+        if (prev >= sampleDemoSteps.length - 1) {
+          setIsWorkflowRunning(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [isWorkflowRunning, sampleDemoSteps.length]);
+
+  const handleExecuteSampleWorkflow = () => {
+    setDemoStepIndex(0);
+    setIsWorkflowRunning(true);
+  };
 
   return (
     <AuroraBackground className="min-h-screen font-sans selection:bg-primary/30 relative">
@@ -159,10 +230,10 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-300">
-          <a href="#features" className="hover:text-blue-400 transition-colors">Modules</a>
+          <a href="#trusted" className="hover:text-blue-400 transition-colors">Stack</a>
           <a href="#architecture" className="hover:text-blue-400 transition-colors">Architecture</a>
-          <a href="#graph-rag" className="hover:text-blue-400 transition-colors">Graph RAG</a>
-          <a href="#enterprise" className="hover:text-blue-400 transition-colors">Security</a>
+          <a href="#demo" className="hover:text-blue-400 transition-colors">Live Demo</a>
+          <a href="#features" className="hover:text-blue-400 transition-colors">Modules</a>
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -176,7 +247,7 @@ export const LandingPage: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-24 text-center relative z-20">
+      <section className="max-w-6xl mx-auto px-6 pt-16 pb-16 text-center relative z-20">
         <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-8 shadow-lg shadow-blue-500/10 backdrop-blur-md">
           <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-spin" style={{ animationDuration: '6s' }} />
           <span>Next-Gen Enterprise Multi-Agent AI Operating System</span>
@@ -226,13 +297,11 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-3">
-                {/* Connected Neo4j Nodes Live Metric */}
                 <div className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-mono font-bold flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
                   <span>Connected Neo4j Nodes: {neo4jNodesCount.toLocaleString()}</span>
                 </div>
 
-                {/* Real Live Latency Ping */}
                 <Badge variant="success" pulse>
                   ⚡ SYSTEM OPTIMAL ({livePingMs}ms live ping)
                 </Badge>
@@ -287,7 +356,6 @@ export const LandingPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Animated Connector Arrow between steps */}
                       {idx < workflowSteps.length - 1 && (
                         <div className="hidden lg:flex items-center justify-center absolute -right-3 top-1/2 -translate-y-1/2 z-20">
                           <ArrowRight className={`w-4 h-4 ${idx <= activeStepIndex ? 'text-blue-400 animate-pulse' : 'text-gray-700'}`} />
@@ -311,6 +379,188 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* ── 1. Trusted By / Technology Stack Section ──────────────────────────────── */}
+      <section id="trusted" className="max-w-6xl mx-auto px-6 py-12 text-center relative z-20 border-t border-b border-white/10 my-8">
+        <p className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest mb-6">
+          POWERED BY ENTERPRISE-GRADE TECH STACK
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 items-center justify-center">
+          {[
+            { name: 'OpenAI', role: 'GPT-4o Gateway', color: 'from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30' },
+            { name: 'LangGraph', role: 'State Orchestration', color: 'from-blue-500/20 to-indigo-500/20 text-blue-400 border-blue-500/30' },
+            { name: 'Neo4j', role: 'Knowledge Graph', color: 'from-cyan-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30' },
+            { name: 'Qdrant', role: 'Vector Store', color: 'from-rose-500/20 to-red-500/20 text-rose-400 border-rose-500/30' },
+            { name: 'FastAPI', role: 'Async REST Server', color: 'from-teal-500/20 to-emerald-500/20 text-teal-400 border-teal-500/30' },
+            { name: 'Docker', role: 'Container Swarm', color: 'from-sky-500/20 to-blue-500/20 text-sky-400 border-sky-500/30' },
+            { name: 'React', role: 'Frontend SPA', color: 'from-indigo-500/20 to-purple-500/20 text-indigo-400 border-indigo-500/30' },
+          ].map((tech) => (
+            <div
+              key={tech.name}
+              className={`p-4 rounded-2xl bg-gradient-to-br ${tech.color} border backdrop-blur-md flex flex-col items-center justify-center space-y-1 hover:scale-105 transition-all duration-300 shadow-lg`}
+            >
+              <span className="font-extrabold text-sm tracking-tight text-white">{tech.name}</span>
+              <span className="text-[10px] font-mono opacity-80">{tech.role}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 2. Platform Architecture Diagram Section ──────────────────────────────── */}
+      <section id="architecture" className="max-w-6xl mx-auto px-6 py-20 relative z-20 text-center">
+        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-bold uppercase tracking-wider mb-4">
+          <Layers className="w-3.5 h-3.5 text-blue-400" />
+          <span>Clean Architecture & Domain Driven Design</span>
+        </div>
+
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
+          AIOS Platform <span className="gradient-text">Layered Architecture</span>
+        </h2>
+        <p className="text-gray-400 max-w-2xl mx-auto text-sm mb-12">
+          End-to-end request flow from browser clients through agents and knowledge graphs to LLMs.
+        </p>
+
+        {/* Vertical Stack Architecture Diagram */}
+        <div className="max-w-3xl mx-auto space-y-3 font-mono">
+          {[
+            { step: 'Browser', label: 'Browser Client / Single-Port SPA UI', detail: 'React 18 + Vite + Tailwind CSS + SSE Stream Listener', color: 'border-blue-500/40 bg-blue-500/10 text-blue-300' },
+            { step: 'AIOS', label: 'AIOS Core Platform & REST/SSE Gateway', detail: 'FastAPI Async Server + Middleware + OpenTelemetry Tracing', color: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300' },
+            { step: 'Agents', label: 'Multi-Agent LangGraph Swarm Engine', detail: 'Planner, Retriever, Tool, Reasoning, Critic & Response Nodes', color: 'border-purple-500/40 bg-purple-500/10 text-purple-300' },
+            { step: 'Graph RAG', label: 'Graph RAG & Entity Fusion Layer', detail: 'Reciprocal Rank Fusion (RRF) + Hybrid Sub-graph Traversal', color: 'border-pink-500/40 bg-pink-500/10 text-pink-300' },
+            { step: 'Knowledge Graph', label: 'Knowledge Graph & Vector Persistence', detail: 'Neo4j 14.8K Nodes + Qdrant 3.8K HNSW Vectors + Postgres 16', color: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300' },
+            { step: 'LLMs', label: 'Multi-Provider Universal Model Gateway', detail: 'OpenAI GPT-4o / Claude 3.5 Sonnet / Gemini 1.5 Pro / Llama 3 70B', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' },
+          ].map((archNode, idx, arr) => (
+            <React.Fragment key={archNode.step}>
+              <div className={`p-4.5 rounded-2xl border ${archNode.color} backdrop-blur-xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-3 transition-all duration-300 hover:scale-[1.02]`}>
+                <div className="flex items-center space-x-3">
+                  <span className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                    {idx + 1}
+                  </span>
+                  <div className="text-left">
+                    <span className="font-extrabold text-base text-white">{archNode.step}</span>
+                    <span className="hidden md:inline-block text-xs opacity-75 ml-2">• {archNode.label}</span>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-300 font-sans text-left md:text-right">{archNode.detail}</span>
+              </div>
+
+              {idx < arr.length - 1 && (
+                <div className="flex justify-center my-1">
+                  <div className="p-1 rounded-full bg-white/5 border border-white/10 text-blue-400 animate-bounce">
+                    <ArrowDown className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 3. Interactive Workflow Demo Section ──────────────────────────────── */}
+      <section id="demo" className="max-w-6xl mx-auto px-6 py-20 relative z-20 text-center border-t border-white/10">
+        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-4">
+          <Zap className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Interactive Execution Sandbox</span>
+        </div>
+
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
+          Interactive Sample <span className="gradient-text">Workflow Execution</span>
+        </h2>
+        <p className="text-gray-400 max-w-2xl mx-auto text-sm mb-8">
+          Click below to run an animated execution of a sample multi-agent workflow step-by-step.
+        </p>
+
+        {/* Execution Control Button */}
+        <div className="flex justify-center mb-10">
+          <Button
+            variant="gradient"
+            size="lg"
+            onClick={handleExecuteSampleWorkflow}
+            leftIcon={isWorkflowRunning ? <RotateCcw className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 text-white" />}
+            className="shadow-2xl px-8"
+          >
+            {isWorkflowRunning ? 'Restart Sample Workflow' : 'Execute Sample Workflow'}
+          </Button>
+        </div>
+
+        {/* Interactive Execution Terminal */}
+        <div className="max-w-4xl mx-auto p-6 md:p-8 rounded-3xl bg-[#090d16]/90 border border-white/10 backdrop-blur-2xl shadow-2xl space-y-6 text-left">
+          <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center space-x-3">
+              <span className={`w-3 h-3 rounded-full ${isWorkflowRunning ? 'bg-emerald-400 animate-ping' : 'bg-blue-400'}`} />
+              <span className="font-mono text-sm font-bold text-white">
+                Workflow Status: {demoStepIndex === sampleDemoSteps.length - 1 && !isWorkflowRunning ? 'Completed' : `Running Step ${demoStepIndex + 1} / ${sampleDemoSteps.length}`}
+              </span>
+            </div>
+            <Badge variant={demoStepIndex === sampleDemoSteps.length - 1 && !isWorkflowRunning ? 'success' : 'info'}>
+              {sampleDemoSteps[demoStepIndex].name}
+            </Badge>
+          </div>
+
+          {/* 6 Step Horizontal Pipeline: Planner -> Retriever -> Neo4j -> Python -> GPT -> Response */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {sampleDemoSteps.map((step, idx) => {
+              const isActive = idx === demoStepIndex;
+              const isCompleted = idx < demoStepIndex;
+              const StepIcon = step.icon;
+
+              return (
+                <div key={step.name} className="flex flex-col items-center space-y-2 relative">
+                  <div
+                    className={`w-full p-4 rounded-xl border transition-all duration-300 flex flex-col justify-between space-y-2 relative overflow-hidden ${
+                      isActive
+                        ? 'bg-blue-500/20 border-blue-400 ring-2 ring-blue-400/50 shadow-lg scale-105 z-10'
+                        : isCompleted
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : 'bg-white/5 border-white/10 text-gray-500 opacity-60'
+                    }`}
+                  >
+                    {isActive && (
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-500 animate-pulse" />
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-500 text-white' : isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-gray-400'}`}>
+                        <StepIcon className="w-4 h-4" />
+                      </div>
+                      {isCompleted ? (
+                        <Check className="w-4 h-4 text-emerald-400 font-bold" />
+                      ) : isActive ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping" />
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <div className={`text-xs font-bold ${isActive ? 'text-blue-400' : isCompleted ? 'text-emerald-300' : 'text-gray-300'}`}>
+                        {step.name}
+                      </div>
+                      <div className="text-[10px] font-mono text-gray-400 truncate">{step.detail}</div>
+                    </div>
+                  </div>
+
+                  {idx < sampleDemoSteps.length - 1 && (
+                    <div className="hidden lg:flex items-center justify-center absolute -right-3 top-1/2 -translate-y-1/2 z-20">
+                      <ArrowRight className={`w-4 h-4 ${idx <= demoStepIndex ? 'text-blue-400 animate-pulse' : 'text-gray-700'}`} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live Thought Stream Box */}
+          <div className="p-4 rounded-xl bg-[#04060b] border border-white/10 font-mono text-xs text-gray-300 space-y-2">
+            <div className="flex items-center justify-between text-gray-500 text-[10px]">
+              <span>LIVE LOG STREAM</span>
+              <span>Node: {sampleDemoSteps[demoStepIndex].name}</span>
+            </div>
+            <div className="text-emerald-400 font-bold flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>{sampleDemoSteps[demoStepIndex].thought}</span>
+            </div>
           </div>
         </div>
       </section>

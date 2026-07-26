@@ -17,64 +17,49 @@ interface NotificationState {
   deleteNotification: (id: string) => void;
   clearAll: () => void;
   addNotification: (item: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
+  triggerSequence: () => void;
 }
 
 const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n-1',
-    type: 'knowledge',
-    title: 'Graph Synced',
-    description: 'Neo4j Knowledge Graph synced 1,420 nodes & 3,890 relationships',
+    type: 'agent',
+    title: 'Planner finished',
+    description: 'Planner Agent completed task decomposition DAG into 4 subtasks',
     timestamp: 'Just now',
     isRead: false
   },
   {
     id: 'n-2',
-    type: 'agent',
-    title: 'Claude disconnected',
-    description: 'Provider socket re-established via fallback router (Anthropic Claude 3.5 Sonnet)',
-    timestamp: '30 sec ago',
+    type: 'knowledge',
+    title: 'Retriever indexed 320 chunks',
+    description: 'Retriever Agent indexed 320 semantic chunks into Qdrant HNSW vector index',
+    timestamp: '1 min ago',
     isRead: false
   },
   {
     id: 'n-3',
-    type: 'workflow',
-    title: '✓ DAG Executed Successfully',
-    description: 'LangGraph DAG compliance audit workflow completed (4/4 nodes verified in 1.2s)',
-    timestamp: '2 min ago',
+    type: 'knowledge',
+    title: 'Neo4j synced',
+    description: 'Neo4j Knowledge Graph synced 14,820 entity nodes & 32,400 relationships',
+    timestamp: '3 mins ago',
     isRead: false
   },
   {
     id: 'n-4',
-    type: 'document',
-    title: 'New Prompt Published',
-    description: 'Prompt version v3.8 ("Enterprise RAG Synthesizer") published to production registry',
-    timestamp: 'Today',
-    isRead: true
+    type: 'workflow',
+    title: 'Workflow deployed',
+    description: 'LangGraph multi-agent DAG workflow deployed to production Celery swarm',
+    timestamp: '5 mins ago',
+    isRead: false
   },
   {
     id: 'n-5',
-    type: 'agent',
-    title: 'Agent Deployed',
-    description: 'Code Architect Agent v2.4 initialized with 6 sub-workers',
-    timestamp: '10 mins ago',
-    isRead: true
-  },
-  {
-    id: 'n-6',
-    type: 'eval',
-    title: 'Evaluation Finished',
-    description: 'DeepEval benchmark score: 98.4% accuracy across 500 test cases',
-    timestamp: '2 hours ago',
-    isRead: true
-  },
-  {
-    id: 'n-7',
     type: 'key',
-    title: 'New API Key Issued',
-    description: 'Production-Gateway-Key-2026 issued for Acme Workspace',
-    timestamp: 'Today',
-    isRead: true
+    title: 'API key created',
+    description: 'New production API key (aios_live_key_2026) created for Acme Workspace',
+    timestamp: '10 mins ago',
+    isRead: false
   }
 ];
 
@@ -82,7 +67,8 @@ const loadInitialNotifications = (): NotificationItem[] => {
   try {
     const saved = localStorage.getItem('aios_notifications');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (e) {
     console.error('Error reading notifications from localStorage:', e);
@@ -137,5 +123,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const updated = [newEntry, ...get().notifications];
     saveNotifications(updated);
     set({ notifications: updated, unreadCount: calcUnread(updated) });
+  },
+
+  triggerSequence: () => {
+    saveNotifications(DEFAULT_NOTIFICATIONS);
+    set({ notifications: DEFAULT_NOTIFICATIONS, unreadCount: calcUnread(DEFAULT_NOTIFICATIONS) });
   }
 }));

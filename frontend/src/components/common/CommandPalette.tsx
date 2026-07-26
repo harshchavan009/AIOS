@@ -17,11 +17,15 @@ import {
   Play,
   Layers,
   BarChart3,
-  Compass,
   Code2,
   Brain,
-  SlidersHorizontal,
   Command,
+  User,
+  Users as UsersIcon,
+  BookOpen,
+  FolderGit2,
+  Workflow as WorkflowIcon,
+  CheckCircle2,
 } from 'lucide-react';
 import { useThemeStore } from '../../store/useThemeStore';
 
@@ -30,11 +34,22 @@ interface CommandPaletteProps {
   onClose: () => void;
 }
 
+export type CommandCategory =
+  | 'Pages'
+  | 'Prompts'
+  | 'Agents'
+  | 'Workflows'
+  | 'Knowledge Base'
+  | 'Documents'
+  | 'Models'
+  | 'Users'
+  | 'Actions';
+
 interface CommandItem {
   id: string;
   title: string;
   subtitle?: string;
-  category: 'Pages' | 'Models' | 'Agents' | 'Prompts' | 'Workflows' | 'Documents' | 'Actions';
+  category: CommandCategory;
   icon: React.ComponentType<{ className?: string }>;
   shortcut?: string;
   action: () => void;
@@ -42,6 +57,7 @@ interface CommandItem {
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('All');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const { theme } = useThemeStore();
@@ -55,35 +71,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   };
 
   const COMMANDS: CommandItem[] = [
-    {
-      id: 'page-api-explorer',
-      title: 'REST API Explorer',
-      subtitle: 'OpenAPI REST endpoints documentation and cURL / Python examples',
-      category: 'Pages',
-      icon: Code2,
-      action: () => handleNavigate('/api-explorer'),
-    },
-    {
-      id: 'page-graph-rag',
-      title: 'Graph RAG',
-      subtitle: 'Neo4j Knowledge Graph & Entity Relations',
-      category: 'Pages',
-      icon: Network,
-      shortcut: '⌘4',
-      action: () => handleNavigate('/knowledge-graph'),
-    },
-    {
-      id: 'page-knowledge-base',
-      title: 'Knowledge Base',
-      subtitle: 'Neo4j & Qdrant Knowledge Management Store',
-      category: 'Pages',
-      icon: Brain,
-      action: () => handleNavigate('/knowledge'),
-    },
+    // ── 1. Pages ──────────────────────────────────────────────────────────────
     {
       id: 'page-dashboard',
-      title: 'Enterprise Dashboard',
-      subtitle: 'Real-time telemetry, 17 system metrics, and Docker status',
+      title: 'Enterprise Infrastructure Dashboard',
+      subtitle: 'Real-time live telemetry, 17 system metric indicators, running agents & Docker status',
       category: 'Pages',
       icon: Cpu,
       shortcut: '⌘1',
@@ -91,8 +83,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'page-playground',
-      title: 'Playground',
-      subtitle: 'Multi-LLM comparative generation sandbox',
+      title: 'Multi-LLM Playground',
+      subtitle: 'Side-by-side prompt execution and comparative generation sandbox',
       category: 'Pages',
       icon: Play,
       shortcut: '⌘2',
@@ -100,93 +92,118 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'page-prompt-studio',
-      title: 'Prompt Studio',
-      subtitle: 'Prompt engineering, registry, and versioning',
+      title: 'Prompt Studio & Registry',
+      subtitle: 'Prompt engineering, template versioning, and LLM evaluation benchmarks',
       category: 'Pages',
       icon: Sparkles,
       action: () => handleNavigate('/prompt-studio'),
     },
     {
       id: 'page-agent-builder',
-      title: 'Agent Builder',
-      subtitle: 'Build custom multi-agent LangGraph nodes',
+      title: 'Agent Builder & Visual Canvas',
+      subtitle: 'Build and wire custom multi-agent LangGraph execution nodes',
       category: 'Pages',
       icon: Bot,
       action: () => handleNavigate('/agent-builder'),
     },
     {
+      id: 'page-graph-rag',
+      title: 'Graph RAG & Entity Explorer',
+      subtitle: 'Neo4j Knowledge Graph, sub-graph traversal & entity relationship visualization',
+      category: 'Pages',
+      icon: Network,
+      shortcut: '⌘4',
+      action: () => handleNavigate('/knowledge-graph'),
+    },
+    {
+      id: 'page-knowledge-base',
+      title: 'Knowledge Base Store',
+      subtitle: 'Neo4j & Qdrant hybrid vector management store',
+      category: 'Pages',
+      icon: Brain,
+      action: () => handleNavigate('/knowledge'),
+    },
+    {
       id: 'page-models',
       title: 'Model Management',
-      subtitle: 'LLM providers, rate limits, and latencies',
+      subtitle: 'LLM providers, model router configuration, rate limits & latency monitors',
       category: 'Pages',
       icon: Database,
       action: () => handleNavigate('/models'),
     },
     {
       id: 'page-analytics',
-      title: 'Executive Analytics',
-      subtitle: 'Token usage volume, expenditures, and latency trends',
+      title: 'Executive LLMOps Analytics',
+      subtitle: 'Token volume trends, cost breakdown, latency distribution & error rates',
       category: 'Pages',
       icon: BarChart3,
       shortcut: '⌘3',
       action: () => handleNavigate('/analytics'),
     },
-
-    // ── Models ────────────────────────────────────────────────────────────────
     {
-      id: 'model-neo4j-retriever',
-      title: 'Neo4j Retriever',
-      subtitle: 'Graph-aware vector retrieval model adapter for Neo4j',
-      category: 'Models',
-      icon: Network,
-      action: () => handleNavigate('/models'),
+      id: 'page-api-explorer',
+      title: 'REST API Explorer & OpenAPI Docs',
+      subtitle: 'Interactive REST API endpoint documentation with cURL and Python SDK examples',
+      category: 'Pages',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
     },
     {
-      id: 'model-gpt4o',
-      title: 'OpenAI GPT-4o',
-      subtitle: 'Flagship multi-modal LLM router engine (128K ctx)',
-      category: 'Models',
-      icon: Database,
-      action: () => handleNavigate('/models'),
-    },
-    {
-      id: 'model-claude',
-      title: 'Claude 3.5 Sonnet',
-      subtitle: 'High precision reasoning & code synthesis model',
-      category: 'Models',
-      icon: Database,
-      action: () => handleNavigate('/models'),
-    },
-    {
-      id: 'model-gemini',
-      title: 'Gemini 1.5 Pro',
-      subtitle: '2 Million token context window & multi-modal RAG',
-      category: 'Models',
-      icon: Database,
-      action: () => handleNavigate('/models'),
-    },
-    {
-      id: 'model-llama3',
-      title: 'Llama 3 70B (Groq)',
-      subtitle: 'Ultra-low latency LPU inference engine',
-      category: 'Models',
-      icon: Terminal,
-      action: () => handleNavigate('/models'),
+      id: 'page-settings',
+      title: 'Settings & Workspace Preferences',
+      subtitle: 'API keys, organization members, security controls & billing options',
+      category: 'Pages',
+      icon: Settings,
+      action: () => handleNavigate('/settings'),
     },
 
-    // ── Agents ────────────────────────────────────────────────────────────────
+    // ── 2. Prompts ────────────────────────────────────────────────────────────
+    {
+      id: 'prompt-cypher-gen',
+      title: 'Neo4j Cypher Query Generator',
+      subtitle: 'Translate natural language queries into optimized Cypher graph traversal syntax',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'prompt-rag-synthesizer',
+      title: 'Enterprise RAG Grounded Synthesizer',
+      subtitle: 'Grounded factual answer composition with inline IEEE source document citations',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'prompt-task-decomposition',
+      title: 'Multi-Agent Task Decomposition Template',
+      subtitle: 'Structured JSON system prompt for atomic task DAG node generation',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'prompt-code-auditor',
+      title: 'Python MCP Code Auditor',
+      subtitle: 'Security & syntax verification prompt for sandboxed Python tool execution',
+      category: 'Prompts',
+      icon: Sparkles,
+      action: () => handleNavigate('/prompt-studio'),
+    },
+
+    // ── 3. Agents ─────────────────────────────────────────────────────────────
     {
       id: 'agent-planner',
       title: 'Planner Agent',
-      subtitle: 'LangGraph task decomposition and topology planner',
+      subtitle: 'LangGraph task decomposition engine and topological DAG router',
       category: 'Agents',
-      icon: Brain,
+      icon: WorkflowIcon,
       action: () => handleNavigate('/agents'),
     },
     {
       id: 'agent-retriever',
       title: 'Retriever Agent',
-      subtitle: 'Neo4j graph traversal and Qdrant vector search worker',
+      subtitle: 'Neo4j knowledge graph traversal & Qdrant vector nearest neighbor search',
       category: 'Agents',
       icon: Network,
       action: () => handleNavigate('/agents'),
@@ -194,113 +211,213 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'agent-tool',
       title: 'Python Tool Agent',
-      subtitle: 'MCP tool execution & sandboxed Python runtime',
+      subtitle: 'Isolated MCP sandbox runtime for running custom Python code and REST APIs',
       category: 'Agents',
       icon: Terminal,
       action: () => handleNavigate('/agents'),
     },
     {
+      id: 'agent-reasoning',
+      title: 'Reasoning Agent',
+      subtitle: 'Chain-of-thought synthesis and factual multi-hop deduction node',
+      category: 'Agents',
+      icon: Brain,
+      action: () => handleNavigate('/agents'),
+    },
+    {
       id: 'agent-critic',
       title: 'Critic Agent',
-      subtitle: 'RAGAS quality evaluator & faithfulness validator',
+      subtitle: 'RAGAS quality benchmark, groundedness scorer & hallucination validator',
       category: 'Agents',
       icon: Shield,
       action: () => handleNavigate('/agents'),
     },
-
-    // ── Prompts ───────────────────────────────────────────────────────────────
     {
-      id: 'prompt-neo4j-cypher',
-      title: 'Neo4j Cypher Generator',
-      subtitle: 'Generate Cypher graph queries from natural language goals',
-      category: 'Prompts',
-      icon: Sparkles,
-      action: () => handleNavigate('/prompt-studio'),
-    },
-    {
-      id: 'prompt-rag-synthesizer',
-      title: 'Enterprise RAG Synthesizer',
-      subtitle: 'Grounded response generation with full source citations',
-      category: 'Prompts',
-      icon: Sparkles,
-      action: () => handleNavigate('/prompt-studio'),
-    },
-    {
-      id: 'prompt-task-planner',
-      title: 'Multi-Agent Task Decomposition Prompt',
-      subtitle: 'Structured JSON system prompt for atomic task breakdown',
-      category: 'Prompts',
-      icon: Sparkles,
-      action: () => handleNavigate('/prompt-studio'),
-    },
-
-    // ── Workflows ─────────────────────────────────────────────────────────────
-    {
-      id: 'wf-neo4j-indexing',
-      title: 'Neo4j Knowledge Graph Indexing Workflow',
-      subtitle: 'Automated entity extraction and Cypher graph sync pipeline',
-      category: 'Workflows',
-      icon: Layers,
-      action: () => handleNavigate('/agents'),
-    },
-    {
-      id: 'wf-compliance-audit',
-      title: 'Enterprise Financial Compliance Audit',
-      subtitle: 'Multi-agent LangGraph audit DAG with tool verification',
-      category: 'Workflows',
-      icon: Layers,
+      id: 'agent-response',
+      title: 'Response Agent',
+      subtitle: 'Structured markdown formatter, executive summary builder & streaming output node',
+      category: 'Agents',
+      icon: Bot,
       action: () => handleNavigate('/agents'),
     },
 
-    // ── Documents ─────────────────────────────────────────────────────────────
+    // ── 4. Workflows ──────────────────────────────────────────────────────────
     {
-      id: 'doc-neo4j-arch',
+      id: 'wf-graph-indexing',
+      title: 'Neo4j Knowledge Graph Sync Workflow',
+      subtitle: 'Automated entity extraction, graph relation linking & vector embedding indexing',
+      category: 'Workflows',
+      icon: FolderGit2,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'wf-financial-audit',
+      title: 'Enterprise Compliance & Financial Audit DAG',
+      subtitle: 'Multi-agent LangGraph workflow for document verification and regulatory reporting',
+      category: 'Workflows',
+      icon: FolderGit2,
+      action: () => handleNavigate('/agents'),
+    },
+    {
+      id: 'wf-auto-dev',
+      title: 'Autonomous Software Engineering Workflow',
+      subtitle: 'End-to-end task decomposition, code generation, sandboxed testing & PR creation',
+      category: 'Workflows',
+      icon: FolderGit2,
+      action: () => handleNavigate('/auto-dev'),
+    },
+
+    // ── 5. Knowledge Base ─────────────────────────────────────────────────────
+    {
+      id: 'kb-neo4j-graph',
+      title: 'Neo4j Enterprise Knowledge Graph Store',
+      subtitle: '14,820 entity nodes, 38,450 relation edges with Cypher query interface',
+      category: 'Knowledge Base',
+      icon: Network,
+      action: () => handleNavigate('/knowledge-graph'),
+    },
+    {
+      id: 'kb-qdrant-vector',
+      title: 'Qdrant Vector Embeddings Collection',
+      subtitle: 'Collection: `aios_embeddings_v2` (3,890 vectors, HNSW index cosine distance)',
+      category: 'Knowledge Base',
+      icon: Database,
+      action: () => handleNavigate('/knowledge'),
+    },
+    {
+      id: 'kb-hybrid-retrieval',
+      title: 'Hybrid BM25 + Vector Fusion Index',
+      subtitle: 'Reciprocal Rank Fusion (RRF) index combining keyword sparse and dense vectors',
+      category: 'Knowledge Base',
+      icon: BookOpen,
+      action: () => handleNavigate('/knowledge'),
+    },
+
+    // ── 6. Documents ──────────────────────────────────────────────────────────
+    {
+      id: 'doc-neo4j-spec',
       title: 'Neo4j_Graph_Architecture_v4.pdf',
-      subtitle: 'Indexed in Qdrant & Neo4j vector store (128 vectors)',
+      subtitle: 'Indexed in Qdrant & Neo4j vector store (128 chunk embeddings)',
       category: 'Documents',
       icon: FileText,
       action: () => handleNavigate('/second-brain'),
     },
     {
-      id: 'doc-aios-spec',
+      id: 'doc-aios-architecture',
       title: 'AIOS_Enterprise_Spec_v3.pdf',
-      subtitle: 'System architecture and API gateway spec',
+      subtitle: 'System clean architecture specification and API gateway protocol',
       category: 'Documents',
       icon: FileText,
       action: () => handleNavigate('/second-brain'),
     },
     {
-      id: 'doc-rag-benchmarks',
+      id: 'doc-ragas-eval',
       title: 'RAG_Benchmark_Results_2026.csv',
-      subtitle: 'RAGAS evaluation dataset across 500 test cases',
+      subtitle: 'RAGAS evaluation report across 500 test cases with faithfulness scores',
+      category: 'Documents',
+      icon: FileText,
+      action: () => handleNavigate('/second-brain'),
+    },
+    {
+      id: 'doc-soc2-compliance',
+      title: 'SOC2_Type_II_Compliance_Report.pdf',
+      subtitle: 'Enterprise security matrix and access control audit logs',
       category: 'Documents',
       icon: FileText,
       action: () => handleNavigate('/second-brain'),
     },
 
-    // ── Quick Actions ─────────────────────────────────────────────────────────
+    // ── 7. Models ─────────────────────────────────────────────────────────────
     {
-      id: 'create-prompt',
-      title: 'Create Prompt',
-      subtitle: 'Open Prompt Studio to draft and test new system prompts',
-      category: 'Actions',
-      icon: Sparkles,
-      shortcut: '⌘P',
-      action: () => handleNavigate('/prompt-studio'),
+      id: 'model-gpt4o',
+      title: 'OpenAI GPT-4o',
+      subtitle: 'Flagship multi-modal LLM router engine (128K context, 138ms latency)',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
     },
     {
-      id: 'create-agent',
-      title: 'Create Agent',
-      subtitle: 'Build a new autonomous multi-agent worker node',
+      id: 'model-claude-35',
+      title: 'Anthropic Claude 3.5 Sonnet',
+      subtitle: 'High-precision reasoning, logic & code synthesis model (154ms latency)',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-gemini-15',
+      title: 'Google Gemini 1.5 Pro',
+      subtitle: '2 Million token context window & multi-modal RAG embedding engine',
+      category: 'Models',
+      icon: Database,
+      action: () => handleNavigate('/models'),
+    },
+    {
+      id: 'model-llama-3',
+      title: 'Llama 3 70B (Groq LPU)',
+      subtitle: 'Ultra-low latency open weights inference server (32ms latency)',
+      category: 'Models',
+      icon: Terminal,
+      action: () => handleNavigate('/models'),
+    },
+
+    // ── 8. Users ──────────────────────────────────────────────────────────────
+    {
+      id: 'user-harsh',
+      title: 'Harsh Chavan',
+      subtitle: 'harsh@aios.ai — Platform Owner & Chief Architect (Admin)',
+      category: 'Users',
+      icon: User,
+      action: () => handleNavigate('/settings'),
+    },
+    {
+      id: 'user-sarah',
+      title: 'Sarah Chen',
+      subtitle: 'sarah.chen@aios.ai — Lead AI & Multi-Agent Engineer',
+      category: 'Users',
+      icon: User,
+      action: () => handleNavigate('/settings'),
+    },
+    {
+      id: 'user-alex',
+      title: 'Alex Rivera',
+      subtitle: 'alex.rivera@aios.ai — SecOps & Compliance Lead',
+      category: 'Users',
+      icon: User,
+      action: () => handleNavigate('/settings'),
+    },
+    {
+      id: 'user-system-bot',
+      title: 'AIOS System Worker Bot',
+      subtitle: 'system-bot@aios.internal — Automated Celery Worker Account',
+      category: 'Users',
+      icon: UsersIcon,
+      action: () => handleNavigate('/settings'),
+    },
+
+    // ── 9. Actions ────────────────────────────────────────────────────────────
+    {
+      id: 'action-create-agent',
+      title: 'Create Custom Agent',
+      subtitle: 'Launch Agent Builder to configure a new autonomous agent node',
       category: 'Actions',
       icon: Bot,
       shortcut: '⌘A',
       action: () => handleNavigate('/agent-builder'),
     },
     {
-      id: 'upload-pdf',
-      title: 'Upload PDF / Document',
-      subtitle: 'Index documents into Qdrant & Neo4j vector store',
+      id: 'action-create-prompt',
+      title: 'Create System Prompt',
+      subtitle: 'Open Prompt Studio to draft, test, and register new system prompts',
+      category: 'Actions',
+      icon: Sparkles,
+      shortcut: '⌘P',
+      action: () => handleNavigate('/prompt-studio'),
+    },
+    {
+      id: 'action-upload-doc',
+      title: 'Upload Document / Knowledge File',
+      subtitle: 'Index PDF or CSV files into Qdrant & Neo4j vector stores',
       category: 'Actions',
       icon: Upload,
       shortcut: '⌘U',
@@ -308,8 +425,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
   ];
 
+  // Category filter tabs list
+  const CATEGORIES: Array<string> = [
+    'All',
+    'Pages',
+    'Prompts',
+    'Agents',
+    'Workflows',
+    'Knowledge Base',
+    'Documents',
+    'Models',
+    'Users',
+  ];
+
   const filteredCommands = COMMANDS.filter((cmd) => {
-    const q = query.toLowerCase();
+    const matchesFilter =
+      activeCategoryFilter === 'All' || cmd.category === activeCategoryFilter;
+    if (!matchesFilter) return false;
+
+    const q = query.toLowerCase().trim();
+    if (!q) return true;
+
     return (
       cmd.title.toLowerCase().includes(q) ||
       (cmd.subtitle && cmd.subtitle.toLowerCase().includes(q)) ||
@@ -317,10 +453,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     );
   });
 
-  // Reset selected index when query changes
+  // Reset selected index when query or filter changes
   useEffect(() => {
     setSelectedIndex(0);
-  }, [query]);
+  }, [query, activeCategoryFilter]);
 
   // Keyboard navigation listener
   useEffect(() => {
@@ -347,20 +483,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
   if (!isOpen) return null;
 
-  // Group commands by category for display
-  const categories: Array<CommandItem['category']> = [
-    'Pages',
-    'Models',
-    'Agents',
-    'Prompts',
-    'Workflows',
-    'Documents',
-    'Actions',
-  ];
+  // Group active filtered commands by category for display
+  const activeDisplayCategories = CATEGORIES.filter(
+    (cat) => cat !== 'All' && (activeCategoryFilter === 'All' || activeCategoryFilter === cat)
+  ) as CommandCategory[];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 sm:pt-28 px-4 bg-black/70 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/75 backdrop-blur-md animate-fade-in font-sans"
       onClick={onClose}
     >
       <div
@@ -379,7 +509,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             className={`w-full bg-transparent placeholder:text-muted-foreground focus:outline-none text-base font-medium ${
               isLight ? 'text-gray-900' : 'text-white'
             }`}
-            placeholder="Type a command or search (e.g., Create Agent, Upload PDF, Open Dashboard)..."
+            placeholder="Search everything (Pages, Prompts, Agents, Workflows, Knowledge Base, Documents, Models, Users)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -393,23 +523,51 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           </button>
         </div>
 
+        {/* Category Filter Pills Bar */}
+        <div className={`flex items-center space-x-1 px-4 py-2 border-b overflow-x-auto scrollbar-none text-xs font-medium ${
+          isLight ? 'border-gray-200 bg-gray-100/60' : 'border-white/[0.06] bg-[#0A0D15]'
+        }`}>
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategoryFilter === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategoryFilter(cat)}
+                className={`px-3 py-1 rounded-lg transition-all whitespace-nowrap text-xs font-semibold ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    : isLight
+                    ? 'text-gray-600 hover:bg-gray-200'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Command List View */}
         <div className="max-h-[26rem] overflow-y-auto p-2 divide-y divide-white/[0.04]" ref={listRef}>
           {filteredCommands.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground text-sm space-y-2">
               <Command className="w-8 h-8 mx-auto text-gray-500 opacity-50" />
-              <p>No matching commands found for "{query}"</p>
-              <p className="text-xs opacity-60 font-mono">Try searching "Dashboard", "Agent", "Upload", or "Prompt"</p>
+              <p>No matching entities found for "{query}"</p>
+              <p className="text-xs opacity-60 font-mono">
+                Try searching "Dashboard", "Planner Agent", "Neo4j", "GPT-4o", or "Harsh"
+              </p>
             </div>
           ) : (
-            categories.map((cat) => {
+            activeDisplayCategories.map((cat) => {
               const catItems = filteredCommands.filter((c) => c.category === cat);
               if (catItems.length === 0) return null;
 
               return (
                 <div key={cat} className="py-1.5">
-                  <div className="px-3 py-1 text-[10px] font-bold font-mono text-muted-foreground/70 uppercase tracking-wider">
-                    {cat}
+                  <div className="px-3 py-1 text-[10px] font-bold font-mono text-muted-foreground/70 uppercase tracking-wider flex items-center justify-between">
+                    <span>{cat}</span>
+                    <span className="text-[9px] opacity-60 font-sans">{catItems.length} items</span>
                   </div>
                   <div className="space-y-0.5 mt-0.5">
                     {catItems.map((cmd) => {
@@ -483,6 +641,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         }`}>
           <div className="flex items-center space-x-4">
             <span className="flex items-center space-x-1">
+              <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">Ctrl / ⌘ + K</kbd>
+              <span>Toggle</span>
+            </span>
+            <span className="flex items-center space-x-1">
               <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">↑↓</kbd>
               <span>Navigate</span>
             </span>
@@ -497,11 +659,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           </div>
 
           <div className="flex items-center space-x-1 font-mono text-[10px]">
-            <span className="text-blue-500 font-bold">AIOS</span> Command Palette
+            <span className="text-blue-500 font-bold">AIOS</span> Global Search
           </div>
         </div>
       </div>
     </div>
   );
 };
-

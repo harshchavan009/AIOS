@@ -18,6 +18,13 @@ import {
   Briefcase,
   ListOrdered,
   Cpu as GpuIcon,
+  Workflow,
+  Search,
+  Terminal,
+  Brain,
+  ShieldCheck,
+  FileText,
+  Sparkles,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -35,7 +42,7 @@ import { EnterpriseChartContainer } from '../components/common/EnterpriseChartCo
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
 export const DashboardPage: React.FC = () => {
-  const { summary, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
+  const { summary, runningAgents, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
   const [pipelineActiveNode, setPipelineActiveNode] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<string>('Live');
@@ -111,6 +118,70 @@ export const DashboardPage: React.FC = () => {
             <span>SSE Live Stream: Connected (2s)</span>
           </div>
           <Badge variant="success">All 7 Docker Containers Healthy</Badge>
+        </div>
+      </div>
+
+      {/* Running Agents Live Execution Grid */}
+      <div className="glass-card p-6 rounded-2xl space-y-4 border border-border/70 bg-card/60 backdrop-blur-xl">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+            <h3 className="text-base font-extrabold tracking-tight">Running Agents</h3>
+          </div>
+          <div className="flex items-center space-x-2 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-emerald-400 font-bold">
+              {runningAgents.filter(a => a.status === 'Running' || a.status.includes('Searching') || a.status.includes('Executing')).length} / {runningAgents.length} Active Nodes
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {runningAgents.map((agent) => {
+            const getStatusBadge = (status: string) => {
+              if (status === 'Running') {
+                return { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', isPulse: true };
+              } else if (status.includes('Searching') || status.includes('Executing')) {
+                return { bg: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30', isPulse: true };
+              } else if (status === 'Waiting') {
+                return { bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30', isPulse: false };
+              } else {
+                return { bg: 'bg-purple-500/10 text-purple-400 border-purple-500/30', isPulse: false };
+              }
+            };
+
+            const statusStyle = getStatusBadge(agent.status);
+
+            return (
+              <div
+                key={agent.name}
+                className="p-4 rounded-xl bg-muted/30 border border-border/40 hover:border-primary/50 transition-all duration-300 space-y-3 flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      {agent.name === 'Planner' && <Workflow className="w-4 h-4 text-emerald-400" />}
+                      {agent.name === 'Retriever' && <Search className="w-4 h-4 text-cyan-400" />}
+                      {agent.name === 'Python Tool' && <Terminal className="w-4 h-4 text-blue-400" />}
+                      {agent.name === 'Reasoning' && <Brain className="w-4 h-4 text-amber-400" />}
+                      {agent.name === 'Critic' && <ShieldCheck className="w-4 h-4 text-purple-400" />}
+                      {agent.name === 'Response' && <FileText className="w-4 h-4 text-teal-400" />}
+                    </div>
+                    <span className="font-extrabold text-sm text-foreground">{agent.name}</span>
+                  </div>
+
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-mono border font-bold flex items-center space-x-1.5 ${statusStyle.bg}`}>
+                    {statusStyle.isPulse && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                    <span>{agent.status}</span>
+                  </span>
+                </div>
+
+                <div className="text-xs font-mono text-muted-foreground bg-background/60 p-2.5 rounded-lg border border-border/30">
+                  {agent.detail}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

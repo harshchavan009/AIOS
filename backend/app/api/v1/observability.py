@@ -1,7 +1,7 @@
 import asyncio
 import json
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -79,6 +79,28 @@ async def stream_live_telemetry():
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
+
+
+@router.websocket("/ws")
+async def websocket_live_telemetry(websocket: WebSocket):
+    """
+    WebSocket endpoint broadcasting real-time system metrics, hardware load, and running agents telemetry.
+    """
+    await websocket.accept()
+    try:
+        while True:
+            async with AsyncSessionLocal() as session:
+                users_cnt, sess_cnt = await _get_real_db_counts(session)
+                data = telemetry_service.get_live_system_telemetry(
+                    active_users_count=users_cnt,
+                    active_sessions_count=sess_cnt
+                )
+            await websocket.send_text(json.dumps(data))
+            await asyncio.sleep(2.0)
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
 
 
 @router.get("/traces", status_code=status.HTTP_200_OK)

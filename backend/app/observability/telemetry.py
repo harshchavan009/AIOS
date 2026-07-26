@@ -132,8 +132,30 @@ class AIOSTelemetryService:
 
         stream_rate = round(78.5 + random.uniform(-15.0, 45.0), 1)
 
+        # Dynamic agent states for live execution panel
+        agent_cycles = [
+            [
+                {"name": "Planner", "agent_id": "PlannerAgent", "status": "Running", "detail": "Decomposing multi-step workflow DAG", "color": "emerald"},
+                {"name": "Retriever", "agent_id": "RetrieverAgent", "status": "Searching Neo4j", "detail": "Traversing graph & Qdrant vector store", "color": "cyan"},
+                {"name": "Python Tool", "agent_id": "ToolAgent", "status": "Executing code", "detail": "Isolated MCP sandbox active", "color": "blue"},
+                {"name": "Reasoning", "agent_id": "ReasoningAgent", "status": "Waiting", "detail": "Synthesizing logical chain of thought", "color": "amber"},
+                {"name": "Critic", "agent_id": "CriticAgent", "status": "Running", "detail": "Evaluating RAGAS groundedness score", "color": "purple"},
+                {"name": "Response", "agent_id": "ResponseAgent", "status": "Completed", "detail": "IEEE citation formatting complete", "color": "teal"}
+            ],
+            [
+                {"name": "Planner", "agent_id": "PlannerAgent", "status": "Completed", "detail": "DAG topological order compiled", "color": "teal"},
+                {"name": "Retriever", "agent_id": "RetrieverAgent", "status": "Running", "detail": "Retrieving 8 semantic citations", "color": "emerald"},
+                {"name": "Python Tool", "agent_id": "ToolAgent", "status": "Executing code", "detail": "Running numerical analysis script", "color": "blue"},
+                {"name": "Reasoning", "agent_id": "ReasoningAgent", "status": "Searching Neo4j", "detail": "Cross-referencing entity relations", "color": "cyan"},
+                {"name": "Critic", "agent_id": "CriticAgent", "status": "Waiting", "detail": "Awaiting final inference payload", "color": "amber"},
+                {"name": "Response", "agent_id": "ResponseAgent", "status": "Running", "detail": "Streaming SSE token output", "color": "purple"}
+            ]
+        ]
+        active_running_agents = agent_cycles[self._agent_cycle_index % len(agent_cycles)]
+
         return {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "running_agents": active_running_agents,
             "summary_metrics": {
                 "active_agents": active_agents_count,
                 "running_jobs": active_sessions_count + (1 if active_agents_count > 3 else 0),

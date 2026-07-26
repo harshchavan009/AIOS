@@ -14,6 +14,14 @@ export interface DailyTrendPoint {
   tokens: number;
 }
 
+export interface RunningAgent {
+  name: string;
+  agent_id: string;
+  status: string;
+  detail: string;
+  color?: string;
+}
+
 export interface TelemetrySummary {
   active_agents: number;
   running_jobs: number;
@@ -37,6 +45,7 @@ export interface TelemetrySummary {
 
 export interface TelemetryStoreState {
   summary: TelemetrySummary;
+  runningAgents: RunningAgent[];
   hardwareHistory: HardwareDataPoint[];
   dailyTrends: DailyTrendPoint[];
   llmLatencies: {
@@ -50,6 +59,7 @@ export interface TelemetryStoreState {
   startTicker: () => void;
   stopTicker: () => void;
   updateFromApi: (data: any) => void;
+  registerDeployedAgent: (agentName: string, detail: string) => void;
 }
 
 const AGENT_SEQUENCE = [3, 4, 5, 4, 3, 4, 5, 6];
@@ -82,6 +92,15 @@ const SAMPLE_EVENTS = [
   { type: 'document' as const, title: 'Vector Store Synced', description: 'Qdrant collection updated with 32 document embeddings' },
 ];
 
+const INITIAL_RUNNING_AGENTS: RunningAgent[] = [
+  { name: 'Planner', agent_id: 'PlannerAgent', status: 'Running', detail: 'Decomposing multi-step workflow DAG', color: 'emerald' },
+  { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Searching Neo4j', detail: 'Traversing graph & Qdrant vector store', color: 'cyan' },
+  { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Isolated MCP sandbox active', color: 'blue' },
+  { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Waiting', detail: 'Synthesizing logical chain of thought', color: 'amber' },
+  { name: 'Critic', agent_id: 'CriticAgent', status: 'Running', detail: 'Evaluating RAGAS groundedness score', color: 'purple' },
+  { name: 'Response', agent_id: 'ResponseAgent', status: 'Completed', detail: 'IEEE citation formatting complete', color: 'teal' },
+];
+
 let timerId: ReturnType<typeof setInterval> | null = null;
 
 export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => ({
@@ -105,6 +124,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
     memory_usage_percent: 46.8,
     container_status: '7 / 7 Containers Active'
   },
+  runningAgents: INITIAL_RUNNING_AGENTS,
   hardwareHistory: INITIAL_HARDWARE_HISTORY,
   dailyTrends: INITIAL_DAILY_TRENDS,
   llmLatencies: {
@@ -122,6 +142,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
     const hw = data.hardware || {};
     const lat = data.llm_latencies || {};
     const pipe = data.pipeline_stream || {};
+    const agents = data.running_agents || [];
 
     const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
     const newHwPoint: HardwareDataPoint = {
@@ -135,6 +156,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
       const updatedHw = [...state.hardwareHistory.slice(-14), newHwPoint];
       return {
         summary: { ...state.summary, ...sm },
+        runningAgents: agents.length > 0 ? agents : state.runningAgents,
         hardwareHistory: updatedHw,
         llmLatencies: {
           openai_gpt4o_ms: lat.openai_gpt4o_ms || state.llmLatencies.openai_gpt4o_ms,
@@ -144,6 +166,23 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
         streamRateTokensSec: pipe.stream_rate_tokens_sec || state.streamRateTokensSec,
       };
     });
+  },
+
+  registerDeployedAgent: (agentName: string, detail: string) => {
+    const newAgent: RunningAgent = {
+      name: agentName,
+      agent_id: `${agentName.replace(/\s+/g, '')}Agent`,
+      status: 'Running',
+      detail: detail || 'Deployed LangGraph Swarm Worker',
+      color: 'emerald'
+    };
+    set((state) => ({
+      runningAgents: [newAgent, ...state.runningAgents.filter(a => a.name !== agentName)],
+      summary: {
+        ...state.summary,
+        active_agents: state.summary.active_agents + 1
+      }
+    }));
   },
 
   startTicker: () => {
@@ -174,6 +213,27 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
 
       const updatedHistory = [...state.hardwareHistory.slice(-14), newHwPoint];
 
+      // Dynamic agent rotation for fallback animation
+      const agentRotations = [
+        [
+          { name: 'Planner', agent_id: 'PlannerAgent', status: 'Running', detail: 'Decomposing multi-step workflow DAG', color: 'emerald' },
+          { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Searching Neo4j', detail: 'Traversing graph & Qdrant vector store', color: 'cyan' },
+          { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Isolated MCP sandbox active', color: 'blue' },
+          { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Waiting', detail: 'Synthesizing logical chain of thought', color: 'amber' },
+          { name: 'Critic', agent_id: 'CriticAgent', status: 'Running', detail: 'Evaluating RAGAS groundedness score', color: 'purple' },
+          { name: 'Response', agent_id: 'ResponseAgent', status: 'Completed', detail: 'IEEE citation formatting complete', color: 'teal' },
+        ],
+        [
+          { name: 'Planner', agent_id: 'PlannerAgent', status: 'Completed', detail: 'DAG topological order compiled', color: 'teal' },
+          { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Running', detail: 'Retrieving 8 semantic citations', color: 'emerald' },
+          { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Running numerical analysis script', color: 'blue' },
+          { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Searching Neo4j', detail: 'Cross-referencing entity relations', color: 'cyan' },
+          { name: 'Critic', agent_id: 'CriticAgent', status: 'Waiting', detail: 'Awaiting final inference payload', color: 'amber' },
+          { name: 'Response', agent_id: 'ResponseAgent', status: 'Running', detail: 'Streaming SSE token output', color: 'purple' },
+        ]
+      ];
+      const updatedAgents = agentRotations[nextTick % agentRotations.length];
+
       // Update daily trends for graph animations
       const updatedTrends = state.dailyTrends.map((dt, idx) => {
         if (idx === state.dailyTrends.length - 1) {
@@ -188,6 +248,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
 
       set({
         tickCounter: nextTick,
+        runningAgents: updatedAgents,
         hardwareHistory: updatedHistory,
         dailyTrends: updatedTrends,
         streamRateTokensSec: streamRate,

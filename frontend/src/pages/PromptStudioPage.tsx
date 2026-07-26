@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Sparkles,
   GitBranch,
@@ -13,31 +13,29 @@ import {
   Trash2,
   Save,
   Upload,
-  ChevronRight,
-  ChevronDown,
   Tag,
   User,
   Clock,
-  Layers,
   Pencil,
   Eye,
   ArrowLeft,
-  Play,
-  Trophy,
-  SplitSquareHorizontal,
-  BookMarked,
   BadgeCheck,
   AlertCircle,
   FileText,
   Loader2,
   Folder,
-  FolderPlus,
   MessageSquare,
   BarChart2,
-  Activity,
+  Share2,
+  X,
+  Play,
+  CopyCheck,
+  SlidersHorizontal,
+  BookMarked,
+  Layers,
+  Database,
   Coins,
-  Check,
-  Zap
+  ShieldCheck,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { useNotificationStore } from '../store/useNotificationStore';
@@ -45,7 +43,7 @@ import { useNotificationStore } from '../store/useNotificationStore';
 // ──────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────
-interface PromptVersion {
+export interface PromptVersion {
   version: string;
   content: string;
   createdAt: string;
@@ -57,7 +55,7 @@ interface PromptVersion {
   abScore?: number;
 }
 
-interface TeamComment {
+export interface TeamComment {
   id: string;
   author: string;
   role: string;
@@ -66,7 +64,7 @@ interface TeamComment {
   content: string;
 }
 
-interface ExecutionLog {
+export interface ExecutionLog {
   id: string;
   timestamp: string;
   model: string;
@@ -79,7 +77,7 @@ interface ExecutionLog {
   status: 'success' | 'failed';
 }
 
-interface PromptTemplate {
+export interface PromptTemplate {
   id: string;
   title: string;
   collection: string;
@@ -94,7 +92,7 @@ interface PromptTemplate {
   executionHistory: ExecutionLog[];
 }
 
-interface ABTest {
+export interface ABTest {
   variantA: string;
   variantB: string;
   results: { a: number; b: number } | null;
@@ -284,14 +282,22 @@ export const PromptStudioPage: React.FC = () => {
   const [newChangeNote, setNewChangeNote] = useState('');
   const [ab, setAb] = useState<ABTest>({ variantA: 'v2', variantB: 'v3', results: null, running: false });
   const [savingVersion, setSavingVersion] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [executingTest, setExecutingTest] = useState(false);
   const [copiedId, setCopiedId] = useState('');
+  
+  // Modals state
   const [newPromptModal, setNewPromptModal] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCollection, setNewCollection] = useState('Security & Compliance');
+  const [newFolder, setNewFolder] = useState('Custom Audits');
   const [newComment, setNewComment] = useState('');
-  const [historyExpanded, setHistoryExpanded] = useState<string | null>(null);
 
-  const selected = useMemo(() => templates.find(t => t.id === selectedId)!, [templates, selectedId]);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const selected = useMemo(() => templates.find(t => t.id === selectedId) || templates[0], [templates, selectedId]);
   const activeVersion = useMemo(() => selected?.versions[activeVersionIdx] ?? selected?.versions[selected.versions.length - 1], [selected, activeVersionIdx]);
   const interpolated = useMemo(() => interpolate(activeVersion?.content || '', variableValues), [activeVersion, variableValues]);
 
@@ -299,28 +305,70 @@ export const PromptStudioPage: React.FC = () => {
     return Array.from(new Set(templates.map(t => t.collection)));
   }, [templates]);
 
-  // Switch prompt
+  // Switch prompt template
   const selectTemplate = useCallback((id: string) => {
-    const tmpl = templates.find(t => t.id === id)!;
+    const tmpl = templates.find(t => t.id === id);
+    if (!tmpl) return;
     setSelectedId(id);
     setActiveVersionIdx(tmpl.versions.length - 1);
     setVariableValues(DEFAULT_VARIABLE_VALUES[id] || {});
     setIsEditing(false);
     setEditingContent('');
     setActiveTab('editor');
-    setAb({ variantA: tmpl.versions[Math.max(0, tmpl.versions.length - 2)]?.version || tmpl.versions[0].version, variantB: tmpl.versions[tmpl.versions.length - 1].version, results: null, running: false });
+    setAb({
+      variantA: tmpl.versions[Math.max(0, tmpl.versions.length - 2)]?.version || tmpl.versions[0].version,
+      variantB: tmpl.versions[tmpl.versions.length - 1].version,
+      results: null,
+      running: false
+    });
   }, [templates]);
 
-  // Start edit
+  // 1. CREATE PROMPT
+  const createNewPrompt = () => {
+    if (!newTitle.trim()) return;
+    const newId = `p-new-${Date.now()}`;
+    const blank: PromptTemplate = {
+      id: newId,
+      title: newTitle,
+      collection: newCollection,
+      folder: newFolder,
+      author: 'You',
+      status: 'draft',
+      tags: ['custom', 'new'],
+      variables: ['company', 'industry', 'country'],
+      publishedVersion: 'v1',
+      versions: [{
+        version: 'v1',
+        content: `You are an AI compliance and analysis agent for {{company}} in the {{industry}} sector.\n\nJurisdiction: {{country}}\n\nTask: Perform thorough verification and return a structured JSON report.`,
+        createdAt: new Date().toISOString(),
+        author: 'You',
+        changeNote: 'Initial prompt creation',
+        faithfulness: 0.92,
+        groundedness: 0.90,
+        relevance: 0.94,
+      }],
+      comments: [],
+      executionHistory: []
+    };
+    setTemplates(prev => [blank, ...prev]);
+    DEFAULT_VARIABLE_VALUES[blank.id] = { company: 'Acme Health', industry: 'Healthcare', country: 'USA' };
+    setNewPromptModal(false);
+    setNewTitle('');
+    addNotification({
+      type: 'document',
+      title: 'Prompt Created',
+      description: `New prompt template "${blank.title}" added to registry.`,
+    });
+    selectTemplate(blank.id);
+  };
+
+  // 2. EDIT PROMPT & SAVE VERSION
   const startEdit = () => {
     setEditingContent(activeVersion.content);
     setNewChangeNote('');
     setIsEditing(true);
   };
 
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  // Save new version
   const saveVersion = () => {
     if (!editingContent.trim() || !newChangeNote.trim()) return;
     setSavingVersion(true);
@@ -333,9 +381,9 @@ export const PromptStudioPage: React.FC = () => {
         createdAt: new Date().toISOString(),
         author: 'You',
         changeNote: newChangeNote,
-        faithfulness: +(0.92 + (editingContent.length % 7) * 0.01).toFixed(2),
-        groundedness: +(0.91 + (editingContent.length % 6) * 0.01).toFixed(2),
-        relevance: +(0.94 + (editingContent.length % 5) * 0.01).toFixed(2),
+        faithfulness: +(0.93 + Math.random() * 0.06).toFixed(2),
+        groundedness: +(0.92 + Math.random() * 0.07).toFixed(2),
+        relevance: +(0.94 + Math.random() * 0.05).toFixed(2),
       };
       setTemplates(prev => prev.map(t => t.id === selectedId
         ? { ...t, versions: [...t.versions, newVer], variables: detectedVars }
@@ -346,48 +394,148 @@ export const PromptStudioPage: React.FC = () => {
       setSavingVersion(false);
       addNotification({
         type: 'document',
-        title: 'Prompt Saved',
-        description: `Prompt version ${newVersionId} ("${selected.title}") saved to registry.`,
+        title: 'Prompt Version Saved',
+        description: `Version ${newVersionId} ("${newChangeNote}") committed to history.`,
       });
     }, 600);
   };
 
-  // Rollback to version
-  const rollback = (idx: number) => {
-    setActiveVersionIdx(idx);
-    setIsEditing(false);
+  // 3. DELETE PROMPT
+  const handleDeletePrompt = () => {
+    if (templates.length <= 1) return;
+    const remaining = templates.filter(t => t.id !== selectedId);
+    setTemplates(remaining);
+    setDeleteConfirmModal(false);
+    addNotification({
+      type: 'workflow',
+      title: 'Prompt Deleted',
+      description: `Prompt template "${selected.title}" removed from registry.`,
+    });
+    selectTemplate(remaining[0].id);
   };
 
-  // Fork / Clone Template
-  const cloneTemplate = () => {
+  // 4. ROLLBACK
+  const handleRollback = (idx: number) => {
+    const rolledVer = selected.versions[idx];
+    setActiveVersionIdx(idx);
+    setIsEditing(false);
+    addNotification({
+      type: 'document',
+      title: 'Rollback Complete',
+      description: `Active version rolled back to ${rolledVer.version} ("${rolledVer.changeNote}")`,
+    });
+  };
+
+  // 5. DUPLICATE (CLONE)
+  const handleDuplicatePrompt = () => {
+    const clonedId = `p-clone-${Date.now()}`;
     const cloned: PromptTemplate = {
       ...selected,
-      id: `p-clone-${Date.now()}`,
-      title: `${selected.title} (Clone)`,
+      id: clonedId,
+      title: `${selected.title} (Copy)`,
       status: 'draft',
-      versions: [{ ...activeVersion, version: 'v1', author: 'You', createdAt: new Date().toISOString(), changeNote: `Cloned from ${selected.title} ${activeVersion.version}` }],
       publishedVersion: 'v1',
+      versions: [{
+        ...activeVersion,
+        version: 'v1',
+        author: 'You',
+        createdAt: new Date().toISOString(),
+        changeNote: `Duplicated from ${selected.title} (${activeVersion.version})`
+      }],
       comments: [],
       executionHistory: []
     };
     setTemplates(prev => [cloned, ...prev]);
-    selectTemplate(cloned.id);
+    DEFAULT_VARIABLE_VALUES[clonedId] = { ...(variableValues || {}) };
+    addNotification({
+      type: 'document',
+      title: 'Prompt Duplicated',
+      description: `Cloned "${selected.title}" as new template.`,
+    });
+    selectTemplate(clonedId);
   };
 
-  // Publish
+  // 6. PROMPT EVALUATION
+  const handleRunEvaluation = () => {
+    setEvaluating(true);
+    setTimeout(() => {
+      const f = +(0.95 + Math.random() * 0.04).toFixed(2);
+      const g = +(0.94 + Math.random() * 0.05).toFixed(2);
+      const r = +(0.96 + Math.random() * 0.03).toFixed(2);
+
+      setTemplates(prev => prev.map(t => {
+        if (t.id === selectedId) {
+          const updatedVers = [...t.versions];
+          updatedVers[activeVersionIdx] = {
+            ...updatedVers[activeVersionIdx],
+            faithfulness: f,
+            groundedness: g,
+            relevance: r,
+          };
+          return { ...t, versions: updatedVers };
+        }
+        return t;
+      }));
+
+      setEvaluating(false);
+      addNotification({
+        type: 'eval',
+        title: 'Prompt RAGAS Evaluation Completed',
+        description: `Faithfulness: ${(f * 100).toFixed(0)}% | Groundedness: ${(g * 100).toFixed(0)}% | Relevance: ${(r * 100).toFixed(0)}%`,
+      });
+    }, 1200);
+  };
+
+  // 7. EXECUTION HISTORY LOG TEST RUN
+  const handleRunTestExecution = () => {
+    setExecutingTest(true);
+    setTimeout(() => {
+      const newLog: ExecutionLog = {
+        id: `ex-${Date.now()}`,
+        timestamp: new Date().toLocaleString(),
+        model: 'gpt-4o',
+        latency_ms: Math.floor(120 + Math.random() * 45),
+        tokens: Math.floor(380 + Math.random() * 120),
+        cost: 0.0038,
+        faithfulness: activeVersion.faithfulness,
+        groundedness: activeVersion.groundedness,
+        relevance: activeVersion.relevance,
+        status: 'success',
+      };
+
+      setTemplates(prev => prev.map(t => {
+        if (t.id === selectedId) {
+          return { ...t, executionHistory: [newLog, ...t.executionHistory] };
+        }
+        return t;
+      }));
+
+      setExecutingTest(false);
+      addNotification({
+        type: 'workflow',
+        title: 'Test Execution Successful',
+        description: `Executed prompt with current variables in ${newLog.latency_ms}ms (${newLog.tokens} tokens).`,
+      });
+    }, 1000);
+  };
+
+  // Publish & Review handlers
   const publish = () => {
     setTemplates(prev => prev.map(t => t.id === selectedId
       ? { ...t, status: 'approved', publishedVersion: activeVersion.version }
       : t
     ));
+    addNotification({
+      type: 'document',
+      title: 'Prompt Published',
+      description: `Version ${activeVersion.version} published to production registry.`,
+    });
   };
 
-  // Submit for review
   const submitForReview = () => {
     setTemplates(prev => prev.map(t => t.id === selectedId ? { ...t, status: 'review' } : t));
   };
 
-  // Add Comment
   const handleAddComment = () => {
     if (!newComment.trim()) return;
     const commentObj: TeamComment = {
@@ -402,7 +550,6 @@ export const PromptStudioPage: React.FC = () => {
     setNewComment('');
   };
 
-  // Run A/B Test
   const runABTest = () => {
     setAb(prev => ({ ...prev, running: true, results: null }));
     setTimeout(() => {
@@ -410,48 +557,17 @@ export const PromptStudioPage: React.FC = () => {
         ...prev,
         running: false,
         results: {
-          a: +(75.0 + (selected.title.length % 15)).toFixed(1),
-          b: +(82.0 + (selected.title.length % 10)).toFixed(1)
+          a: +(78.0 + (selected.title.length % 12)).toFixed(1),
+          b: +(86.0 + (selected.title.length % 8)).toFixed(1)
         }
       }));
-    }, 1500);
+    }, 1400);
   };
 
   const copyInterpolated = () => {
     navigator.clipboard.writeText(interpolated);
     setCopiedId('interpolated');
     setTimeout(() => setCopiedId(''), 1500);
-  };
-
-  // Create new blank prompt
-  const createNewPrompt = () => {
-    if (!newTitle.trim()) return;
-    const blank: PromptTemplate = {
-      id: `p-new-${Date.now()}`,
-      title: newTitle,
-      collection: newCollection,
-      folder: 'Custom Prompts',
-      author: 'You',
-      status: 'draft',
-      tags: ['custom'],
-      variables: ['company', 'industry', 'country'],
-      publishedVersion: 'v1',
-      versions: [{
-        version: 'v1',
-        content: `You are an AI assistant for {{company}} in the {{industry}} sector.\n\nContext: {{country}}\n\nTask: `,
-        createdAt: new Date().toISOString(),
-        author: 'You',
-        changeNote: 'Created from scratch',
-        faithfulness: 0.90, groundedness: 0.90, relevance: 0.90,
-      }],
-      comments: [],
-      executionHistory: []
-    };
-    setTemplates(prev => [blank, ...prev]);
-    DEFAULT_VARIABLE_VALUES[blank.id] = { company: '', industry: '', country: '' };
-    setNewPromptModal(false);
-    setNewTitle('');
-    selectTemplate(blank.id);
   };
 
   const filteredTemplates = templates.filter(t => {
@@ -466,7 +582,7 @@ export const PromptStudioPage: React.FC = () => {
     { id: 'editor', label: 'Editor', icon: <Pencil className="w-3.5 h-3.5" /> },
     { id: 'variables', label: 'Variables', icon: <Tag className="w-3.5 h-3.5" /> },
     { id: 'history', label: 'Version History', icon: <History className="w-3.5 h-3.5" /> },
-    { id: 'ab', label: 'A/B Test', icon: <SplitSquareHorizontal className="w-3.5 h-3.5" /> },
+    { id: 'ab', label: 'A/B Test', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
     { id: 'review', label: 'Approval Workflow', icon: <BadgeCheck className="w-3.5 h-3.5" /> },
     { id: 'comments', label: 'Team Comments', icon: <MessageSquare className="w-3.5 h-3.5" /> },
     { id: 'analytics', label: 'Execution Logs', icon: <BarChart2 className="w-3.5 h-3.5" /> },
@@ -474,24 +590,53 @@ export const PromptStudioPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
-      {/* Header */}
+      {/* Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <BookMarked className="w-7 h-7 text-primary" />
-            <span>Enterprise Prompt Studio</span>
+            <BookMarked className="w-8 h-8 text-primary" />
+            <span>Prompt Studio & Version Registry</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Prompt version control, rollbacks, approval workflows, A/B testing, team comments, and execution history.
+            Create, edit, clone, version control, rollback, evaluate RAGAS quality scores, share, and track prompt execution logs.
           </p>
         </div>
-        <button
-          onClick={() => setNewPromptModal(true)}
-          className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Prompt</span>
-        </button>
+
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
+          <button
+            onClick={() => setNewPromptModal(true)}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Prompt</span>
+          </button>
+
+          <button
+            onClick={handleDuplicatePrompt}
+            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted transition-all"
+          >
+            <GitBranch className="w-4 h-4 text-primary" />
+            <span>Duplicate / Clone</span>
+          </button>
+
+          <button
+            onClick={() => setShareModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted transition-all"
+          >
+            <Share2 className="w-4 h-4 text-indigo-400" />
+            <span>Share</span>
+          </button>
+
+          <button
+            onClick={() => setDeleteConfirmModal(true)}
+            disabled={templates.length <= 1}
+            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 disabled:opacity-40 transition-all"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Delete</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -525,7 +670,7 @@ export const PromptStudioPage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by title, tag, or collection..."
+              placeholder="Search prompts by title, tag, or collection..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
@@ -537,9 +682,8 @@ export const PromptStudioPage: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center space-x-1.5">
                 <Folder className="w-3.5 h-3.5 text-primary" />
-                <span>Prompt Collections</span>
+                <span>Prompt Registry ({filteredTemplates.length})</span>
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono">{filteredTemplates.length}</span>
             </div>
 
             {filteredTemplates.map((tmpl) => (
@@ -580,11 +724,16 @@ export const PromptStudioPage: React.FC = () => {
         {/* ────────────────── RIGHT: Prompt Workspace ────────────────── */}
         <div className="lg:col-span-8 space-y-5">
           
-          {/* Header Bar */}
+          {/* Active Prompt Info Bar */}
           <div className="glass-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-3 min-w-0">
               <div>
-                <div className="font-bold text-base truncate">{selected.title}</div>
+                <div className="font-bold text-base truncate flex items-center space-x-2">
+                  <span>{selected.title}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColor(selected.status)}`}>
+                    {selected.status.toUpperCase()}
+                  </span>
+                </div>
                 <div className="text-[10px] text-muted-foreground font-mono flex items-center space-x-2 mt-0.5">
                   <User className="w-3 h-3" />
                   <span>{selected.author}</span>
@@ -592,16 +741,13 @@ export const PromptStudioPage: React.FC = () => {
                   <Folder className="w-3 h-3 text-primary" />
                   <span>{selected.collection}</span>
                   <span>·</span>
-                  <span className={`flex items-center space-x-1 ${statusColor(selected.status)} px-1.5 py-0.5 rounded-full border`}>
-                    {statusIcon(selected.status)}
-                    <span>{selected.status}</span>
-                  </span>
+                  <span>Published: {selected.publishedVersion}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center space-x-2 flex-shrink-0">
-              {/* Version Picker */}
+              {/* Version Selector Chips */}
               <div className="flex items-center space-x-1">
                 {selected.versions.map((v, i) => (
                   <button
@@ -621,9 +767,24 @@ export const PromptStudioPage: React.FC = () => {
                 ))}
               </div>
 
-              <button onClick={cloneTemplate} title="Clone Prompt" className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-semibold hover:bg-muted/70 transition-all">
-                <GitBranch className="w-3.5 h-3.5 text-primary" />
-                <span>Clone</span>
+              {/* RAGAS Evaluation Trigger Button */}
+              <button
+                onClick={handleRunEvaluation}
+                disabled={evaluating}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold hover:bg-purple-500/20 transition-all"
+              >
+                {evaluating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FlaskConical className="w-3.5 h-3.5" />}
+                <span>{evaluating ? 'Evaluating…' : 'Evaluate RAGAS'}</span>
+              </button>
+
+              {/* Test Execution Trigger Button */}
+              <button
+                onClick={handleRunTestExecution}
+                disabled={executingTest}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+              >
+                {executingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{executingTest ? 'Executing…' : 'Test Run'}</span>
               </button>
             </div>
           </div>
@@ -649,7 +810,7 @@ export const PromptStudioPage: React.FC = () => {
           {/* ── TAB 1: EDITOR ── */}
           {activeTab === 'editor' && (
             <div className="space-y-4">
-              {/* Evaluation Scores Bar */}
+              {/* RAGAS Metric Indicators */}
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: 'Faithfulness Score', value: activeVersion.faithfulness, color: 'text-emerald-400', bar: 'bg-emerald-500' },
@@ -671,7 +832,7 @@ export const PromptStudioPage: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {isEditing ? 'Drafting New Version' : `Prompt Content — ${activeVersion.version}`}
+                      {isEditing ? 'Drafting New Version Commit' : `Prompt Content — ${activeVersion.version}`}
                     </span>
                     {!isEditing && (
                       <span className="text-[10px] font-mono text-muted-foreground/60">
@@ -683,12 +844,12 @@ export const PromptStudioPage: React.FC = () => {
                     {!isEditing ? (
                       <>
                         <button onClick={startEdit} className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-semibold hover:bg-muted/70 transition-all">
-                          <Pencil className="w-3 h-3" />
-                          <span>Edit</span>
+                          <Pencil className="w-3 h-3 text-primary" />
+                          <span>Edit Prompt</span>
                         </button>
                         <button onClick={copyInterpolated} className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-semibold hover:bg-muted/70 transition-all">
                           {copiedId === 'interpolated' ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedId === 'interpolated' ? 'Copied!' : 'Copy'}</span>
+                          <span>{copiedId === 'interpolated' ? 'Copied' : 'Copy'}</span>
                         </button>
                       </>
                     ) : (
@@ -711,18 +872,18 @@ export const PromptStudioPage: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <input
                         type="text"
-                        placeholder="Commit change note (e.g., added JSON formatting)..."
+                        placeholder="Commit change note (e.g., added JSON schema formatting)..."
                         value={newChangeNote}
                         onChange={e => setNewChangeNote(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
+                        className="flex-1 px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
                       />
                       <button
                         onClick={saveVersion}
                         disabled={!editingContent.trim() || !newChangeNote.trim() || savingVersion}
-                        className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs disabled:opacity-40 transition-all"
+                        className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs disabled:opacity-40 transition-all"
                       >
                         {savingVersion ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                        <span>Save Version</span>
+                        <span>Save Version Commit</span>
                       </button>
                     </div>
                   </div>
@@ -730,21 +891,21 @@ export const PromptStudioPage: React.FC = () => {
                   <div className="p-4 rounded-xl bg-[#090d16] border border-border/60 font-mono text-xs text-gray-200 leading-relaxed whitespace-pre-wrap min-h-[160px]">
                     {activeVersion.content.split(/(\{\{[\w]+\}\})/g).map((part, i) =>
                       /^\{\{[\w]+\}\}$/.test(part)
-                        ? <span key={i} className="bg-amber-500/20 text-amber-300 rounded px-0.5">{part}</span>
+                        ? <span key={i} className="bg-amber-500/20 text-amber-300 rounded px-1 font-bold">{part}</span>
                         : <span key={i}>{part}</span>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Interpolated Preview */}
+              {/* Interpolated Live Preview */}
               <div className="glass-card p-5 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between border-b border-border/60 pb-2">
                   <div className="flex items-center space-x-2">
                     <Eye className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live Interpolated Output Preview</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground">Substituted in real-time</span>
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold">Substituted with current variables</span>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-[#090d16] to-[#0f1620] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
                   {interpolated}
@@ -757,9 +918,9 @@ export const PromptStudioPage: React.FC = () => {
           {activeTab === 'variables' && (
             <div className="glass-card p-5 rounded-2xl space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h3 className="text-sm font-bold text-foreground">Variable Interpolation Fields</h3>
+                <h3 className="text-sm font-bold text-foreground">Variable Subscriptions</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Set default values for each <code className="text-primary bg-primary/10 px-1 rounded">{'{{variable}}'}</code>.
+                  Specify template values for each <code className="text-primary bg-primary/10 px-1 rounded">{'{{variable}}'}</code>.
                 </p>
               </div>
 
@@ -767,14 +928,14 @@ export const PromptStudioPage: React.FC = () => {
                 {selected.variables.map(varName => (
                   <div key={varName} className="space-y-1.5">
                     <label className="flex items-center space-x-2">
-                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[11px] font-mono">{`{{${varName}}}`}</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[11px] font-mono font-bold">{`{{${varName}}}`}</span>
                     </label>
                     <input
                       type="text"
                       value={variableValues[varName] || ''}
                       onChange={e => setVariableValues(prev => ({ ...prev, [varName]: e.target.value }))}
                       placeholder={`Enter value for ${varName}...`}
-                      className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
                     />
                   </div>
                 ))}
@@ -784,13 +945,13 @@ export const PromptStudioPage: React.FC = () => {
 
           {/* ── TAB 3: VERSION HISTORY & ROLLBACK ── */}
           {activeTab === 'history' && (
-            <div className="glass-card p-5 rounded-2xl space-y-3">
+            <div className="glass-card p-5 rounded-2xl space-y-4">
               <div className="border-b border-border/60 pb-3 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground flex items-center space-x-2">
                   <History className="w-4 h-4 text-primary" />
                   <span>Version Commit History & Rollbacks</span>
                 </h3>
-                <span className="text-[10px] text-muted-foreground font-mono">{selected.versions.length} versions</span>
+                <span className="text-[10px] text-muted-foreground font-mono">{selected.versions.length} versions committed</span>
               </div>
 
               <div className="space-y-3">
@@ -801,41 +962,47 @@ export const PromptStudioPage: React.FC = () => {
                   return (
                     <div
                       key={v.version}
-                      className={`p-4 rounded-xl border transition-all ${isActive ? 'border-primary/50 bg-primary/5' : 'border-border/40 bg-muted/20'}`}
+                      className={`p-4 rounded-xl border transition-all ${isActive ? 'border-primary/50 bg-primary/5 shadow-md' : 'border-border/40 bg-muted/20'}`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold flex-shrink-0 ${isActive ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-mono font-bold shrink-0 ${isActive ? 'bg-primary text-white shadow' : 'bg-muted text-muted-foreground'}`}>
                             {v.version}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold text-foreground truncate">{v.changeNote}</div>
-                            <div className="text-[10px] text-muted-foreground font-mono flex items-center space-x-1.5 mt-0.5">
-                              <User className="w-2.5 h-2.5" />
+                            <div className="text-xs font-bold text-foreground truncate">{v.changeNote}</div>
+                            <div className="text-[10px] text-muted-foreground font-mono flex items-center space-x-2 mt-0.5">
+                              <User className="w-3 h-3" />
                               <span>{v.author}</span>
                               <span>·</span>
-                              <Clock className="w-2.5 h-2.5" />
+                              <Clock className="w-3 h-3" />
                               <span>{timeAgo(v.createdAt)}</span>
+                              <span>·</span>
+                              <span className="text-emerald-400">Faithfulness: {(v.faithfulness * 100).toFixed(0)}%</span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-1.5 flex-shrink-0">
+                        <div className="flex items-center space-x-1.5 shrink-0">
                           {isPublished && (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">PUBLISHED</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">PUBLISHED</span>
                           )}
                           {isActive && (
-                            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 text-[9px] font-bold">ACTIVE</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 text-[9px] font-bold">ACTIVE</span>
                           )}
                         </div>
+                      </div>
+
+                      <div className="mt-3 p-3 rounded-lg bg-black/40 border border-border/30 font-mono text-[11px] text-gray-300 line-clamp-2">
+                        {v.content}
                       </div>
 
                       {!isActive && (
                         <div className="flex items-center space-x-2 mt-3">
                           <button
-                            onClick={() => rollback(idx)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-[10px] font-semibold hover:bg-muted/70 transition-all"
+                            onClick={() => handleRollback(idx)}
+                            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 transition-all"
                           >
-                            <RotateCcw className="w-3 h-3 text-amber-400" />
+                            <RotateCcw className="w-3.5 h-3.5" />
                             <span>Rollback to {v.version}</span>
                           </button>
                         </div>
@@ -852,10 +1019,10 @@ export const PromptStudioPage: React.FC = () => {
             <div className="glass-card p-5 rounded-2xl space-y-5">
               <div className="border-b border-border/60 pb-3">
                 <h3 className="text-sm font-bold text-foreground flex items-center space-x-2">
-                  <SplitSquareHorizontal className="w-4 h-4 text-primary" />
-                  <span>A/B Version Testing</span>
+                  <SlidersHorizontal className="w-4 h-4 text-primary" />
+                  <span>A/B Version Evaluation</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Evaluate two versions side-by-side.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Evaluate two versions side-by-side across RAGAS benchmark metrics.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -867,10 +1034,10 @@ export const PromptStudioPage: React.FC = () => {
                     <select
                       value={ab[key]}
                       onChange={e => setAb(prev => ({ ...prev, [key]: e.target.value, results: null }))}
-                      className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-foreground focus:outline-none"
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-foreground focus:outline-none"
                     >
                       {selected.versions.map(v => (
-                        <option key={v.version} value={v.version}>{v.version} — {v.changeNote.slice(0, 30)}...</option>
+                        <option key={v.version} value={v.version}>{v.version} — {v.changeNote.slice(0, 32)}...</option>
                       ))}
                     </select>
                   </div>
@@ -881,17 +1048,27 @@ export const PromptStudioPage: React.FC = () => {
                 <button
                   onClick={runABTest}
                   disabled={ab.variantA === ab.variantB || ab.running}
-                  className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 disabled:opacity-40 transition-all"
+                  className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 disabled:opacity-40 transition-all"
                 >
                   {ab.running ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
-                  <span>{ab.running ? 'Running A/B Evaluation...' : 'Run A/B Test'}</span>
+                  <span>{ab.running ? 'Running A/B Test...' : 'Run A/B Benchmark'}</span>
                 </button>
               </div>
 
               {ab.results && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border border-purple-500/30 text-center space-y-2">
-                  <div className="text-sm font-bold text-purple-400">
-                    Winner: {ab.results.a > ab.results.b ? `Variant A (${ab.variantA})` : `Variant B (${ab.variantB})`}
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30 text-center space-y-3">
+                  <div className="text-sm font-extrabold text-purple-300">
+                    🏆 Winner: {ab.results.a > ab.results.b ? `Variant A (${ab.variantA})` : `Variant B (${ab.variantB})`}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 font-mono text-xs">
+                    <div className="p-3 rounded-xl bg-black/40 border border-border/40">
+                      <div className="text-muted-foreground text-[10px]">Variant A ({ab.variantA})</div>
+                      <div className="text-lg font-bold text-blue-400">{ab.results.a}% Quality</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/40 border border-border/40">
+                      <div className="text-muted-foreground text-[10px]">Variant B ({ab.variantB})</div>
+                      <div className="text-lg font-bold text-emerald-400">{ab.results.b}% Quality</div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -915,6 +1092,11 @@ export const PromptStudioPage: React.FC = () => {
                     <span>{selected.status.toUpperCase()}</span>
                   </span>
                 </div>
+
+                <div className="text-xs text-muted-foreground space-y-2">
+                  <p>Current Published Production Version: <strong className="text-emerald-400">{selected.publishedVersion}</strong></p>
+                  <p>Active Selected Version: <strong className="text-primary">{activeVersion.version}</strong></p>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -924,7 +1106,7 @@ export const PromptStudioPage: React.FC = () => {
                     className="flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl bg-amber-600/20 border border-amber-500/40 text-amber-400 font-bold text-xs hover:bg-amber-600/30 transition-all"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Submit for Review</span>
+                    <span>Submit for Team Review</span>
                   </button>
                 )}
                 {selected.status === 'review' && (
@@ -934,6 +1116,15 @@ export const PromptStudioPage: React.FC = () => {
                   >
                     <Upload className="w-4 h-4" />
                     <span>Approve & Publish {activeVersion.version}</span>
+                  </button>
+                )}
+                {selected.status === 'approved' && (
+                  <button
+                    onClick={publish}
+                    className="flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Re-Publish {activeVersion.version} to Production</span>
                   </button>
                 )}
               </div>
@@ -952,24 +1143,27 @@ export const PromptStudioPage: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {selected.comments.map(c => (
-                  <div key={c.id} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
-                          {c.avatar}
+                {selected.comments.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-xs font-mono">No comments posted yet. Add a review comment below.</div>
+                ) : (
+                  selected.comments.map(c => (
+                    <div key={c.id} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
+                            {c.avatar}
+                          </div>
+                          <span className="text-xs font-bold text-foreground">{c.author}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">({c.role})</span>
                         </div>
-                        <span className="text-xs font-bold text-foreground">{c.author}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">({c.role})</span>
+                        <span className="text-[9px] font-mono text-muted-foreground">{timeAgo(c.timestamp)}</span>
                       </div>
-                      <span className="text-[9px] font-mono text-muted-foreground">{timeAgo(c.timestamp)}</span>
+                      <p className="text-xs text-gray-300 leading-relaxed font-sans">{c.content}</p>
                     </div>
-                    <p className="text-xs text-gray-300 leading-relaxed font-sans">{c.content}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
-              {/* Add Comment Input */}
               <div className="flex items-center space-x-2 pt-2 border-t border-border/40">
                 <input
                   type="text"
@@ -998,7 +1192,14 @@ export const PromptStudioPage: React.FC = () => {
                   <BarChart2 className="w-4 h-4 text-primary" />
                   <span>Prompt Execution History Logs</span>
                 </h3>
-                <Badge variant="success">Live Log Stream</Badge>
+                <button
+                  onClick={handleRunTestExecution}
+                  disabled={executingTest}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+                >
+                  {executingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                  <span>Run Execution Test</span>
+                </button>
               </div>
 
               <div className="overflow-x-auto">
@@ -1011,19 +1212,27 @@ export const PromptStudioPage: React.FC = () => {
                       <th className="pb-2">Tokens</th>
                       <th className="pb-2">Cost</th>
                       <th className="pb-2">Faithfulness</th>
+                      <th className="pb-2">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
-                    {selected.executionHistory.map(log => (
-                      <tr key={log.id} className="hover:bg-muted/20">
-                        <td className="py-2.5 text-muted-foreground">{log.timestamp}</td>
-                        <td className="py-2.5 font-bold text-foreground">{log.model}</td>
-                        <td className="py-2.5 text-pink-400">{log.latency_ms}ms</td>
-                        <td className="py-2.5 text-primary">{log.tokens}</td>
-                        <td className="py-2.5 text-emerald-400">${log.cost}</td>
-                        <td className="py-2.5 text-blue-400">{(log.faithfulness * 100).toFixed(0)}%</td>
+                    {selected.executionHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-muted-foreground text-xs">No execution history recorded. Click "Run Execution Test" to log a test run.</td>
                       </tr>
-                    ))}
+                    ) : (
+                      selected.executionHistory.map(log => (
+                        <tr key={log.id} className="hover:bg-muted/20">
+                          <td className="py-2.5 text-muted-foreground">{log.timestamp}</td>
+                          <td className="py-2.5 font-bold text-foreground">{log.model}</td>
+                          <td className="py-2.5 text-pink-400">{log.latency_ms}ms</td>
+                          <td className="py-2.5 text-primary">{log.tokens}</td>
+                          <td className="py-2.5 text-emerald-400">${log.cost}</td>
+                          <td className="py-2.5 text-blue-400">{(log.faithfulness * 100).toFixed(0)}%</td>
+                          <td className="py-2.5 font-bold text-emerald-400 uppercase">{log.status}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1032,13 +1241,16 @@ export const PromptStudioPage: React.FC = () => {
         </div>
       </div>
 
-      {/* New Prompt Modal */}
+      {/* ────────────────── CREATE PROMPT MODAL ────────────────── */}
       {newPromptModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
           <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-border/60 shadow-2xl">
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-base font-bold">Create New Prompt</h3>
-              <button onClick={() => setNewPromptModal(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+              <h3 className="text-base font-bold flex items-center space-x-2">
+                <Plus className="w-5 h-5 text-primary" />
+                <span>Create New System Prompt</span>
+              </h3>
+              <X className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-white" onClick={() => setNewPromptModal(false)} />
             </div>
             <div className="space-y-3">
               <div>
@@ -1048,22 +1260,35 @@ export const PromptStudioPage: React.FC = () => {
                   autoFocus
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  placeholder="e.g. Customer Audit Pipeline"
-                  className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-mono focus:outline-none focus:border-primary text-foreground"
+                  placeholder="e.g. Financial Risk Evaluator"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Collection</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Collection Name</label>
                 <input
                   type="text"
                   value={newCollection}
                   onChange={e => setNewCollection(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-mono focus:outline-none text-foreground"
+                  placeholder="Security & Compliance"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Folder</label>
+                <input
+                  type="text"
+                  value={newFolder}
+                  onChange={e => setNewFolder(e.target.value)}
+                  placeholder="Audit Workflows"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
                 />
               </div>
             </div>
-            <div className="flex items-center space-x-3 pt-1">
+
+            <div className="flex items-center space-x-3 pt-2">
               <button onClick={() => setNewPromptModal(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted">Cancel</button>
               <button
                 onClick={createNewPrompt}
@@ -1071,6 +1296,70 @@ export const PromptStudioPage: React.FC = () => {
                 className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs disabled:opacity-40"
               >
                 Create Prompt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── PROMPT SHARING MODAL ────────────────── */}
+      {shareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-border/60 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <h3 className="text-base font-bold flex items-center space-x-2">
+                <Share2 className="w-5 h-5 text-indigo-400" />
+                <span>Share Prompt Registry Link</span>
+              </h3>
+              <X className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-white" onClick={() => setShareModalOpen(false)} />
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Shareable production link for prompt <strong className="text-white">{selected.title}</strong> ({activeVersion.version}).
+            </p>
+
+            <div className="p-3 rounded-xl bg-black/50 border border-border/60 font-mono text-xs text-emerald-400 break-all">
+              https://aios.enterprise/prompt-studio?id={selected.id}&version={activeVersion.version}
+            </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`https://aios.enterprise/prompt-studio?id=${selected.id}&version=${activeVersion.version}`);
+                alert('Prompt registry link copied to clipboard!');
+                setShareModalOpen(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-primary text-white font-semibold text-xs flex items-center justify-center space-x-2 shadow-lg"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy Share Link</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── DELETE CONFIRMATION MODAL ────────────────── */}
+      {deleteConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-rose-500/40 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <h3 className="text-base font-bold text-rose-400 flex items-center space-x-2">
+                <Trash2 className="w-5 h-5" />
+                <span>Delete Prompt Template?</span>
+              </h3>
+              <X className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-white" onClick={() => setDeleteConfirmModal(false)} />
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to permanently delete <strong className="text-white">{selected.title}</strong>? All {selected.versions.length} version commits and execution history will be removed.
+            </p>
+
+            <div className="flex items-center space-x-3 pt-2">
+              <button onClick={() => setDeleteConfirmModal(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted">Cancel</button>
+              <button
+                onClick={handleDeletePrompt}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30"
+              >
+                Permanently Delete
               </button>
             </div>
           </div>
