@@ -11,6 +11,7 @@ import {
   Zap,
   Filter,
   RefreshCw,
+  FileText,
 } from 'lucide-react';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
@@ -29,21 +30,32 @@ export interface TimelineEvent {
 
 const INITIAL_EVENTS: TimelineEvent[] = [
   {
-    id: 'ev-1',
+    id: 'ev-5',
     time: '10:25',
-    title: 'Final Response Generated',
-    description: 'ResponseAgent synthesized multi-modal output with 8 citations',
-    category: 'llm',
+    title: 'User Uploaded PDF',
+    description: 'Enterprise document uploaded & ingested into vector store',
+    category: 'system',
     status: 'completed',
-    icon: MessageSquare,
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10',
+    icon: FileText,
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-500/10',
   },
   {
-    id: 'ev-2',
+    id: 'ev-4',
     time: '10:24',
+    title: 'Workflow Complete',
+    description: 'LangGraph multi-agent execution pipeline finished successfully',
+    category: 'agent',
+    status: 'completed',
+    icon: CheckCircle2,
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+  },
+  {
+    id: 'ev-3',
+    time: '10:23',
     title: 'Neo4j Connected',
-    description: 'Traversed graph nodes & retrieved 1,420 entity relationships',
+    description: 'Knowledge graph entity relationships traversed and linked',
     category: 'graph',
     status: 'completed',
     icon: Network,
@@ -51,48 +63,26 @@ const INITIAL_EVENTS: TimelineEvent[] = [
     bg: 'bg-teal-500/10',
   },
   {
-    id: 'ev-3',
-    time: '10:24',
-    title: 'Retriever Query Executed',
-    description: 'Qdrant vector store top-k search completed (latency 0.55ms)',
+    id: 'ev-2',
+    time: '10:22',
+    title: 'Retriever Searching',
+    description: 'Hybrid vector search querying Qdrant collection',
     category: 'retrieval',
-    status: 'completed',
+    status: 'running',
     icon: Database,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
   },
   {
-    id: 'ev-4',
-    time: '10:23',
-    title: 'Planner Agent Started',
-    description: 'Decomposed compliance goal into 4 atomic LangGraph subtasks',
+    id: 'ev-1',
+    time: '10:21',
+    title: 'Planner Started',
+    description: 'LangGraph DAG decomposition initialized for task execution',
     category: 'agent',
     status: 'completed',
     icon: Brain,
     color: 'text-purple-400',
     bg: 'bg-purple-500/10',
-  },
-  {
-    id: 'ev-5',
-    time: '10:22',
-    title: 'Python Tool Executed',
-    description: 'Executed calculation script inside sandboxed MCP worker',
-    category: 'agent',
-    status: 'completed',
-    icon: Terminal,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-  },
-  {
-    id: 'ev-6',
-    time: '10:20',
-    title: 'SSE Telemetry Stream Connected',
-    description: 'Real-time telemetry stream active on FastAPI loop',
-    category: 'system',
-    status: 'info',
-    icon: Zap,
-    color: 'text-sky-400',
-    bg: 'bg-sky-500/10',
   },
 ];
 
@@ -170,7 +160,7 @@ export const ActivityTimelinePanel: React.FC = () => {
         <div>
           <h3 className="text-base font-extrabold tracking-tight flex items-center space-x-2">
             <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
-            <span>Live Enterprise Activity Timeline</span>
+            <span>Activity Feed</span>
           </h3>
           <p className="text-xs text-muted-foreground">Real-time audit feed of multi-agent execution, RAG queries, and system events</p>
         </div>

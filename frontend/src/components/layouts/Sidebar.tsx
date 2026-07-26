@@ -19,12 +19,19 @@ import {
   Database,
   ShoppingBag,
   BarChart2,
+  BookOpen,
   Code2,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseMobile }) => {
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuthStore();
   const { theme } = useThemeStore();
@@ -44,19 +51,35 @@ export const Sidebar: React.FC = () => {
     { label: 'Evaluation Studio', icon: Award, path: '/evaluation' },
     { label: 'Knowledge Base', icon: Database, path: '/knowledge' },
     { label: 'Agent Marketplace', icon: ShoppingBag, path: '/marketplace' },
-    { label: 'REST API Explorer', icon: Code2, path: '/api-explorer', badge: 'v1.0' },
+    { label: 'Documentation', icon: BookOpen, path: '/docs', badge: 'v1.0' },
+    { label: 'REST API Explorer', icon: Code2, path: '/api-explorer' },
     { label: 'Enterprise Analytics', icon: BarChart2, path: '/analytics' },
     { label: 'System Settings', icon: SlidersHorizontal, path: '/settings' },
   ];
 
   return (
-    <aside
-      className={`h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 z-40 backdrop-blur-[30px] ${
-        isLight
-          ? 'bg-[#FAFAFA]/90 border-r border-[#E5E7EB]'
-          : 'bg-[#0E121B]/85 border-r border-white/[0.08] shadow-[1px_0_30px_rgba(0,0,0,0.4)]'
-      } ${collapsed ? 'w-20' : 'w-64'}`}
-    >
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+        />
+      )}
+
+      {/* Main Sidebar (Desktop Sticky + Mobile Slide-over Drawer) */}
+      <aside
+        className={`h-screen flex flex-col justify-between transition-all duration-300 z-50 backdrop-blur-[30px] ${
+          isLight
+            ? 'bg-[#FAFAFA]/95 border-r border-[#E5E7EB]'
+            : 'bg-[#0E121B]/95 border-r border-white/[0.08] shadow-[1px_0_30px_rgba(0,0,0,0.4)]'
+        } ${
+          /* Mobile Drawer Position */
+          isMobileOpen
+            ? 'fixed inset-y-0 left-0 w-64 shadow-2xl translate-x-0'
+            : 'fixed lg:sticky top-0 -translate-x-full lg:translate-x-0'
+        } ${collapsed ? 'lg:w-20' : 'lg:w-64'}`}
+      >
       <div>
         {/* Brand Header */}
         <div
@@ -79,17 +102,30 @@ export const Sidebar: React.FC = () => {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            className={`p-1.5 rounded-lg border transition-colors ${
-              isLight
-                ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
-                : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
-            }`}
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className={`hidden lg:flex p-1.5 rounded-lg border transition-colors ${
+                isLight
+                  ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
+                  : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
+              }`}
+            >
+              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className={`lg:hidden p-2 rounded-lg border transition-colors ${
+                isLight
+                  ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
+                  : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
+              }`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Items */}
@@ -100,8 +136,9 @@ export const Sidebar: React.FC = () => {
               <NavLink
                 key={idx}
                 to={item.path}
+                onClick={onCloseMobile}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group active:scale-[0.98] ${
                     isActive
                       ? isLight
                         ? 'bg-[#0B84FF] text-white shadow-md shadow-blue-500/20'
@@ -139,5 +176,6 @@ export const Sidebar: React.FC = () => {
         </button>
       </div>
     </aside>
+    </>
   );
 };

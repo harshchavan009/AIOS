@@ -1,5 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Sun, Moon, Building2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Search,
+  Sun,
+  Moon,
+  Building2,
+  ChevronDown,
+  Check,
+  Sparkles,
+  Brain,
+  Bot,
+  SlidersHorizontal,
+  FolderKanban,
+  CheckCircle2,
+  Menu,
+  X,
+} from 'lucide-react';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { SystemHealthPopover } from '../common/SystemHealthPopover';
@@ -8,18 +24,38 @@ import { ProfileDropdown } from '../common/ProfileDropdown';
 import { KeyboardShortcutsModal } from '../common/KeyboardShortcutsModal';
 
 interface NavbarProps {
+  isMobileMenuOpen?: boolean;
+  onToggleMobileMenu?: () => void;
   onOpenCommandPalette: () => void;
   onOpenOnboarding?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette, onOpenOnboarding }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  isMobileMenuOpen = false,
+  onToggleMobileMenu,
+  onOpenCommandPalette,
+  onOpenOnboarding,
+}) => {
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeStore();
-  const { currentOrganization, currentWorkspace } = useWorkspaceStore();
+  const { currentOrganization, currentWorkspace, workspaces, setWorkspace } = useWorkspaceStore();
 
   const [activeDropdown, setActiveDropdown] = useState<'notifications' | 'profile' | 'health' | null>(null);
+  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   const isLight = theme === 'light';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (workspaceRef.current && !workspaceRef.current.contains(e.target as Node)) {
+        setIsWorkspaceOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -74,27 +110,165 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommandPalette, onOpenOnbo
           : 'bg-[#0E121B]/82 border-b border-white/[0.08] text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
       }`}
     >
-      {/* Left: Organization / Workspace Switcher & Global Search */}
-      <div className="flex items-center space-x-4">
-        {/* Workspace Switcher */}
-        <div
-          className={`hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${
+      {/* Left: Mobile Menu Toggle, Workspace Switcher & Global Search */}
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Mobile Hamburger Drawer Button */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          aria-label="Toggle Navigation Drawer"
+          className={`lg:hidden p-2.5 rounded-xl border flex items-center justify-center transition-all min-h-[44px] min-w-[44px] touch-manipulation active:scale-95 ${
             isLight
-              ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827]'
-              : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200'
+              ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827] hover:bg-[#E5E7EB]'
+              : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200 hover:bg-[#20283A]'
           }`}
         >
-          <Building2 className="w-3.5 h-3.5 text-[#0B84FF]" />
-          <span className="font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
-          <span className="font-mono opacity-50">/</span>
-          <span className="text-sky-400 font-mono">{currentWorkspace?.name || 'Production'}</span>
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        {/* Interactive Workspace Switcher Dropdown */}
+        <div className="relative hidden sm:block" ref={workspaceRef}>
+          <button
+            type="button"
+            onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all hover:border-blue-500/50 ${
+              isLight
+                ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827]'
+                : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-[#0B84FF]" />
+            <span className="font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
+            <span className="font-mono opacity-50">/</span>
+            <span className="text-sky-400 font-mono font-bold">{currentWorkspace?.name || 'Workspace A'}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-1" />
+          </button>
+
+          {/* Workspace Switcher Menu */}
+          {isWorkspaceOpen && (
+            <div
+              className={`absolute left-0 mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in p-3 space-y-3 ${
+                isLight
+                  ? 'bg-white border-gray-200 text-gray-900'
+                  : 'bg-[#0E121B] border-white/10 text-white'
+              }`}
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-border/40 px-1">
+                <span className="text-[10px] uppercase font-mono font-bold text-muted-foreground">Select Workspace</span>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold">3 Active Environments</span>
+              </div>
+
+              {/* Workspaces List: Workspace A, Workspace B, Workspace C */}
+              <div className="space-y-1.5">
+                {workspaces.map((ws) => {
+                  const isSelected = currentWorkspace?.id === ws.id;
+                  return (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => {
+                        setWorkspace(ws);
+                        setIsWorkspaceOpen(false);
+                      }}
+                      className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between ${
+                        isSelected
+                          ? isLight
+                            ? 'bg-blue-50 border-blue-200 text-blue-900'
+                            : 'bg-blue-600/15 border-blue-500/40 text-blue-200'
+                          : isLight
+                          ? 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                          : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
+                      }`}
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-bold truncate">{ws.name}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                        </div>
+                        {ws.resources && (
+                          <div className="text-[10px] font-mono text-muted-foreground truncate">
+                            {ws.resources.settings.environment} • {ws.resources.settings.region}
+                          </div>
+                        )}
+                      </div>
+
+                      {ws.resources && (
+                        <div className="flex items-center space-x-1.5 text-[9px] font-mono shrink-0">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            {ws.resources.agents} Agents
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Current Workspace Resource Actions */}
+              {currentWorkspace && (
+                <div className="pt-2 border-t border-border/40 space-y-1.5">
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase font-bold px-1">
+                    {currentWorkspace.name} Resources
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWorkspaceOpen(false);
+                        navigate('/prompt-studio');
+                      }}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Prompts</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWorkspaceOpen(false);
+                        navigate('/second-brain');
+                      }}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                    >
+                      <Brain className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Documents</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWorkspaceOpen(false);
+                        navigate('/agents');
+                      }}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                    >
+                      <Bot className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Agents</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWorkspaceOpen(false);
+                        navigate('/settings');
+                      }}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Settings</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Global Search Trigger */}
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className={`flex items-center space-x-3 px-3.5 py-1.5 rounded-xl border text-sm transition-all w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs transition-all w-32 sm:w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50 touch-manipulation active:scale-95 ${
             isLight
               ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-600'
               : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-400'

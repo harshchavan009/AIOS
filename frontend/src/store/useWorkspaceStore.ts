@@ -7,11 +7,23 @@ export interface Organization {
   plan: string;
 }
 
+export interface WorkspaceResources {
+  prompts: number;
+  documents: number;
+  agents: number;
+  settings: {
+    environment: string;
+    llmProvider: string;
+    region: string;
+  };
+}
+
 export interface Workspace {
   id: string;
   organization_id: string;
   name: string;
   slug: string;
+  resources?: WorkspaceResources;
 }
 
 interface WorkspaceState {
@@ -31,8 +43,42 @@ const DEFAULT_ORGS: Organization[] = [
 ];
 
 const DEFAULT_WORKSPACES: Workspace[] = [
-  { id: 'ws-prod', organization_id: 'org-acme', name: 'Production Agent Cluster', slug: 'production-cluster' },
-  { id: 'ws-[#01]', organization_id: 'org-acme', name: 'SOC-2 Compliance Sandbox', slug: 'soc2-sandbox' }
+  {
+    id: 'ws-a',
+    organization_id: 'org-acme',
+    name: 'Workspace A',
+    slug: 'workspace-a',
+    resources: {
+      prompts: 14,
+      documents: 42,
+      agents: 6,
+      settings: { environment: 'Production', llmProvider: 'OpenAI GPT-4o', region: 'us-east-1' },
+    },
+  },
+  {
+    id: 'ws-b',
+    organization_id: 'org-acme',
+    name: 'Workspace B',
+    slug: 'workspace-b',
+    resources: {
+      prompts: 8,
+      documents: 24,
+      agents: 4,
+      settings: { environment: 'Staging / QA', llmProvider: 'Claude 3.5 Sonnet', region: 'eu-west-1' },
+    },
+  },
+  {
+    id: 'ws-c',
+    organization_id: 'org-acme',
+    name: 'Workspace C',
+    slug: 'workspace-c',
+    resources: {
+      prompts: 19,
+      documents: 88,
+      agents: 10,
+      settings: { environment: 'SOC-2 Sandbox', llmProvider: 'Multi-LLM Mesh', region: 'us-west-2' },
+    },
+  },
 ];
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({

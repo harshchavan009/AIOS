@@ -62,10 +62,10 @@ export const AICopilotWidget: React.FC = () => {
   }, [messages, isOpen]);
 
   const QUICK_PROMPTS = [
-    'Create a Planner Agent',
-    'Compare GPT-4o vs Claude',
-    'Generate Prompt',
-    'Debug Workflow',
+    'How do I deploy?',
+    'How do I create an agent?',
+    'Generate Workflow',
+    'Explain Graph RAG',
   ];
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -91,26 +91,26 @@ export const AICopilotWidget: React.FC = () => {
 
       const qLower = query.toLowerCase();
 
-      if (qLower.includes('planner agent') || qLower.includes('create')) {
+      if (qLower.includes('deploy')) {
         botResponse =
-          "I can help you build a **Planner Agent** powered by LangGraph. A Planner Agent decomposes complex goals into atomic tasks and delegates work across worker nodes.\n\nWould you like to open the Agent Builder with the Planner template pre-loaded?";
+          "**Deploying AIOS Applications & Agents:**\n\n1. **Docker Stack**: Run `docker-compose up --build` for the backend container suite.\n2. **Kubernetes Cluster**: Apply Helm manifests in `infra/k8s/` for enterprise scaling.\n3. **Production API Keys**: Configure gateway endpoints and CORS rules in Platform Settings.\n\nWould you like to manage deployment & environment settings?";
+        actionUrl = '/settings';
+        actionText = 'Open Settings →';
+      } else if (qLower.includes('create') || qLower.includes('agent')) {
+        botResponse =
+          "**Creating an Agent in AIOS:**\n\n1. Open the **Agent Builder**.\n2. Select your base LLM model (e.g. GPT-4o, Claude 3.5 Sonnet, Llama 3).\n3. Define role prompts, memory retention, and tool registries.\n4. Test & deploy your agent to the runtime cluster.";
         actionUrl = '/agent-builder';
         actionText = 'Open Agent Builder →';
-      } else if (qLower.includes('compare') || qLower.includes('gpt-4o') || qLower.includes('claude')) {
+      } else if (qLower.includes('generate') || qLower.includes('workflow')) {
         botResponse =
-          "**GPT-4o vs Claude 3.5 Sonnet Comparison:**\n\n• **OpenAI GPT-4o**: 145ms avg latency, $2.50/1M tokens, 128K context, high function calling speed.\n• **Claude 3.5 Sonnet**: 185ms avg latency, $3.00/1M tokens, 200K context, superior coding & reasoning precision.\n\nYou can run comparative prompt tests side-by-side in the Multi-LLM Playground.";
+          "**Workflow Generation (LangGraph DAGs):**\n\nAIOS synthesizes multi-step agent execution workflows. Connect task planners, vector retrievers, code interpreters, and human review gates into automated DAGs.\n\nYou can test and visualize interactive workflows in the Multi-LLM Playground.";
         actionUrl = '/playground';
-        actionText = 'Open LLM Playground →';
-      } else if (qLower.includes('prompt')) {
+        actionText = 'Open Playground →';
+      } else if (qLower.includes('graph rag') || qLower.includes('graph')) {
         botResponse =
-          "I've generated an **Enterprise RAG Synthesizer Prompt** draft:\n\n```markdown\nSystem: You are an expert RAG response generator. Ground your output strictly on the retrieved Neo4j knowledge graph nodes and Qdrant vector chunks.\n```\n\nYou can test and register this prompt in Prompt Studio.";
-        actionUrl = '/prompt-studio';
-        actionText = 'Open Prompt Studio →';
-      } else if (qLower.includes('debug') || qLower.includes('workflow') || qLower.includes('dag')) {
-        botResponse =
-          "**Workflow Diagnostic Report:**\n\n✓ All 4 LangGraph DAG nodes (Planner, Retriever, Tool, Critic) are healthy.\n✓ FastAPI REST Gateway latency: 12ms\n✓ Redis PubSub cache hit rate: 94.2%\n\nNo deadlocks or worker failures detected.";
-        actionUrl = '/dashboard';
-        actionText = 'View System Dashboard →';
+          "**Graph RAG Architecture:**\n\nGraph RAG unifies **Vector Search (Qdrant)** with **Knowledge Graphs (Neo4j)**.\n\n• **Entity Relationships**: Connects document concepts across graph nodes and edges.\n• **Hybrid Retrieval**: Combines semantic vector matching with multi-hop graph traversal for 40% higher answer accuracy.";
+        actionUrl = '/graph-rag';
+        actionText = 'Explore Graph RAG →';
       } else {
         botResponse = `I've analyzed your query "${query}". AIOS Multi-Agent cluster is online and active with 4 worker nodes. What specific action would you like me to execute?`;
       }
@@ -147,8 +147,8 @@ export const AICopilotWidget: React.FC = () => {
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
           </div>
           <div className="flex flex-col text-left">
-            <span className="text-[10px] uppercase font-mono font-bold text-blue-300 leading-none">Need Help?</span>
-            <span className="text-xs font-extrabold tracking-tight leading-tight">Ask AI Copilot</span>
+            <span className="text-[10px] uppercase font-mono font-bold text-blue-300 leading-none">AI Copilot</span>
+            <span className="text-xs font-extrabold tracking-tight leading-tight">Ask anything</span>
           </div>
         </button>
       )}
@@ -294,7 +294,7 @@ export const AICopilotWidget: React.FC = () => {
               type="text"
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
-              placeholder="Ask Copilot (e.g. Debug Workflow)..."
+              placeholder="Ask Copilot (e.g. How do I deploy?)..."
               className={`flex-1 bg-transparent text-xs font-medium focus:outline-none ${
                 isLight ? 'text-gray-900 placeholder:text-gray-400' : 'text-white placeholder:text-gray-500'
               }`}

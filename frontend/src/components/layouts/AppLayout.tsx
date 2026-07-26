@@ -13,6 +13,7 @@ import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 export const AppLayout: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme } = useThemeStore();
   const { startTicker, stopTicker, updateFromApi } = useLiveTelemetryStore();
 
@@ -51,7 +52,7 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen flex font-sans relative overflow-hidden transition-colors duration-300 ${
+      className={`min-h-screen flex font-sans relative overflow-x-hidden transition-colors duration-300 ${
         isLight
           ? 'bg-[#F5F7FA] text-[#111827]'
           : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#161C28] via-[#0B0E17] to-[#07090F] text-[#FFFFFF]'
@@ -95,19 +96,24 @@ export const AppLayout: React.FC = () => {
         )}
       </div>
 
-      {/* Collapsible macOS Sidebar */}
-      <Sidebar />
+      {/* Responsive Collapsible & Mobile Drawer Sidebar */}
+      <Sidebar
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 z-10 relative">
         {/* Sticky Header Navbar */}
         <Navbar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenOnboarding={() => setIsOnboardingOpen(true)}
         />
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
           <PageTransition>
             <Outlet />
           </PageTransition>

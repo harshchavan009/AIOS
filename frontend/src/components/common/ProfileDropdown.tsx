@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
   Building2,
+  FolderKanban,
   Key,
   CreditCard,
+  Settings as SettingsIcon,
   Keyboard,
   FileText,
   LogOut,
@@ -122,10 +124,11 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           </div>
 
           {/* User Avatar Menu Items */}
-          <div className="p-2 space-y-0.5">
+          <div className="p-2 space-y-0.5" role="menu">
             <button
               type="button"
-              onClick={() => handleNavigate('/settings')}
+              role="menuitem"
+              onClick={() => handleNavigate('/settings?tab=profile')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
@@ -136,7 +139,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
-              onClick={() => handleNavigate('/settings')}
+              role="menuitem"
+              onClick={() => handleNavigate('/settings?tab=organization')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
@@ -147,18 +151,20 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
-              onClick={() => handleNavigate('/analytics')}
+              role="menuitem"
+              onClick={() => handleNavigate('/workspace')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <CreditCard className="w-4 h-4 text-emerald-500" />
-              <span>Billing</span>
+              <FolderKanban className="w-4 h-4 text-indigo-500" />
+              <span>Workspace</span>
             </button>
 
             <button
               type="button"
-              onClick={() => handleNavigate('/settings')}
+              role="menuitem"
+              onClick={() => handleNavigate('/settings?tab=api-keys')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
               }`}
@@ -169,6 +175,31 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
+              role="menuitem"
+              onClick={() => handleNavigate('/settings?tab=billing')}
+              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 text-emerald-500" />
+              <span>Billing</span>
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => handleNavigate('/settings')}
+              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <SettingsIcon className="w-4 h-4 text-purple-500" />
+              <span>Settings</span>
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
               onClick={() => window.open('https://github.com/harshchavan009/AIOS', '_blank')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
@@ -181,6 +212,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             {onOpenOnboarding && (
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   onClose();
                   onOpenOnboarding();
@@ -198,6 +230,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
+              role="menuitem"
               onClick={() => {
                 onClose();
                 onOpenShortcuts();
@@ -207,7 +240,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Keyboard className="w-4 h-4 text-purple-500" />
+                <Keyboard className="w-4 h-4 text-pink-500" />
                 <span>Keyboard Shortcuts</span>
               </div>
               <kbd className={`px-1.5 py-0.5 text-[10px] font-mono border rounded ${isLight ? 'bg-gray-100 border-[#E5E7EB] text-gray-600' : 'bg-[#07090D] border-white/[0.06] text-gray-400'}`}>
@@ -219,11 +252,12 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
             <button
               type="button"
+              role="menuitem"
               onClick={handleLogout}
               className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
