@@ -82,13 +82,88 @@ export const SettingsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [timezone, setTimezone] = useState('UTC-5 (Eastern Time)');
 
-  // API Keys state
+  // Enterprise API Keys State
+  const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
+  const [keyEnv, setKeyEnv] = useState<'Production' | 'Staging'>('Production');
+  const [keyExpiration, setKeyExpiration] = useState('90 Days');
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(['full_access', 'agents:write']);
+
   const [apiKeys, setApiKeys] = useState([
-    { id: 'key-1', name: 'Production Gateway Key', prefix: 'aios_live_8f9a...', created: '2026-07-01', lastUsed: '2 mins ago', status: 'active' },
-    { id: 'key-2', name: 'Staging Integration Worker', prefix: 'aios_live_3k2m...', created: '2026-07-15', lastUsed: '1 hour ago', status: 'active' },
+    {
+      id: 'key-1',
+      name: 'Production Gateway Key',
+      prefix: 'aios_live_sec_8f9a...',
+      created: '2026-07-01',
+      expires: 'Oct 25, 2026 (In 90 days)',
+      lastUsed: '2 mins ago',
+      requestsCount: 14250,
+      rateLimit: '1,000 req/min',
+      scopes: ['full_access', 'agents:write', 'rag:ingest'],
+      env: 'Production',
+      status: 'Active',
+    },
+    {
+      id: 'key-2',
+      name: 'Staging Integration Worker',
+      prefix: 'aios_test_sec_3k2m...',
+      created: '2026-07-15',
+      expires: 'Never',
+      lastUsed: '1 hour ago',
+      requestsCount: 3890,
+      rateLimit: '500 req/min',
+      scopes: ['agents:write', 'prompts:read'],
+      env: 'Staging',
+      status: 'Active',
+    },
+    {
+      id: 'key-3',
+      name: 'Legacy CI/CD Automation Token',
+      prefix: 'aios_test_sec_99xx...',
+      created: '2026-05-10',
+      expires: 'Jul 10, 2026 (Expired)',
+      lastUsed: '18 days ago',
+      requestsCount: 820,
+      rateLimit: '200 req/min',
+      scopes: ['prompts:read'],
+      env: 'Staging',
+      status: 'Revoked',
+    },
   ]);
   const [newKeyName, setNewKeyName] = useState('');
   const [generatedKey, setGeneratedKey] = useState('');
+
+  const handleCreateApiKeyFull = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKeyName.trim()) return;
+
+    const secret = `aios_${keyEnv === 'Production' ? 'live' : 'test'}_sec_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
+    const prefix = `${secret.substring(0, 18)}...`;
+
+    const newKeyItem = {
+      id: `key-${Date.now()}`,
+      name: newKeyName,
+      prefix,
+      created: new Date().toISOString().split('T')[0],
+      expires: keyExpiration === 'Never' ? 'Never' : `In ${keyExpiration}`,
+      lastUsed: 'Just now',
+      requestsCount: 0,
+      rateLimit: '1,000 req/min',
+      scopes: selectedScopes.length > 0 ? selectedScopes : ['full_access'],
+      env: keyEnv,
+      status: 'Active',
+    };
+
+    setApiKeys(prev => [newKeyItem, ...prev]);
+    setGeneratedKey(secret);
+    setNewKeyName('');
+    setShowCreateKeyModal(false);
+
+    addNotification({
+      type: 'key',
+      title: 'Secret API Key Generated',
+      description: `Issued secret key "${newKeyName}" with ${selectedScopes.length} scopes.`,
+    });
+  };
 
   // PATs state
   const [pats, setPats] = useState([
@@ -112,10 +187,53 @@ export const SettingsPage: React.FC = () => {
   const [sessionTimeout, setSessionTimeout] = useState('24h');
   const [ipWhitelist, setIpWhitelist] = useState('192.168.1.0/24, 10.0.0.0/8');
 
-  useEffect(() => {
-    fetchSessions();
-    fetchLoginHistory();
-  }, []);
+  // User Management, Invites, Teams & RBAC Roles State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<'Owner' | 'Admin' | 'Developer' | 'Analyst' | 'Viewer'>('Developer');
+  const [inviteTeam, setInviteTeam] = useState('Core AI Engineering');
+  const [generatedInviteLink, setGeneratedInviteLink] = useState('');
+
+  const [membersList, setMembersList] = useState([
+    { id: 'm-1', name: 'Harsh Chavan', email: 'harsh@aios.dev', role: 'Owner', team: 'Core AI Engineering', status: 'Active', avatar: 'HC' },
+    { id: 'm-2', name: 'Sarah Chen', email: 'sarah.chen@aios.dev', role: 'Admin', team: 'SecOps & Audit', status: 'Active', avatar: 'SC' },
+    { id: 'm-3', name: 'Dr. Aris Thorne', email: 'aris.thorne@aios.dev', role: 'Developer', team: 'AI Research Lab', status: 'Active', avatar: 'AT' },
+    { id: 'm-4', name: 'Alex Mercer', email: 'alex.mercer@aios.dev', role: 'Analyst', team: 'Product Analytics', status: 'Active', avatar: 'AM' },
+    { id: 'm-5', name: 'Elena Rostova', email: 'elena@aios.dev', role: 'Viewer', team: 'SecOps & Audit', status: 'Pending', avatar: 'ER' },
+  ]);
+
+  const [teamsList, setTeamsList] = useState([
+    { id: 't-1', name: 'Core AI Engineering', lead: 'Harsh Chavan', count: 2, icon: Brain },
+    { id: 't-2', name: 'SecOps & Audit', lead: 'Sarah Chen', count: 2, icon: ShieldCheck },
+    { id: 't-3', name: 'AI Research Lab', lead: 'Dr. Aris Thorne', count: 1, icon: Bot },
+    { id: 't-4', name: 'Product Analytics', lead: 'Alex Mercer', count: 1, icon: SlidersHorizontal },
+  ]);
+
+  const handleSendInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || !inviteName.trim()) return;
+
+    const newMember = {
+      id: `m-${Date.now()}`,
+      name: inviteName,
+      email: inviteEmail,
+      role: inviteRole,
+      team: inviteTeam,
+      status: 'Pending',
+      avatar: inviteName.split(' ').map(n => n[0]).join('').toUpperCase(),
+    };
+
+    setMembersList(prev => [newMember, ...prev]);
+    const link = `http://localhost:8000/invite?token=inv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    setGeneratedInviteLink(link);
+
+    addNotification({
+      type: 'workflow',
+      title: 'User Invitation Sent',
+      description: `Invitation sent to ${inviteEmail} with ${inviteRole} role on ${inviteTeam}.`,
+    });
+  };
 
   const handleSaveProfile = async () => {
     const success = await updatePreferences({ full_name: profileName, role: userRole });
@@ -168,8 +286,13 @@ export const SettingsPage: React.FC = () => {
       name: newKeyName,
       prefix: `${newSecret.substring(0, 12)}...`,
       created: 'Just now',
+      expires: 'In 90 days',
       lastUsed: 'Never',
-      status: 'active',
+      requestsCount: 0,
+      rateLimit: '1,000 req/min',
+      scopes: ['full_access'],
+      env: 'Production',
+      status: 'Active',
     };
     setApiKeys([newEntry, ...apiKeys]);
     setGeneratedKey(newSecret);
@@ -498,106 +621,537 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── TAB 4: API KEYS ────────────────────────────────────────────────── */}
+      {/* ── TAB 4: API KEYS, SCOPES, EXPIRATION & USAGE METRICS ──────────────── */}
       {activeTab === 'api-keys' && (
-        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
-            <div>
-              <h3 className="text-lg font-extrabold tracking-tight">Programmatic Service API Keys</h3>
-              <p className="text-xs text-muted-foreground">API keys authenticate worker nodes and REST gateway connections</p>
-            </div>
+        <div className="space-y-6 max-w-5xl animate-fade-in font-sans">
+          {/* Header Bar & Create Trigger */}
+          <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+              <div>
+                <h3 className="text-lg font-extrabold tracking-tight flex items-center space-x-2">
+                  <Key className="w-5 h-5 text-amber-400" />
+                  <span>Programmatic Service API Keys & Scopes</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">Manage API key access control, granular permissions, expiration schedules, and request usage metrics</p>
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={newKeyName}
-                onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder="Key Description (e.g. CI/CD Key)"
-                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-blue-500"
-              />
               <button
                 type="button"
-                onClick={handleCreateApiKey}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shrink-0"
+                onClick={() => {
+                  setShowCreateKeyModal(true);
+                  setGeneratedKey('');
+                }}
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center space-x-2 transition-all shadow-lg shadow-blue-500/20 shrink-0"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create Key</span>
+                <span>Create Secret Key</span>
               </button>
             </div>
-          </div>
 
-          {generatedKey && (
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono space-y-1.5">
-              <div className="text-emerald-400 font-bold">New Secret Key Generated (Copy now, secret won't be shown again):</div>
-              <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 text-white font-bold break-all flex items-center justify-between">
-                <span>{generatedKey}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(generatedKey);
-                    addNotification({ type: 'key', title: 'API Key Copied', description: 'Copied to clipboard.' });
-                  }}
-                  className="p-1.5 hover:bg-white/10 rounded-lg text-gray-300"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-3 font-mono text-xs">
-            {apiKeys.map((k) => (
-              <div key={k.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-foreground">{k.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{k.prefix} • Created: {k.created}</div>
+            {/* Newly Generated Secret Banner */}
+            {generatedKey && (
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono space-y-2 animate-fade-in">
+                <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                  <Check className="w-4 h-4" />
+                  <span>New Secret API Key Generated (Copy now — this secret will never be displayed again):</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Badge variant="success">{k.status.toUpperCase()}</Badge>
+                <div className="p-3 rounded-xl bg-black/60 border border-white/10 text-white font-bold break-all flex items-center justify-between">
+                  <span>{generatedKey}</span>
                   <button
                     type="button"
-                    onClick={() => setApiKeys(apiKeys.filter((item) => item.id !== k.id))}
-                    className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedKey);
+                      addNotification({ type: 'key', title: 'API Key Copied', description: 'Secret key copied to clipboard.' });
+                    }}
+                    className="p-1.5 hover:bg-white/10 rounded-lg text-gray-300 transition-colors shrink-0 ml-2"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Copy className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* API Keys Cards List */}
+            <div className="space-y-4">
+              {apiKeys.map((k) => (
+                <div
+                  key={k.id}
+                  className={`p-5 rounded-2xl border transition-all space-y-3.5 ${
+                    isLight ? 'bg-white border-gray-200' : 'bg-white/5 border-white/10'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
+                        <Key className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-sm text-foreground flex items-center space-x-2">
+                          <span>{k.name}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            k.env === 'Production' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' : 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
+                          }`}>
+                            {k.env}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono">{k.prefix} • Created: {k.created}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Badge variant={k.status === 'Active' ? 'success' : 'destructive'}>
+                        {k.status.toUpperCase()}
+                      </Badge>
+                      {k.status === 'Active' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setApiKeys(apiKeys.map(item => item.id === k.id ? { ...item, status: 'Revoked' } : item));
+                            addNotification({ type: 'key', title: 'API Key Revoked', description: `Revoked key "${k.name}".` });
+                          }}
+                          className="px-3 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-mono font-bold transition-colors"
+                        >
+                          Revoke Key
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Metadata Row: Usage, Expiration, Rate Limit & Scopes */}
+                  <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                    {/* Usage Stats */}
+                    <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                      <div><span className="text-foreground font-bold">{k.requestsCount.toLocaleString()}</span> total requests</div>
+                      <div>Last used: <span className="text-foreground font-bold">{k.lastUsed}</span></div>
+                      <div>Expires: <span className="text-foreground font-bold">{k.expires}</span></div>
+                      <div>Rate limit: <span className="text-foreground font-bold">{k.rateLimit}</span></div>
+                    </div>
+
+                    {/* Scopes Badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {k.scopes.map((s) => (
+                        <span key={s} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-blue-400 text-[10px]">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Create API Key Modal Dialog */}
+          {showCreateKeyModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
+              <div className={`w-full max-w-lg p-6 rounded-3xl border shadow-2xl space-y-5 ${isLight ? 'bg-white border-gray-200' : 'bg-[#0E121B] border-white/10'}`}>
+                <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                      <Key className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-foreground">Create Programmatic API Key</h3>
+                      <p className="text-xs text-muted-foreground">Configure name, environment, expiration, and granular scopes</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateKeyModal(false)}
+                    className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateApiKeyFull} className="space-y-4 text-xs font-mono">
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground font-bold uppercase">Key Description / Label</label>
+                    <input
+                      type="text"
+                      required
+                      value={newKeyName}
+                      onChange={(e) => setNewKeyName(e.target.value)}
+                      placeholder="e.g. CI/CD Deployment Gateway Worker"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-bold uppercase">Environment</label>
+                      <select
+                        value={keyEnv}
+                        onChange={(e) => setKeyEnv(e.target.value as any)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0E121B] border border-white/10 text-foreground focus:outline-none"
+                      >
+                        <option value="Production">Production Cluster</option>
+                        <option value="Staging">Staging Sandbox</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-bold uppercase">Expiration Duration</label>
+                      <select
+                        value={keyExpiration}
+                        onChange={(e) => setKeyExpiration(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0E121B] border border-white/10 text-foreground focus:outline-none"
+                      >
+                        <option value="30 Days">30 Days</option>
+                        <option value="60 Days">60 Days</option>
+                        <option value="90 Days">90 Days</option>
+                        <option value="1 Year">1 Year</option>
+                        <option value="Never">Never (No Expiration)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Scopes Selection Checkboxes */}
+                  <div className="space-y-2 pt-1">
+                    <label className="text-muted-foreground font-bold uppercase">Select Granular API Scopes</label>
+                    <div className="space-y-2 bg-white/5 p-3 rounded-2xl border border-white/10">
+                      {[
+                        { scope: 'full_access', label: 'Full Access (All REST & Streaming APIs)' },
+                        { scope: 'agents:write', label: 'Agents: Execute Swarms & Deploy Workflows' },
+                        { scope: 'prompts:read', label: 'Prompts: Read System Prompts & Guardrails' },
+                        { scope: 'rag:ingest', label: 'Graph RAG: Index Documents & Repositories' },
+                        { scope: 'analytics:read', label: 'Analytics: Query Cost & Telemetry Metrics' },
+                      ].map((item) => {
+                        const isChecked = selectedScopes.includes(item.scope);
+                        return (
+                          <label key={item.scope} className="flex items-center space-x-2.5 cursor-pointer text-xs">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedScopes(selectedScopes.filter(s => s !== item.scope));
+                                } else {
+                                  setSelectedScopes([...selectedScopes, item.scope]);
+                                }
+                              }}
+                              className="w-4 h-4 accent-blue-500 rounded"
+                            />
+                            <span className={isChecked ? 'text-foreground font-bold' : 'text-muted-foreground'}>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end space-x-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateKeyModal(false)}
+                      className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-foreground font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20"
+                    >
+                      Generate Key
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── TAB 5: TEAM MEMBERS ────────────────────────────────────────────── */}
+      {/* ── TAB 5: TEAM MEMBERS, ROLES, PERMISSIONS & TEAMS ───────────────────────── */}
       {activeTab === 'team' && (
-        <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-4xl animate-fade-in">
-          <div className="flex items-center justify-between pb-4 border-b border-border/60">
-            <div>
-              <h3 className="text-lg font-extrabold tracking-tight">5-Tier RBAC Team Members</h3>
-              <p className="text-xs text-muted-foreground">Manage organization access control roles (Owner, Admin, Developer, Analyst, Viewer)</p>
+        <div className="space-y-8 animate-fade-in">
+          {/* Header & Invite Trigger */}
+          <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-5xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+              <div>
+                <h3 className="text-lg font-extrabold tracking-tight flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  <span>5-Role RBAC Team Directory & User Management</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">Manage multi-tenant organization access, assign roles, and invite team members</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInviteModal(true);
+                  setGeneratedInviteLink('');
+                }}
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center space-x-2 transition-all shadow-lg shadow-blue-500/20 shrink-0"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Invite Team Member</span>
+              </button>
             </div>
-            <Badge variant="info">5 Members Active</Badge>
+
+            {/* Member Directory List */}
+            <div className="space-y-3">
+              {membersList.map((m) => (
+                <div
+                  key={m.id}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                    isLight ? 'bg-white border-gray-200' : 'bg-white/5 border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md">
+                      {m.avatar}
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-sm text-foreground flex items-center space-x-2">
+                        <span>{m.name}</span>
+                        {m.status === 'Pending' && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-mono font-bold">
+                            Pending Invite
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">{m.email} • {m.team}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    {/* Role Dropdown */}
+                    <select
+                      value={m.role}
+                      onChange={(e) => {
+                        const newRole = e.target.value as any;
+                        setMembersList(membersList.map(item => item.id === m.id ? { ...item, role: newRole } : item));
+                        addNotification({ type: 'workflow', title: 'Role Updated', description: `${m.name}'s role updated to ${newRole}.` });
+                      }}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold focus:outline-none ${
+                        m.role === 'Owner'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                          : m.role === 'Admin'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                          : m.role === 'Developer'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                          : m.role === 'Analyst'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                          : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                      }`}
+                    >
+                      <option value="Owner" className="bg-[#0E121B] text-purple-400">👑 Owner</option>
+                      <option value="Admin" className="bg-[#0E121B] text-blue-400">🛡️ Admin</option>
+                      <option value="Developer" className="bg-[#0E121B] text-emerald-400">💻 Developer</option>
+                      <option value="Analyst" className="bg-[#0E121B] text-amber-400">📊 Analyst</option>
+                      <option value="Viewer" className="bg-[#0E121B] text-gray-400">👁️ Viewer</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMembersList(membersList.filter(item => item.id !== m.id));
+                        addNotification({ type: 'workflow', title: 'Member Removed', description: `Removed ${m.name} from organization.` });
+                      }}
+                      className="p-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors"
+                      title="Remove Member"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {[
-              { name: 'Senior AI Systems Architect', role: 'Owner', email: 'engineer@aios.enterprise' },
-              { name: 'DevOps & Infra Lead', role: 'Admin', email: 'admin@aios.enterprise' },
-              { name: 'ML Engineer', role: 'Developer', email: 'dev@aios.enterprise' },
-              { name: 'Data Analyst', role: 'Analyst', email: 'analyst@aios.enterprise' },
-              { name: 'Security Auditor', role: 'Viewer', email: 'auditor@aios.enterprise' },
-            ].map((m, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
-                <div>
-                  <div className="font-extrabold text-foreground">{m.name}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{m.email}</div>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 font-mono font-bold border border-blue-500/20">
-                  {m.role}
-                </span>
+          {/* Departmental Teams Grid */}
+          <div className="glass-card p-6 md:p-8 rounded-3xl space-y-5 max-w-5xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+              <div>
+                <h3 className="text-base font-extrabold tracking-tight">Departmental Teams & Workgroups</h3>
+                <p className="text-xs text-muted-foreground">Group users into team scopes with specific project access</p>
               </div>
-            ))}
+              <Badge variant="info">{teamsList.length} Teams</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {teamsList.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <div key={t.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-mono font-bold text-muted-foreground">{t.count} members</span>
+                    </div>
+                    <div className="font-extrabold text-sm text-foreground">{t.name}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">Lead: {t.lead}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+
+          {/* 5-Role RBAC Permissions Matrix Grid */}
+          <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-5xl">
+            <div>
+              <h3 className="text-base font-extrabold tracking-tight flex items-center space-x-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <span>Granular 5-Role Permissions Matrix</span>
+              </h3>
+              <p className="text-xs text-muted-foreground">Comprehensive Role-Based Access Control (RBAC) scope map</p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono border-collapse">
+                <thead>
+                  <tr className={`border-b ${isLight ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-white/5'}`}>
+                    <th className="p-3 text-muted-foreground font-bold">Permission Scope</th>
+                    <th className="p-3 text-purple-400 font-bold text-center">👑 Owner</th>
+                    <th className="p-3 text-blue-400 font-bold text-center">🛡️ Admin</th>
+                    <th className="p-3 text-emerald-400 font-bold text-center">💻 Developer</th>
+                    <th className="p-3 text-amber-400 font-bold text-center">📊 Analyst</th>
+                    <th className="p-3 text-gray-400 font-bold text-center">👁️ Viewer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {[
+                    { perm: 'Workspace & Security Settings', owner: true, admin: true, dev: false, analyst: false, viewer: false },
+                    { perm: 'Billing & Subscriptions', owner: true, admin: false, dev: false, analyst: false, viewer: false },
+                    { perm: 'User & Team Invites', owner: true, admin: true, dev: false, analyst: false, viewer: false },
+                    { perm: 'API Keys & Gateway Secrets', owner: true, admin: true, dev: false, analyst: false, viewer: false },
+                    { perm: 'Deploy Swarm Agents & DAG Workflows', owner: true, admin: true, dev: true, analyst: false, viewer: false },
+                    { perm: 'Prompts & Graph RAG Indexing', owner: true, admin: true, dev: true, analyst: false, viewer: false },
+                    { perm: 'View Telemetry Analytics & Benchmarks', owner: true, admin: true, dev: true, analyst: true, viewer: false },
+                    { perm: 'Read-Only Infrastructure Logs', owner: true, admin: true, dev: true, analyst: true, viewer: true },
+                  ].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="p-3 font-semibold text-foreground">{row.perm}</td>
+                      <td className="p-3 text-center">{row.owner ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-muted-foreground/30">•</span>}</td>
+                      <td className="p-3 text-center">{row.admin ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-muted-foreground/30">•</span>}</td>
+                      <td className="p-3 text-center">{row.dev ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-muted-foreground/30">•</span>}</td>
+                      <td className="p-3 text-center">{row.analyst ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-muted-foreground/30">•</span>}</td>
+                      <td className="p-3 text-center">{row.viewer ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-muted-foreground/30">•</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Invite User Modal */}
+          {showInviteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
+              <div className={`w-full max-w-lg p-6 rounded-3xl border shadow-2xl space-y-5 ${isLight ? 'bg-white border-gray-200' : 'bg-[#0E121B] border-white/10'}`}>
+                <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-foreground">Invite Team Member</h3>
+                      <p className="text-xs text-muted-foreground">Assign RBAC role and departmental team</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteModal(false)}
+                    className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSendInvite} className="space-y-4 text-xs font-mono">
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground font-bold uppercase">Member Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      placeholder="e.g. Jordan Vance"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground font-bold uppercase">Work Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="jordan@enterprise.com"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-bold uppercase">Assign RBAC Role</label>
+                      <select
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value as any)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0E121B] border border-white/10 text-foreground focus:outline-none"
+                      >
+                        <option value="Owner">👑 Owner</option>
+                        <option value="Admin">🛡️ Admin</option>
+                        <option value="Developer">💻 Developer</option>
+                        <option value="Analyst">📊 Analyst</option>
+                        <option value="Viewer">👁️ Viewer</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-bold uppercase">Department Team</label>
+                      <select
+                        value={inviteTeam}
+                        onChange={(e) => setInviteTeam(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0E121B] border border-white/10 text-foreground focus:outline-none"
+                      >
+                        <option value="Core AI Engineering">Core AI Engineering</option>
+                        <option value="SecOps & Audit">SecOps & Audit</option>
+                        <option value="AI Research Lab">AI Research Lab</option>
+                        <option value="Product Analytics">Product Analytics</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {generatedInviteLink && (
+                    <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5">
+                      <div className="text-emerald-400 font-bold text-[11px]">Invitation Token Link Created:</div>
+                      <div className="p-2 rounded-lg bg-black/60 border border-white/10 text-[10px] text-white flex items-center justify-between break-all">
+                        <span>{generatedInviteLink}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedInviteLink);
+                            addNotification({ type: 'workflow', title: 'Invite Link Copied', description: 'Copied to clipboard.' });
+                          }}
+                          className="p-1 hover:bg-white/10 rounded text-gray-300 shrink-0 ml-2"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end space-x-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowInviteModal(false)}
+                      className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-foreground font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20"
+                    >
+                      Send Invitation
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
