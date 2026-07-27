@@ -1,305 +1,426 @@
-🚀 Overview
-AIOS (Artificial Intelligence Operating System) is a production-inspired Enterprise AI Platform designed to help organizations build, manage, orchestrate, and deploy intelligent AI applications from a single unified interface.
-Unlike traditional AI chatbots, AIOS combines Multi-Agent AI, Graph RAG, Knowledge Management, Prompt Engineering, LLM Evaluation, and Enterprise Analytics into a scalable platform that mirrors the architecture of modern enterprise AI systems.
-The project is built to demonstrate real-world AI engineering practices, modular architecture, and production-ready software design.
-✨ Key Features
-🔐 Enterprise Authentication
-Secure JWT Authentication
-Refresh Token Management
-Role-Based Access Control (RBAC)
-Multi-Tenant Organizations
-Workspace Management
-Session Persistence
-Secure API Key Storage
-🤖 AI Playground
-Compare multiple Large Language Models in a single workspace.
-Supported Providers
-OpenAI
-Anthropic Claude
-Google Gemini
-Meta Llama
-Groq
-Ollama (Local Models)
-Features
-Side-by-side comparison
-Live streaming responses
-Token analytics
-Cost estimation
-Latency benchmarking
-Prompt templates
-Conversation history
-📝 Prompt Studio
-Enterprise prompt engineering environment.
-Features include:
-Prompt Library
-Prompt Versioning
-Variable Injection
-Approval Workflow
-Prompt Testing
-Prompt History
-Prompt Sharing
-Live Preview
-Performance Metrics
-🧠 Multi-Agent Studio
-Design intelligent autonomous workflows.
-Available Agents
-Planner Agent
-Research Agent
-Retriever Agent
-Memory Agent
-Reasoning Agent
-Critic Agent
-Response Agent
-Python Execution Agent
-SQL Agent
-Tool Agent
-🎨 Visual Agent Builder
-A drag-and-drop interface for designing AI workflows.
-Features
-Node-based editor
-LangGraph DAG generation
-Workflow simulation
-Conditional routing
-Tool execution
-Memory integration
-Export / Import JSON
-Execution visualization
-📚 Graph RAG Engine
-Enterprise Retrieval-Augmented Generation powered by Vector Search and Knowledge Graphs.
-Capabilities
-PDF Upload
-DOCX Upload
-PPTX Upload
-Markdown Support
-Text Files
-OCR Processing
-Semantic Chunking
-Embedding Generation
-Hybrid Search
-Graph RAG
-Source Citation
-Incremental Indexing
-🗂 Enterprise Knowledge Base
-Unified enterprise knowledge management.
-Supported Sources
-GitHub
-Google Drive
-Notion
-Slack
-Confluence
-SharePoint
-Local Files
-APIs
-Features
-Automatic Synchronization
-Metadata Extraction
-Document Versioning
-Enterprise Search
-Access Control
-📊 Evaluation Studio
-Evaluate LLM quality using modern benchmarking frameworks.
-Metrics
-Faithfulness
-Groundedness
-Relevance
-Hallucination Detection
-Precision
-Recall
-Latency
-Token Usage
-Cost Analysis
-Frameworks
-RAGAS
-DeepEval
-Promptfoo
-🛒 Agent Marketplace
-Enterprise marketplace for reusable AI agents.
-Features
-Install Agents
-Publish Agents
-Clone Workflows
-Share Templates
-Ratings & Reviews
-Community Library
-📈 Enterprise Analytics
-Real-time operational insights.
-Dashboard includes
-Token Usage
-API Requests
-System Health
-Agent Performance
-Cost Analytics
-User Activity
-Model Latency
-Workflow Statistics
-⚙ Enterprise Administration
-Organization management features.
-Teams
-Workspaces
-RBAC
-API Keys
-Audit Logs
-Security Policies
-User Management
-Model Permissions
-🏛 System Architecture
-                           AIOS PLATFORM
+<div align="center">
 
-                      React + TypeScript UI
-                               │
-                               ▼
-                     FastAPI API Gateway
-                               │
-        ┌──────────────────────────────────────────────┐
-        │ Authentication & Authorization               │
-        │ Multi-Agent Orchestration                    │
-        │ Graph RAG Engine                             │
-        │ Prompt Studio                                │
-        │ Knowledge Management                         │
-        │ Evaluation Studio                            │
-        │ Analytics & Monitoring                       │
-        └──────────────────────────────────────────────┘
-                               │
-         ┌───────────────┬───────────────┬───────────────┐
-         ▼               ▼               ▼
-    PostgreSQL         Redis          Neo4j
-         │                               │
-         ▼                               ▼
-     User Data                  Knowledge Graph
-                               │
-                               ▼
-                           Qdrant Vector DB
-                               │
-                               ▼
-              OpenAI • Claude • Gemini • Llama • Groq
-🛠 Technology Stack
-Frontend
-React
-TypeScript
-Tailwind CSS
-Vite
-Zustand
-React Query
-Framer Motion
-React Router
-Backend
-FastAPI
-SQLAlchemy
-Alembic
-Celery
-Pydantic
-AI & Machine Learning
-LangGraph
-LangChain
-LlamaIndex
-OpenAI API
-Anthropic API
-Google Gemini API
-Databases
-PostgreSQL
-Redis
-Neo4j
-Qdrant
-DevOps
-Docker
-Docker Compose
-GitHub Actions
-Nginx
-📁 Project Structure
-AIOS
-│
-├── frontend/
-│   ├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   └── assets/
-│
-├── backend/
-│   ├── api/
-│   ├── core/
-│   ├── auth/
-│   ├── services/
-│   ├── database/
-│   └── models/
-│
-├── agents/
-├── graph_rag/
-├── prompt_studio/
-├── workflows/
-├── evaluation/
-├── knowledge_base/
-├── docker/
-├── docs/
-└── README.md
-🎯 Roadmap
-Completed
-Enterprise Landing Page
-Authentication UI
-Dashboard
-AI Playground
-Prompt Studio
-Visual Agent Builder
-Graph RAG Interface
-Knowledge Base UI
-Evaluation Studio
-Agent Marketplace
-Enterprise Analytics
-Organization Settings
-In Progress
-Multi-Agent Execution Engine
-Graph RAG Backend
-Neo4j Integration
-Qdrant Integration
-JWT Authentication
-Live Streaming Responses
-Document Processing Pipeline
-Real-Time Notifications
-Planned
-Autonomous AI Agents
-MCP Integration
-Voice AI Assistant
-Kubernetes Deployment
-Enterprise SSO
-Slack Integration
-GitHub Integration
-Notion Integration
-Google Drive Connector
-AI Workflow Marketplace
-🚀 Getting Started
-Clone the repository
-git clone https://github.com/your-username/AIOS.git
-cd AIOS
-Frontend
-cd frontend
-npm install
-npm run dev
-Backend
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-📸 Preview
-Add screenshots or GIFs showcasing:
-Landing Page
-Authentication
-Enterprise Dashboard
-AI Playground
-Prompt Studio
-Visual Agent Builder
-Graph RAG
-Knowledge Base
-Analytics Dashboard
-🤝 Contributing
-Contributions are welcome.
-If you would like to improve AIOS, feel free to:
-Fork the repository
-Create a feature branch
-Submit a pull request
-Report issues
-Suggest new features
-📜 License
+# AIOS
+### Enterprise Multi-Agent AI Platform
+
+**Build • Orchestrate • Evaluate • Deploy Intelligent AI Systems**
+
+AIOS is a modern enterprise AI platform that combines Multi-Agent Systems, Graph RAG, Prompt Engineering, Knowledge Management, LLM Evaluation, and Enterprise Analytics into a unified workspace.
+
+---
+
+![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-UI-38BDF8?style=for-the-badge&logo=tailwind-css)
+![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-purple?style=for-the-badge)
+![Neo4j](https://img.shields.io/badge/Neo4j-GraphRAG-green?style=for-the-badge)
+![Qdrant](https://img.shields.io/badge/Qdrant-VectorDB-red?style=for-the-badge)
+
+</div>
+
+---
+
+# Overview
+
+AIOS (Artificial Intelligence Operating System) is a production-inspired enterprise platform for building, managing, and deploying AI-powered applications.
+
+The platform provides an integrated environment for AI engineers, researchers, and developers to design intelligent workflows, manage knowledge, orchestrate multiple AI agents, evaluate large language models, and monitor enterprise AI systems from a single interface.
+
+---
+
+# Key Features
+
+## Enterprise Dashboard
+
+- Real-time infrastructure monitoring
+- Live execution pipeline
+- System health monitoring
+- Token analytics
+- Worker status
+- Cost monitoring
+- Database monitoring
+
+---
+
+## AI Playground
+
+Enterprise ChatGPT-style workspace.
+
+Features include:
+
+- Multi-model conversations
+- Streaming responses
+- Conversation history
+- File uploads
+- Hyperparameter controls
+- Prompt customization
+- Model comparison
+
+---
+
+## Prompt Studio
+
+Professional prompt engineering environment.
+
+Features
+
+- Prompt collections
+- Version history
+- Prompt editor
+- Variable injection
+- A/B testing
+- Approval workflow
+- Team collaboration
+- Execution history
+
+---
+
+## Visual Agent Builder
+
+Create AI workflows visually.
+
+Features
+
+- Drag-and-drop node editor
+- Workflow simulation
+- DAG validation
+- JSON export
+- Agent deployment
+- Node configuration
+- LangGraph-inspired workflow design
+
+---
+
+## Multi-Agent Studio
+
+Design and execute intelligent AI pipelines.
+
+Agents include
+
+- Planner Agent
+- Retriever Agent
+- Python Tool
+- Reasoning Agent
+- Critic Agent
+- Response Agent
+
+---
+
+## Graph RAG Engine
+
+Enterprise Retrieval-Augmented Generation system.
+
+Supports
+
+- Document upload
+- Semantic chunking
+- Vector embeddings
+- Neo4j Knowledge Graph
+- Qdrant Vector Search
+- Hybrid Retrieval
+- Citation-ready responses
+
+---
+
+## Second Brain
+
+Personal enterprise knowledge vault.
+
+Features
+
+- Document storage
+- Semantic memory
+- Intelligent search
+- Long-term AI memory
+- Knowledge retrieval
+
+---
+
+## Model Registry
+
+Centralized LLM management.
+
+Supported providers
+
+- OpenAI
+- Anthropic
+- Google AI
+- Groq
+- Together AI
+- OpenRouter
+
+Includes
+
+- Availability monitoring
+- Pricing
+- Latency
+- Context length
+- Capability tracking
+
+---
+
+## Evaluation Studio
+
+Evaluate LLM quality using enterprise benchmarks.
+
+Metrics
+
+- Faithfulness
+- Groundedness
+- Hallucination Detection
+- Relevance
+- Model comparison
+
+---
+
+## Knowledge Base
+
+Unified enterprise data management.
+
+Designed for
+
+- PDFs
+- GitHub
+- Google Drive
+- Notion
+- Slack
+- Local Documents
+
+---
+
+## Agent Marketplace
+
+Deploy and manage reusable AI agents.
+
+Features
+
+- Publish agents
+- Clone workflows
+- Deploy templates
+- Organization sharing
+
+---
+
+## REST API Explorer
+
+Interactive API testing interface.
+
+- Live API documentation
+- Request builder
+- Response preview
+- Code snippets
+- OpenAPI integration
+
+---
+
+## Enterprise Analytics
+
+Organization-wide AI monitoring.
+
+Includes
+
+- Cost analytics
+- Token usage
+- Execution logs
+- Performance dashboards
+- Audit monitoring
+
+---
+
+## Platform Settings
+
+Enterprise administration.
+
+- User profile
+- API keys
+- OAuth
+- Billing
+- Security
+- RBAC
+- Audit logs
+- Organization management
+
+---
+
+# Technology Stack
+
+### Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+
+### Backend
+
+- FastAPI
+- Python
+- REST APIs
+
+### AI Technologies
+
+- Multi-Agent Architecture
+- Graph RAG
+- Prompt Engineering
+- Semantic Search
+- LLM Orchestration
+
+### Databases
+
+- PostgreSQL
+- Neo4j
+- Qdrant
+- Redis
+
+### DevOps
+
+- Docker
+- GitHub
+- GitHub Actions
+
+---
+
+# Platform Modules
+
+- Enterprise Dashboard
+- AI Playground
+- Prompt Studio
+- Visual Agent Builder
+- Multi-Agent Studio
+- Graph RAG
+- Second Brain
+- Model Registry
+- Evaluation Studio
+- Knowledge Base
+- Agent Marketplace
+- REST API Explorer
+- Enterprise Analytics
+- Platform Settings
+
+---
+
+# Project Goals
+
+AIOS aims to simplify enterprise AI development by bringing together:
+
+- Multi-Agent Orchestration
+- Knowledge Management
+- Prompt Engineering
+- AI Evaluation
+- Graph RAG
+- Enterprise Monitoring
+- Model Management
+- AI Workflow Automation
+
+into a single production-ready platform.
+
+---
+
+# Roadmap
+
+### Completed
+
+- Modern Landing Page
+- Authentication
+- Enterprise Dashboard
+- AI Playground
+- Prompt Studio
+- Visual Agent Builder
+- Multi-Agent Studio
+- Graph RAG Interface
+- Second Brain
+- Model Registry
+- Evaluation Studio
+- Knowledge Base
+- Agent Marketplace
+- REST API Explorer
+- Enterprise Analytics
+- Platform Settings
+
+---
+
+### Upcoming
+
+- Real Multi-Agent Execution
+- LangGraph Integration
+- Live Graph Visualization
+- Document Processing Pipeline
+- OAuth Authentication
+- Knowledge Connectors
+- Workflow Marketplace
+- Kubernetes Deployment
+- CI/CD Pipeline
+- Production Monitoring
+
+---
+
+# Screenshots
+
+Add screenshots of:
+
+- Landing Page
+- Authentication
+- Dashboard
+- AI Playground
+- Prompt Studio
+- Visual Agent Builder
+- Graph RAG
+- Evaluation Studio
+- Analytics
+- Knowledge Base
+
+---
+
+# Why AIOS?
+
+Unlike traditional AI chat applications, AIOS provides a unified enterprise platform that combines AI workflow orchestration, knowledge management, Graph RAG, prompt engineering, model evaluation, and enterprise monitoring into a scalable ecosystem for modern AI development.
+
+---
+
+# Future Enhancements
+
+- Live Multi-Agent Execution
+- Voice AI
+- MCP Integration
+- Autonomous Workflows
+- Plugin Marketplace
+- Mobile Application
+- Distributed Agent Clusters
+- Enterprise SSO
+- Cloud Deployment
+
+---
+
+# Contributing
+
+Contributions, feature requests, and improvements are welcome.
+
+Please feel free to fork the repository, create a feature branch, and submit a pull request.
+
+---
+
+# License
+
 This project is licensed under the MIT License.
-👨‍💻 Author
-Harsh Chavan
+
+---
+
+# Author
+
+**Harsh Chavan**
+
 B.Tech Computer Science Engineering (Artificial Intelligence & Machine Learning)
-Passionate about building Enterprise AI Systems, Multi-Agent Architectures, Graph RAG, Retrieval-Augmented Generation, and Large Language Model Applications.
+
+Passionate about Enterprise AI Systems, Multi-Agent Architectures, Graph RAG, and Intelligent Software Engineering.
+
+---
+
+<div align="center">
+
+⭐ Star this repository if you found it useful.
+
+**Building the Future of Enterprise AI.**
+
+</div>
