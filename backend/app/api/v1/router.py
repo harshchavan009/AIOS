@@ -11,6 +11,9 @@ from app.api.v1.studio import router as studio_router
 from app.api.v1.apps import router as apps_router
 from app.api.v1.tools import router as tools_router
 from app.api.v1.observability import router as observability_router
+from app.api.v1.jobs import router as jobs_router
+from app.api.v1.workers import router as workers_router
+from app.api.v1.billing import router as billing_router
 
 api_router = APIRouter()
 
@@ -26,3 +29,6 @@ api_router.include_router(studio_router)
 api_router.include_router(apps_router)
 api_router.include_router(tools_router)
 api_router.include_router(observability_router)
+api_router.include_router(jobs_router)
+api_router.include_router(workers_router)
+api_router.include_router(billing_router)

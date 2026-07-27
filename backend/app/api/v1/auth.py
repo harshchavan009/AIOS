@@ -34,6 +34,8 @@ from app.schemas.user import (
     CreateWorkspaceInviteRequest,
     AcceptInviteRequest,
     InviteResponse,
+    UserUpdate,
+    AvatarUploadRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -551,3 +553,58 @@ async def logout(current_user: User = Depends(get_current_user)):
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """Get currently authenticated user profile."""
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+@router.put("/me", response_model=UserResponse)
+async def update_current_user_profile(
+    payload: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update profile preferences, full name, role, and avatar URL."""
+    if payload.full_name is not None:
+        current_user.full_name = payload.full_name
+    if payload.role is not None:
+        current_user.role = normalize_role(payload.role)
+    if payload.avatar_url is not None:
+        current_user.avatar_url = payload.avatar_url
+
+    await db.commit()
+    await db.refresh(current_user)
+    logger.info(f"Updated profile for user {current_user.email}")
+    return current_user
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+async def upload_profile_avatar(
+    payload: AvatarUploadRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Upload or update profile picture avatar URL."""
+    current_user.avatar_url = payload.avatar_data
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+
+@router.delete("/me")
+async def delete_current_user_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Deactivate user account, revoke active sessions, and wipe credentials."""
+    logger.info(f"Account deletion requested for email='{current_user.email}'")
+    
+    # Revoke all active sessions
+    await db.execute(
+        update(UserSession)
+        .where(UserSession.user_id == current_user.id)
+        .values(is_revoked=True)
+    )
+    
+    current_user.is_active = False
+    await db.commit()
+    
+    return {"message": "Account successfully deleted and all active sessions revoked.", "email": current_user.email}

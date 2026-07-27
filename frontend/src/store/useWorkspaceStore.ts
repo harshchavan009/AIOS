@@ -8,10 +8,17 @@ export interface Organization {
 }
 
 export interface WorkspaceResources {
-  prompts: number;
+  users?: number;
   documents: number;
+  apiKeys?: number;
   agents: number;
-  settings: {
+  prompts: number;
+  analytics?: {
+    tokens_today: number;
+    cost_today_usd: number;
+    environment?: string;
+  };
+  settings?: {
     environment: string;
     llmProvider: string;
     region: string;
@@ -44,39 +51,78 @@ const DEFAULT_ORGS: Organization[] = [
 
 const DEFAULT_WORKSPACES: Workspace[] = [
   {
-    id: 'ws-a',
+    id: 'ws-startup',
     organization_id: 'org-acme',
-    name: 'Workspace A',
-    slug: 'workspace-a',
+    name: 'My Startup',
+    slug: 'my-startup',
     resources: {
-      prompts: 14,
-      documents: 42,
-      agents: 6,
-      settings: { environment: 'Production', llmProvider: 'OpenAI GPT-4o', region: 'us-east-1' },
-    },
-  },
-  {
-    id: 'ws-b',
-    organization_id: 'org-acme',
-    name: 'Workspace B',
-    slug: 'workspace-b',
-    resources: {
-      prompts: 8,
-      documents: 24,
+      users: 4,
+      documents: 18,
+      apiKeys: 3,
       agents: 4,
-      settings: { environment: 'Staging / QA', llmProvider: 'Claude 3.5 Sonnet', region: 'eu-west-1' },
+      prompts: 12,
+      analytics: { tokens_today: 480000, cost_today_usd: 8.64, environment: 'SaaS MVP (Production)' },
+      settings: { environment: 'SaaS MVP', llmProvider: 'OpenAI GPT-4o', region: 'us-east-1' },
     },
   },
   {
-    id: 'ws-c',
+    id: 'ws-openai',
     organization_id: 'org-acme',
-    name: 'Workspace C',
-    slug: 'workspace-c',
+    name: 'OpenAI Team',
+    slug: 'openai-team',
     resources: {
-      prompts: 19,
-      documents: 88,
+      users: 8,
+      documents: 64,
+      apiKeys: 6,
+      agents: 8,
+      prompts: 35,
+      analytics: { tokens_today: 2400000, cost_today_usd: 43.20, environment: 'GPT-4o Inference Cluster' },
+      settings: { environment: 'LLM Cluster', llmProvider: 'OpenAI GPT-4o / O3', region: 'us-west-2' },
+    },
+  },
+  {
+    id: 'ws-finance',
+    organization_id: 'org-acme',
+    name: 'Finance Team',
+    slug: 'finance-team',
+    resources: {
+      users: 5,
+      documents: 112,
+      apiKeys: 4,
+      agents: 6,
+      prompts: 22,
+      analytics: { tokens_today: 1100000, cost_today_usd: 19.80, environment: 'SOC-2 Enforced Vault' },
+      settings: { environment: 'SOC-2 Enforced', llmProvider: 'Claude 3.5 Sonnet', region: 'us-east-1' },
+    },
+  },
+  {
+    id: 'ws-healthcare',
+    organization_id: 'org-acme',
+    name: 'Healthcare',
+    slug: 'healthcare',
+    resources: {
+      users: 6,
+      documents: 95,
+      apiKeys: 5,
+      agents: 5,
+      prompts: 18,
+      analytics: { tokens_today: 950000, cost_today_usd: 17.10, environment: 'HIPAA Compliant Sandbox' },
+      settings: { environment: 'HIPAA Vault', llmProvider: 'Google Gemini 1.5 Pro', region: 'eu-west-1' },
+    },
+  },
+  {
+    id: 'ws-research',
+    organization_id: 'org-acme',
+    name: 'Research Lab',
+    slug: 'research-lab',
+    resources: {
+      users: 10,
+      documents: 140,
+      apiKeys: 8,
       agents: 10,
-      settings: { environment: 'SOC-2 Sandbox', llmProvider: 'Multi-LLM Mesh', region: 'us-west-2' },
+      prompts: 45,
+      analytics: { tokens_today: 3800000, cost_today_usd: 68.40, environment: 'Deep Learning & Graph RAG' },
+      settings: { environment: 'Graph RAG Mesh', llmProvider: 'Multi-Model Swarm', region: 'us-west-1' },
     },
   },
 ];

@@ -43,6 +43,8 @@ export type CommandCategory =
   | 'Documents'
   | 'Models'
   | 'Users'
+  | 'APIs'
+  | 'Chats'
   | 'Actions';
 
 interface CommandItem {
@@ -395,7 +397,67 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       action: () => handleNavigate('/settings'),
     },
 
-    // ── 9. Actions ────────────────────────────────────────────────────────────
+    // ── 9. APIs ───────────────────────────────────────────────────────────────
+    {
+      id: 'api-upload-stream',
+      title: 'POST /api/v1/rag/upload/stream',
+      subtitle: 'Stream 9-stage Graph RAG upload pipeline (OCR ➔ Neo4j ➔ Qdrant)',
+      category: 'APIs',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
+    },
+    {
+      id: 'api-github-ingest',
+      title: 'POST /api/v1/rag/github',
+      subtitle: 'Clone and index GitHub repository into Graph RAG pipeline',
+      category: 'APIs',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
+    },
+    {
+      id: 'api-hybrid-query',
+      title: 'POST /api/v1/rag/query',
+      subtitle: 'Execute hybrid vector similarity search + 3-hop Neo4j entity traversal',
+      category: 'APIs',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
+    },
+    {
+      id: 'api-billing-subscription',
+      title: 'GET /api/v1/billing/subscription',
+      subtitle: 'Fetch active subscription plan, token usage metrics & invoice history',
+      category: 'APIs',
+      icon: Code2,
+      action: () => handleNavigate('/api-explorer'),
+    },
+
+    // ── 10. Chats ─────────────────────────────────────────────────────────────
+    {
+      id: 'chat-thread-1',
+      title: 'Graph RAG & LangGraph DAG Conversation Thread',
+      subtitle: 'Live AI Playground chat thread with Mermaid diagram & Markdown output',
+      category: 'Chats',
+      icon: Play,
+      action: () => handleNavigate('/playground'),
+    },
+    {
+      id: 'chat-copilot-thread',
+      title: 'AIOS Enterprise Copilot Session',
+      subtitle: 'Bottom-right platform assistant session (7 action commands)',
+      category: 'Chats',
+      icon: Sparkles,
+      action: () => handleNavigate('/playground'),
+    },
+    {
+      id: 'chat-model-arena',
+      title: 'Model Comparison Arena Thread',
+      subtitle: 'GPT-4o vs Claude 3.5 Sonnet side-by-side prompt execution benchmark',
+      category: 'Chats',
+      icon: BarChart3,
+      action: () => handleNavigate('/playground'),
+    },
+
+    // ── 11. Actions ───────────────────────────────────────────────────────────
     {
       id: 'action-create-agent',
       title: 'Create Custom Agent',
@@ -428,14 +490,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   // Category filter tabs list
   const CATEGORIES: Array<string> = [
     'All',
-    'Pages',
     'Prompts',
     'Agents',
-    'Workflows',
-    'Knowledge Base',
     'Documents',
-    'Models',
     'Users',
+    'Workflows',
+    'APIs',
+    'Models',
+    'Chats',
+    'Pages',
   ];
 
   const filteredCommands = COMMANDS.filter((cmd) => {

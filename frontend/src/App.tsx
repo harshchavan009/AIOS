@@ -30,6 +30,7 @@ const GraphRAGPage = lazy(() => import('./pages/GraphRAGPage').then((m) => ({ de
 const AutoDevPage = lazy(() => import('./pages/AutoDevPage').then((m) => ({ default: m.AutoDevPage })));
 const SecondBrainPage = lazy(() => import('./pages/SecondBrainPage').then((m) => ({ default: m.SecondBrainPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
 const ApiExplorerPage = lazy(() => import('./pages/ApiExplorerPage').then((m) => ({ default: m.ApiExplorerPage })));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,6 +100,7 @@ export const App: React.FC = () => {
               <Route path="/documents" element={<SecondBrainPage />} />
               <Route path="/second-brain" element={<SecondBrainPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/billing" element={<BillingPage />} />
               <Route path="/docs" element={<ApiExplorerPage />} />
               <Route path="/api-explorer" element={<ApiExplorerPage />} />
               <Route path="/docs/api" element={<ApiExplorerPage />} />

@@ -43,7 +43,7 @@ export const AnalyticsPage: React.FC = () => {
     streamRateTokensSec,
   } = useLiveTelemetryStore();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [tokenTimeRange, setTokenTimeRange] = useState('24H');
   const [costTimeRange, setCostTimeRange] = useState('7D');
   const [modelTimeRange, setModelTimeRange] = useState('24H');

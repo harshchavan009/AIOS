@@ -19,6 +19,16 @@ class UserLogin(BaseModel):
     remember_me: bool = Field(default=False, description="Extend session duration to 30 days")
 
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    role: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class AvatarUploadRequest(BaseModel):
+    avatar_data: str = Field(..., description="Base64 or image URL string")
+
+
 class UserResponse(UserBase):
     id: str
     is_active: bool

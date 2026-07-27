@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
     setError('');
 
     // If MFA is required or toggled, show MFA step first
-    if (requireMfa || email.includes('admin')) {
+    if (requireMfa) {
       setStep('mfa');
       return;
     }
@@ -72,7 +72,7 @@ export const LoginPage: React.FC = () => {
       addNotification({
         type: 'login',
         title: 'Authentication Successful',
-        description: `Welcome back, ${data.user?.full_name || 'Admin'}!`,
+        description: `Welcome back, ${data.user?.full_name || 'User'}!`,
       });
 
       navigate('/dashboard');
@@ -91,43 +91,53 @@ export const LoginPage: React.FC = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setAuth(
-        {
-          id: 'usr-1',
-          email,
-          full_name: 'AIOS Administrator',
-          role: 'Owner',
-          is_active: true,
-          is_superuser: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        'aios_live_access_token_mfa_verified',
-        'aios_live_refresh_token'
-      );
+    setAuth(
+      {
+        id: 'usr-1',
+        email,
+        full_name: 'AIOS Administrator',
+        role: 'Owner',
+        is_active: true,
+        is_superuser: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      'aios_live_access_token_mfa_verified',
+      'aios_live_refresh_token'
+    );
 
-      addNotification({
-        type: 'login',
-        title: 'MFA Verified & Signed In',
-        description: '2-Factor Authenticator code verified successfully.',
-      });
+    addNotification({
+      type: 'login',
+      title: 'MFA Verified & Signed In',
+      description: '2-Factor Authenticator code verified successfully.',
+    });
 
-      setLoading(false);
-      navigate('/dashboard');
-    }, 600);
+    setLoading(false);
+    navigate('/dashboard');
   };
 
-  const handleForgotPassword = (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotEmail.trim()) return;
 
-    setForgotSent(true);
-    addNotification({
-      type: 'document',
-      title: 'Reset Email Sent',
-      description: `Password reset instructions sent to ${forgotEmail}.`,
-    });
+    try {
+      const res = await fetch('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+      setForgotSent(true);
+      if (res.ok) {
+        const data = await res.json();
+        addNotification({
+          type: 'document',
+          title: 'Reset Email Sent',
+          description: data.message || `Password reset instructions sent to ${forgotEmail}.`,
+        });
+      }
+    } catch (err) {
+      setForgotSent(true);
+    }
   };
 
   const handleOAuth = async (provider: 'google' | 'github' | 'microsoft') => {

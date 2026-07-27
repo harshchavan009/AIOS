@@ -21,6 +21,7 @@ import {
   BarChart2,
   BookOpen,
   Code2,
+  CreditCard,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
     { label: 'Documentation', icon: BookOpen, path: '/docs', badge: 'v1.0' },
     { label: 'REST API Explorer', icon: Code2, path: '/api-explorer' },
     { label: 'Enterprise Analytics', icon: BarChart2, path: '/analytics' },
+    { label: 'SaaS Billing', icon: CreditCard, path: '/billing', badge: '4 Tiers' },
     { label: 'System Settings', icon: SlidersHorizontal, path: '/settings' },
   ];
 

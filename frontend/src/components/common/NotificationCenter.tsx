@@ -82,35 +82,23 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   });
 
   const getIcon = (item: NotificationItem) => {
-    if (item.title.toLowerCase().includes('planner')) {
-      return <Brain className="w-4 h-4 text-purple-400" />;
-    }
-    if (item.title.toLowerCase().includes('retriever')) {
-      return <Database className="w-4 h-4 text-emerald-400" />;
-    }
-    if (item.title.toLowerCase().includes('neo4j') || item.title.toLowerCase().includes('graph')) {
-      return <Network className="w-4 h-4 text-teal-400" />;
-    }
-    if (item.title.toLowerCase().includes('workflow') || item.title.toLowerCase().includes('deployed')) {
-      return <Zap className="w-4 h-4 text-blue-400" />;
-    }
-    if (item.title.toLowerCase().includes('api key') || item.title.toLowerCase().includes('key')) {
-      return <Key className="w-4 h-4 text-amber-400" />;
-    }
-
     switch (item.type) {
-      case 'workflow':
-        return <Zap className="w-4 h-4 text-blue-400" />;
-      case 'document':
-        return <FileText className="w-4 h-4 text-amber-400" />;
-      case 'agent':
-        return <Bot className="w-4 h-4 text-purple-400" />;
-      case 'eval':
-        return <Award className="w-4 h-4 text-pink-400" />;
-      case 'key':
-        return <Key className="w-4 h-4 text-amber-400" />;
-      case 'knowledge':
-        return <Database className="w-4 h-4 text-emerald-400" />;
+      case 'prompt_approved':
+        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+      case 'document_indexed':
+        return <Database className="w-4 h-4 text-sky-400" />;
+      case 'workflow_completed':
+        return <CheckCheck className="w-4 h-4 text-purple-400" />;
+      case 'model_unavailable':
+        return <WifiOff className="w-4 h-4 text-red-400" />;
+      case 'token_limit':
+        return <Zap className="w-4 h-4 text-amber-400" />;
+      case 'agent_failed':
+        return <X className="w-4 h-4 text-red-400" />;
+      case 'billing_reminder':
+        return <Key className="w-4 h-4 text-blue-400" />;
+      case 'deployment_completed':
+        return <Sparkles className="w-4 h-4 text-teal-400" />;
       default:
         return <Bell className="w-4 h-4 text-blue-400" />;
     }

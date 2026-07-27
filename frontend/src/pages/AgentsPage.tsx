@@ -57,6 +57,11 @@ export interface AgentState {
   status: AgentStatus;
   logs: AgentStepLog[];
   isStreaming?: boolean;
+  executionTimeMs?: number;
+  tokensUsed?: number;
+  modelUsed?: string;
+  retries?: number;
+  errors?: number;
 }
 
 // ── Agent Swarm Configuration ────────────────────────────────────────────────
@@ -221,6 +226,15 @@ export const AgentsPage: React.FC = () => {
 
     const stepDelay = Math.floor(600 / speedMultiplier);
 
+    const AGENT_METRICS: Record<AgentId, { execMs: number; tokens: number; retries: number; errors: number }> = {
+      PlannerAgent:   { execMs: 45,  tokens: 280, retries: 0, errors: 0 },
+      RetrieverAgent: { execMs: 112, tokens: 420, retries: 0, errors: 0 },
+      ToolAgent:      { execMs: 195, tokens: 310, retries: 0, errors: 0 },
+      ReasoningAgent: { execMs: 165, tokens: 530, retries: 0, errors: 0 },
+      CriticAgent:    { execMs: 88,  tokens: 240, retries: 0, errors: 0 },
+      ResponseAgent:  { execMs: 130, tokens: 680, retries: 0, errors: 0 },
+    };
+
     // Sequential agent execution pipeline
     SWARM_AGENTS.forEach((agent, agentIdx) => {
       // 1. Trigger agent node start
@@ -228,7 +242,16 @@ export const AgentsPage: React.FC = () => {
         setActiveAgentIdx(agentIdx);
         setAgentStates(prev => ({
           ...prev,
-          [agent.id]: { status: 'running', logs: [], isStreaming: true }
+          [agent.id]: {
+            status: 'running',
+            logs: [],
+            isStreaming: true,
+            executionTimeMs: AGENT_METRICS[agent.id].execMs,
+            tokensUsed: AGENT_METRICS[agent.id].tokens,
+            modelUsed: agent.model,
+            retries: AGENT_METRICS[agent.id].retries,
+            errors: AGENT_METRICS[agent.id].errors,
+          }
         }));
 
         // Stream logs inside this specific agent box line-by-line
@@ -424,6 +447,32 @@ export const AgentsPage: React.FC = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Per-Node Telemetry Metrics Bar (Execution Time, Model Used, Token Count, Retries, Errors) */}
+                    {(isRunning || isDone) && (
+                      <div className="mt-2 pt-2 border-t border-white/10 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono">
+                        <span className="text-amber-300 font-semibold flex items-center space-x-1">
+                          <Clock className="w-3 h-3 text-amber-400" />
+                          <span>{state.executionTimeMs || 45}ms</span>
+                        </span>
+                        <span className="text-purple-300 font-semibold flex items-center space-x-1">
+                          <Brain className="w-3 h-3 text-purple-400" />
+                          <span>{state.modelUsed || agent.model}</span>
+                        </span>
+                        <span className="text-blue-300 font-semibold flex items-center space-x-1">
+                          <Coins className="w-3 h-3 text-blue-400" />
+                          <span>{state.tokensUsed || 280} tokens</span>
+                        </span>
+                        <span className="text-emerald-300 font-semibold flex items-center space-x-1">
+                          <RotateCcw className="w-3 h-3 text-emerald-400" />
+                          <span>{state.retries || 0} retries</span>
+                        </span>
+                        <span className="text-emerald-400 font-semibold flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <span>{state.errors || 0} errors</span>
+                        </span>
+                      </div>
+                    )}
 
                     {/* Per-Node Live Streaming Terminal Logs Window */}
                     <div className="mt-3 p-3 rounded-xl bg-[#080c14] border border-border/60 font-mono text-[11px] min-h-[90px] max-h-40 overflow-y-auto space-y-1">

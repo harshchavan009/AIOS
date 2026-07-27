@@ -67,15 +67,19 @@ export const SettingsPage: React.FC = () => {
     }
   }, [tabParam]);
   const { currentOrganization, currentWorkspace } = useWorkspaceStore();
-  const { user, loginHistory, fetchLoginHistory, sessions, fetchSessions, revokeSession } = useAuthStore();
+  const { user, loginHistory, fetchLoginHistory, sessions, fetchSessions, revokeSession, updatePreferences, uploadAvatar, deleteAccount } = useAuthStore();
   const { theme, toggleTheme, setTheme } = useThemeStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const isLight = theme === 'light';
 
   // State forms
-  const [profileName, setProfileName] = useState(user?.full_name || 'Harsh Chavan');
-  const [profileEmail, setProfileEmail] = useState(user?.email || 'harsh@aios.dev');
+  const [profileName, setProfileName] = useState(user?.full_name || 'AIOS User');
+  const [profileEmail, setProfileEmail] = useState(user?.email || 'user@aios.dev');
+  const [userRole, setUserRole] = useState(user?.role || 'Developer');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [timezone, setTimezone] = useState('UTC-5 (Eastern Time)');
 
   // API Keys state
@@ -113,12 +117,47 @@ export const SettingsPage: React.FC = () => {
     fetchLoginHistory();
   }, []);
 
-  const handleSaveProfile = () => {
-    addNotification({
-      type: 'login',
-      title: 'Profile Updated',
-      description: 'Your account profile settings have been updated.',
-    });
+  const handleSaveProfile = async () => {
+    const success = await updatePreferences({ full_name: profileName, role: userRole });
+    if (success) {
+      addNotification({
+        type: 'login',
+        title: 'Profile Updated',
+        description: 'Your profile details and preferences have been updated.',
+      });
+    }
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      setAvatarPreview(base64);
+      const success = await uploadAvatar(base64);
+      if (success) {
+        addNotification({
+          type: 'login',
+          title: 'Avatar Updated',
+          description: 'Your profile picture avatar has been updated.',
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    const success = await deleteAccount();
+    setIsDeleting(false);
+    if (success) {
+      addNotification({
+        type: 'login',
+        title: 'Account Deleted',
+        description: 'Your account has been deactivated and active sessions revoked.',
+      });
+    }
   };
 
   const handleCreateApiKey = () => {
@@ -238,14 +277,30 @@ export const SettingsPage: React.FC = () => {
       {/* ── TAB 1: PROFILE ─────────────────────────────────────────────────── */}
       {activeTab === 'profile' && (
         <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6 max-w-3xl animate-fade-in">
-          <div className="flex items-center space-x-4 pb-4 border-b border-border/60">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-blue-500/20">
-              {profileName.charAt(0)}
+          <div className="flex items-center justify-between pb-4 border-b border-border/60">
+            <div className="flex items-center space-x-4">
+              <div className="relative group">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile Avatar" className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500/50 shadow-lg shadow-blue-500/20" />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-blue-500/20">
+                    {profileName.charAt(0)}
+                  </div>
+                )}
+                <label className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-[10px] font-bold text-white uppercase tracking-wider">
+                  Upload
+                  <input type="file" accept="image/*" onChange={handleAvatarFileChange} className="hidden" />
+                </label>
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-foreground">{profileName}</h3>
+                <p className="text-xs text-muted-foreground font-mono">{profileEmail} • {userRole} Role</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-foreground">{profileName}</h3>
-              <p className="text-xs text-muted-foreground font-mono">{profileEmail} • Owner Role</p>
-            </div>
+            <label className="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold cursor-pointer text-foreground transition-all">
+              Change Avatar
+              <input type="file" accept="image/*" onChange={handleAvatarFileChange} className="hidden" />
+            </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -264,8 +319,8 @@ export const SettingsPage: React.FC = () => {
               <input
                 type="email"
                 value={profileEmail}
-                onChange={(e) => setProfileEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-foreground focus:outline-none focus:border-blue-500"
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-muted-foreground focus:outline-none cursor-not-allowed"
               />
             </div>
 
@@ -292,6 +347,53 @@ export const SettingsPage: React.FC = () => {
             >
               Save Profile Changes
             </button>
+          </div>
+
+          {/* Danger Zone: Account Deletion */}
+          <div className="pt-6 border-t border-rose-500/30 space-y-3">
+            <h4 className="text-sm font-extrabold text-rose-400 flex items-center space-x-2">
+              <Trash2 className="w-4 h-4" />
+              <span>Danger Zone — Delete Account</span>
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Permanently delete your user account, revoke active sessions, and remove access token authorizations.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-400 text-xs font-bold transition-all"
+            >
+              Delete Account...
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Account Deletion Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="glass-card p-6 rounded-3xl max-w-md w-full border border-rose-500/30 space-y-4">
+            <h3 className="text-lg font-extrabold text-rose-400">Confirm Account Deletion</h3>
+            <p className="text-xs text-muted-foreground">
+              Are you sure you want to delete your AIOS account? This will revoke all your JWT refresh sessions immediately.
+            </p>
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDeleteAccount}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-500/30"
+              >
+                {isDeleting ? 'Deleting...' : 'Confirm Deletion'}
+              </button>
+            </div>
           </div>
         </div>
       )}

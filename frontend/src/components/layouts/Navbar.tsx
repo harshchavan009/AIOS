@@ -90,6 +90,27 @@ export const Navbar: React.FC<NavbarProps> = ({
         return;
       }
 
+      // P: New Prompt (Prompt Studio)
+      if (!isInput && e.key.toLowerCase() === 'p' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        navigate('/prompt-studio');
+        return;
+      }
+
+      // A: New Agent (Agent Builder)
+      if (!isInput && e.key.toLowerCase() === 'a' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        navigate('/agent-builder');
+        return;
+      }
+
+      // D: Dashboard
+      if (!isInput && e.key.toLowerCase() === 'd' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        navigate('/dashboard');
+        return;
+      }
+
       // Cmd + / or Ctrl + /: Keyboard Shortcuts Cheatsheet
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault();
@@ -100,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleTheme, onOpenCommandPalette]);
+  }, [toggleTheme, onOpenCommandPalette, navigate]);
 
   return (
     <header
@@ -154,11 +175,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/40 px-1">
                 <span className="text-[10px] uppercase font-mono font-bold text-muted-foreground">Select Workspace</span>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">3 Active Environments</span>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold">{workspaces.length} Environments Available</span>
               </div>
 
-              {/* Workspaces List: Workspace A, Workspace B, Workspace C */}
-              <div className="space-y-1.5">
+              {/* Workspaces List: My Startup, OpenAI Team, Finance Team, Healthcare, Research Lab */}
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {workspaces.map((ws) => {
                   const isSelected = currentWorkspace?.id === ws.id;
                   return (
@@ -186,7 +207,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         {ws.resources && (
                           <div className="text-[10px] font-mono text-muted-foreground truncate">
-                            {ws.resources.settings.environment} • {ws.resources.settings.region}
+                            {ws.resources.settings?.environment || ws.resources.analytics?.environment || 'Active'} • {ws.resources.users || 4} Members
                           </div>
                         )}
                       </div>
@@ -195,6 +216,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <div className="flex items-center space-x-1.5 text-[9px] font-mono shrink-0">
                           <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
                             {ws.resources.agents} Agents
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            {ws.resources.documents} Docs
                           </span>
                         </div>
                       )}

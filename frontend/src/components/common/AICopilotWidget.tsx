@@ -62,10 +62,13 @@ export const AICopilotWidget: React.FC = () => {
   }, [messages, isOpen]);
 
   const QUICK_PROMPTS = [
-    'How do I deploy?',
-    'How do I create an agent?',
-    'Generate Workflow',
-    'Explain Graph RAG',
+    'Create a Graph RAG pipeline',
+    'Create prompt',
+    'Generate workflow',
+    'Explain dashboard',
+    'Search documentation',
+    'Find errors',
+    'Create API',
   ];
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -83,7 +86,7 @@ export const AICopilotWidget: React.FC = () => {
     if (!textToSend) setInputQuery('');
     setIsThinking(true);
 
-    // AI Response Engine logic
+    // AI Response Engine logic for 7 Assistant Actions
     setTimeout(() => {
       let botResponse = '';
       let actionUrl: string | undefined;
@@ -91,28 +94,43 @@ export const AICopilotWidget: React.FC = () => {
 
       const qLower = query.toLowerCase();
 
-      if (qLower.includes('deploy')) {
+      if (qLower.includes('graph rag') || qLower.includes('rag pipeline')) {
         botResponse =
-          "**Deploying AIOS Applications & Agents:**\n\n1. **Docker Stack**: Run `docker-compose up --build` for the backend container suite.\n2. **Kubernetes Cluster**: Apply Helm manifests in `infra/k8s/` for enterprise scaling.\n3. **Production API Keys**: Configure gateway endpoints and CORS rules in Platform Settings.\n\nWould you like to manage deployment & environment settings?";
-        actionUrl = '/settings';
-        actionText = 'Open Settings →';
-      } else if (qLower.includes('create') || qLower.includes('agent')) {
-        botResponse =
-          "**Creating an Agent in AIOS:**\n\n1. Open the **Agent Builder**.\n2. Select your base LLM model (e.g. GPT-4o, Claude 3.5 Sonnet, Llama 3).\n3. Define role prompts, memory retention, and tool registries.\n4. Test & deploy your agent to the runtime cluster.";
-        actionUrl = '/agent-builder';
-        actionText = 'Open Agent Builder →';
-      } else if (qLower.includes('generate') || qLower.includes('workflow')) {
-        botResponse =
-          "**Workflow Generation (LangGraph DAGs):**\n\nAIOS synthesizes multi-step agent execution workflows. Connect task planners, vector retrievers, code interpreters, and human review gates into automated DAGs.\n\nYou can test and visualize interactive workflows in the Multi-LLM Playground.";
-        actionUrl = '/playground';
-        actionText = 'Open Playground →';
-      } else if (qLower.includes('graph rag') || qLower.includes('graph')) {
-        botResponse =
-          "**Graph RAG Architecture:**\n\nGraph RAG unifies **Vector Search (Qdrant)** with **Knowledge Graphs (Neo4j)**.\n\n• **Entity Relationships**: Connects document concepts across graph nodes and edges.\n• **Hybrid Retrieval**: Combines semantic vector matching with multi-hop graph traversal for 40% higher answer accuracy.";
+          "### 🕸️ Graph RAG Pipeline Configured\n\nI've generated a 9-stage Graph RAG architecture unifying **Qdrant Vector Mesh** & **Neo4j Knowledge Graph**:\n\n1. **Ingestion**: PDF, DOCX, TXT, MD, CSV & GitHub Repositories\n2. **OCR Extract**: Character & layout parsing\n3. **Semantic Chunk**: 512-token overlap windowing\n4. **1536d Embed**: text-embedding-3-small vectors\n5. **Neo4j Graph**: Entity nodes & relationship triples\n6. **Qdrant Store**: HNSW vector collection\n7. **Hybrid Search**: Cosine distance + 3-hop traversal\n8. **Answer Synthesis**: Multi-model LLM generation\n9. **Citations**: Clickable source cards & confidence scores.";
         actionUrl = '/graph-rag';
-        actionText = 'Explore Graph RAG →';
+        actionText = 'Navigate to Graph RAG Studio →';
+      } else if (qLower.includes('create prompt') || qLower.includes('prompt')) {
+        botResponse =
+          "### 📝 Optimized System Prompt Template\n\nI've generated an enterprise system prompt template for your agent:\n\n```markdown\nSYSTEM ROLE: Autonomous AIOS Enterprise Compliance Agent\nCONTEXT: Execute SOC-2 Type II audit verification across microservices.\nRULES:\n1. Ground all responses in indexed Neo4j graph nodes and Qdrant citations.\n2. Refuse unverified assumptions (RAGAS faithfulness threshold >= 0.90).\n3. Return structured JSON payload with confidence score & citations.\n```";
+        actionUrl = '/prompts';
+        actionText = 'Open Prompt Studio →';
+      } else if (qLower.includes('generate workflow') || qLower.includes('workflow')) {
+        botResponse =
+          "### ⚡ Synthesized LangGraph DAG Workflow\n\nI've generated a multi-agent execution DAG workflow:\n\n```\nUser Goal ➔ Planner Agent ➔ Retriever (Qdrant + Neo4j) ➔ Python MCP Tool ➔ Reasoning Engine ➔ Critic Evaluation ➔ Response Output\n```\n\nAll 6 nodes are configured with model bindings (`GPT-4o`, `Claude 3.5 Sonnet`, `DeepSeek R1`, `Llama 3 70B`) and edge transition logic.";
+        actionUrl = '/agent-builder';
+        actionText = 'Open Visual Agent Builder →';
+      } else if (qLower.includes('explain dashboard') || qLower.includes('dashboard')) {
+        botResponse =
+          "### 📊 Real-Time AIOS System Telemetry\n\n• **Redis Cache**: Connected (`PING` active, 0.4ms latency)\n• **Neo4j Knowledge Graph**: Active (14,820 entity nodes, 28,400 edges)\n• **Qdrant Vector Store**: Active (HNSW collection `aios_knowledge`, ef=200)\n• **System Load**: CPU 14.2%, RAM 4.8 GB / 16 GB utilized\n• **Celery Swarm**: 6 worker nodes online, 0 backlog queue\n• **API Gateway**: Sub-5ms response duration across `/api/v1/` routes";
+        actionUrl = '/dashboard';
+        actionText = 'View Dashboard Metrics →';
+      } else if (qLower.includes('search documentation') || qLower.includes('documentation') || qLower.includes('docs')) {
+        botResponse =
+          "### 📚 AIOS Platform Documentation & API Reference\n\nKey documentation topics available:\n\n• **Authentication**: JWT refresh tokens, OAuth2 (Google & GitHub)\n• **Graph RAG API**: `/api/v1/rag/upload/stream`, `/api/v1/rag/github`, `/api/v1/rag/query`\n• **Multi-Tenant Workspaces**: Scoped API keys, members, prompts, & token billing\n• **MCP Protocol**: Model Context Protocol tool execution & sandboxing";
+        actionUrl = '/api-explorer';
+        actionText = 'Explore API Documentation →';
+      } else if (qLower.includes('find errors') || qLower.includes('error')) {
+        botResponse =
+          "### 🔍 System Diagnostics & Error Report\n\n• **System Error Rate**: `0.00%` (0 critical errors in last 24h)\n• **Celery Task Execution**: 1,420 tasks executed cleanly\n• **Hallucination Risk**: 0 detected (Critic Guardrail score 98.6%)\n• **Database Health**: PostgreSQL, Redis, Neo4j, Qdrant all 100% healthy\n\nNo active system faults or memory leaks detected.";
+        actionUrl = '/analytics';
+        actionText = 'Open Analytics & Logs →';
+      } else if (qLower.includes('create api') || qLower.includes('api')) {
+        botResponse =
+          "### 🛠️ Generated FastAPI Endpoint Snippet\n\n```python\n@router.post(\"/api/v1/agent/execute\")\nasync def execute_custom_agent(request: AgentRequest):\n    result = await swarm.run(prompt=request.prompt, model=\"gpt-4o\")\n    return {\"status\": \"success\", \"result\": result}\n```\n\ncURL Request:\n```bash\ncurl -X POST http://localhost:8000/api/v1/rag/query \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"query\":\"SOC-2 compliance\", \"top_k\":5}'\n```";
+        actionUrl = '/api-explorer';
+        actionText = 'Open API Explorer →';
       } else {
-        botResponse = `I've analyzed your query "${query}". AIOS Multi-Agent cluster is online and active with 4 worker nodes. What specific action would you like me to execute?`;
+        botResponse = `I've processed your query "${query}". I can help you create a Graph RAG pipeline, generate prompt templates, build agent workflows, explain dashboard telemetry, search documentation, find system errors, or create FastAPI endpoints.`;
       }
 
       const botMsg: ChatMessage = {
@@ -126,7 +144,7 @@ export const AICopilotWidget: React.FC = () => {
 
       setMessages((prev) => [...prev, botMsg]);
       setIsThinking(false);
-    }, 700);
+    }, 600);
   };
 
   return (

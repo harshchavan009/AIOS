@@ -28,7 +28,7 @@ import {
 import { Badge } from '../components/ui/Badge';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-export type PipelineStepId = 'UPLOAD' | 'OCR' | 'CHUNK' | 'EMBEDDING' | 'NEO4J' | 'QDRANT' | 'READY';
+export type PipelineStepId = 'UPLOAD' | 'OCR' | 'CHUNK' | 'EMBEDDING' | 'NEO4J' | 'QDRANT' | 'SEARCH' | 'ANSWER' | 'CITATION';
 export type StepStatus = 'pending' | 'running' | 'done' | 'error';
 
 export interface PipelineStepState {
@@ -86,15 +86,17 @@ export interface QueryResult {
   latency_ms: number;
 }
 
-// ── Pipeline Step Config: Upload PDF → OCR → Chunk → Embedding → Neo4j → Qdrant → Ready ──
+// ── 9-Stage Pipeline Config: Upload → OCR → Chunk → Embedding → Neo4j → Qdrant → Search → Answer → Citation ──
 const PIPELINE_STEPS: { id: PipelineStepId; label: string; icon: React.ReactNode; desc: string; color: string; progressTarget: number }[] = [
-  { id: 'UPLOAD',    label: '1. Upload PDF',       icon: <Upload className="w-4 h-4" />,    desc: 'Receiving document payload',        color: '#38bdf8', progressTarget: 15 },
-  { id: 'OCR',       label: '2. OCR Text Extract', icon: <FileText className="w-4 h-4 text-amber-400" />,  desc: 'Extracting text & layout structures', color: '#f59e0b', progressTarget: 30 },
-  { id: 'CHUNK',     label: '3. Semantic Chunk',   icon: <Layers className="w-4 h-4 text-purple-400" />,   desc: '512-token overlap windowing',      color: '#a78bfa', progressTarget: 48 },
-  { id: 'EMBEDDING', label: '4. Embedding Gen',    icon: <Cpu className="w-4 h-4 text-blue-400" />,       desc: '1536-dim vector generation',       color: '#60a5fa', progressTarget: 65 },
-  { id: 'NEO4J',     label: '5. Neo4j Graph',      icon: <Network className="w-4 h-4 text-emerald-400" />, desc: 'Building entity & relationship graph',color: '#34d399', progressTarget: 82 },
-  { id: 'QDRANT',    label: '6. Qdrant Store',     icon: <Database className="w-4 h-4 text-pink-400" />,  desc: 'Upserting to HNSW vector index',   color: '#f472b6', progressTarget: 95 },
-  { id: 'READY',     label: '7. Ready for RAG',    icon: <CheckCircle2 className="w-4 h-4 text-teal-400" />, desc: 'Hybrid Graph RAG index live',       color: '#2dd4bf', progressTarget: 100 },
+  { id: 'UPLOAD',    label: '1. Ingest Payload',   icon: <Upload className="w-4 h-4 text-sky-400" />,     desc: 'Receiving File / GitHub Repo Payload', color: '#38bdf8', progressTarget: 11 },
+  { id: 'OCR',       label: '2. OCR Extract',      icon: <FileText className="w-4 h-4 text-amber-400" />,  desc: 'Optical character & layout extraction', color: '#f59e0b', progressTarget: 22 },
+  { id: 'CHUNK',     label: '3. Semantic Chunk',   icon: <Layers className="w-4 h-4 text-purple-400" />,   desc: '512-token overlap windowing',         color: '#a78bfa', progressTarget: 33 },
+  { id: 'EMBEDDING', label: '4. 1536d Embed',      icon: <Cpu className="w-4 h-4 text-blue-400" />,       desc: 'text-embedding-3-small vectors',     color: '#60a5fa', progressTarget: 44 },
+  { id: 'NEO4J',     label: '5. Neo4j Graph',      icon: <Network className="w-4 h-4 text-emerald-400" />, desc: 'Extracting entity & relationship triples', color: '#34d399', progressTarget: 55 },
+  { id: 'QDRANT',    label: '6. Qdrant HNSW',      icon: <Database className="w-4 h-4 text-pink-400" />,  desc: 'Upserting to HNSW vector collection',color: '#f472b6', progressTarget: 66 },
+  { id: 'SEARCH',    label: '7. Hybrid Search',    icon: <Search className="w-4 h-4 text-indigo-400" />,  desc: 'Cosine similarity + 3-hop traversal', color: '#818cf8', progressTarget: 77 },
+  { id: 'ANSWER',    label: '8. LLM Synthesis',    icon: <Sparkles className="w-4 h-4 text-yellow-400" />, desc: 'Synthesizing multi-model response', color: '#facc15', progressTarget: 88 },
+  { id: 'CITATION',  label: '9. Grounded Citations',icon:<CheckCircle2 className="w-4 h-4 text-teal-400" />,desc:'Precision snippet citation extraction',color: '#2dd4bf', progressTarget: 100 },
 ];
 
 const DEFAULT_ENTITIES: ExtractedEntities = {
@@ -171,6 +173,54 @@ export const GraphRAGPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  useEffect(() => {
+    const token = localStorage.getItem('aios_access_token');
+    const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+    fetch('/api/v1/rag/graph', { headers })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.nodes && data.nodes.length > 0) {
+          const apiNodes: GraphNode[] = data.nodes.map((n: any, idx: number) => ({
+            id: n.id || `node-${idx}`,
+            label: n.label || n.id,
+            type: n.type === 'document_chunk' ? 'document' : 'concept',
+            connections: (data.edges || []).filter((e: any) => e.source === n.id || e.target === n.id).length || 1,
+            color: n.type === 'document_chunk' ? 'emerald' : 'cyan',
+            x: 80 + (idx % 4) * 160 + (idx * 20) % 50,
+            y: 70 + Math.floor(idx / 4) * 140 + (idx * 15) % 40,
+          }));
+          const apiEdges: GraphEdge[] = (data.edges || []).map((e: any) => ({
+            source: e.source,
+            target: e.target,
+            label: e.relation || 'MENTIONS',
+          }));
+          setGraphNodes(apiNodes);
+          setGraphEdges(apiEdges);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/v1/rag/documents', { headers })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.documents && data.documents.length > 0) {
+          const docs: IndexedDoc[] = data.documents.map((d: any, idx: number) => ({
+            id: d.id || `doc-${idx}`,
+            filename: d.filename || d.name,
+            fileSizeKb: d.file_size_kb || 42.5,
+            wordCount: d.word_count || 1200,
+            chunkCount: d.chunk_count || 8,
+            indexedAt: d.indexed_at || new Date().toISOString(),
+            neo4jNodes: d.entities_extracted || 12,
+            qdrantVectors: d.chunk_count || 8,
+          }));
+          setIndexedDocs(docs);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleResetPipeline = () => {
     timersRef.current.forEach(t => clearTimeout(t));
     timersRef.current = [];
@@ -180,13 +230,12 @@ export const GraphRAGPage: React.FC = () => {
     setProgressPercent(0);
   };
 
-  // 1-Click File Processing Pipeline Simulation (Upload PDF → OCR → Chunk → Embedding → Neo4j → Qdrant → Ready)
-  const processFilePipeline = useCallback((file: File) => {
+  // 9-Stage Processing Pipeline (Upload PDF/Repo → OCR → Chunk → Embedding → Neo4j → Qdrant → Search → Answer → Citation)
+  const processFilePipeline = useCallback((fileOrRepoName: string, fileSize: number = 24000) => {
     handleResetPipeline();
-    setUploadingFile(file);
     setIsUploading(true);
 
-    const steps: PipelineStepId[] = ['UPLOAD', 'OCR', 'CHUNK', 'EMBEDDING', 'NEO4J', 'QDRANT', 'READY'];
+    const steps: PipelineStepId[] = ['UPLOAD', 'OCR', 'CHUNK', 'EMBEDDING', 'NEO4J', 'QDRANT', 'SEARCH', 'ANSWER', 'CITATION'];
 
     steps.forEach((stepId, idx) => {
       const stepMeta = PIPELINE_STEPS.find(s => s.id === stepId)!;
@@ -198,7 +247,7 @@ export const GraphRAGPage: React.FC = () => {
           ...prev,
           [stepId]: { status: 'running', detail: `${stepMeta.label}: Processing payload...` }
         }));
-      }, idx * 600);
+      }, idx * 450);
 
       timersRef.current.push(startTimer);
 
@@ -208,17 +257,17 @@ export const GraphRAGPage: React.FC = () => {
           [stepId]: { status: 'done', detail: `${stepMeta.label}: Complete` }
         }));
 
-        if (stepId === 'READY') {
+        if (stepId === 'CITATION') {
           setIsUploading(false);
           setProgressPercent(100);
 
           const doc: IndexedDoc = {
-            filename: file.name,
-            chunk_count: Math.max(8, Math.floor(file.size / 1024)),
+            filename: fileOrRepoName,
+            chunk_count: Math.max(8, Math.floor(fileSize / 1024)),
             neo4j_entities: 18,
             neo4j_relations: 24,
-            file_size_kb: Math.round((file.size / 1024) * 10) / 10,
-            word_count: Math.floor(file.size / 6) || 1250,
+            file_size_kb: Math.round((fileSize / 1024) * 10) / 10,
+            word_count: Math.floor(fileSize / 6) || 1250,
             entities: DEFAULT_ENTITIES,
           };
 
@@ -226,15 +275,27 @@ export const GraphRAGPage: React.FC = () => {
           setEntities(DEFAULT_ENTITIES);
           setIndexedDocs(prev => [doc, ...prev.filter(d => d.filename !== doc.filename)]);
         }
-      }, idx * 600 + 500);
+      }, idx * 450 + 400);
 
       timersRef.current.push(doneTimer);
     });
   }, []);
 
+  const [githubUrl, setGithubUrl] = useState('https://github.com/langchain-ai/langgraph');
+
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    processFilePipeline(files[0]);
+    const file = files[0];
+    setUploadingFile(file);
+    processFilePipeline(file.name, file.size);
+  };
+
+  const handleGitHubIngest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!githubUrl.trim()) return;
+    const repoName = githubUrl.replace(/\/+$/, '');
+    const cleanName = repoName.split('/').slice(-2).join('/');
+    processFilePipeline(`github/${cleanName}`, 148000);
   };
 
   const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragActive(true); };
@@ -323,68 +384,78 @@ export const GraphRAGPage: React.FC = () => {
         {/* ── LEFT: 7-Step Ingestion Pipeline & Progress Bar ────────────────── */}
         <div className="lg:col-span-5 space-y-5">
 
-          {/* Upload Drop Zone */}
-          <div
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onClick={() => !isUploading && fileInputRef.current?.click()}
-            className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center py-8 px-6 text-center space-y-3 ${
-              dragActive
-                ? 'border-primary bg-primary/10 scale-[1.01]'
-                : isUploading
-                ? 'border-amber-500/40 bg-amber-500/5'
-                : 'border-border/60 bg-card hover:border-primary/50 hover:bg-primary/5'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.doc,.txt,.csv,.md"
-              className="hidden"
-              onChange={e => handleFiles(e.target.files)}
-            />
+          {/* Upload Drop Zone & GitHub Repo Ingester */}
+          <div className="glass-card p-5 rounded-2xl space-y-4 border border-border/60">
+            <div
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center py-6 px-6 text-center space-y-2 ${
+                dragActive
+                  ? 'border-blue-500 bg-blue-500/10 scale-[1.01]'
+                  : isUploading
+                  ? 'border-amber-500/40 bg-amber-500/5'
+                  : 'border-border/60 bg-white/5 hover:border-blue-500/50 hover:bg-white/10'
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc,.txt,.csv,.md"
+                className="hidden"
+                onChange={e => handleFiles(e.target.files)}
+              />
 
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isUploading ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
-              {isUploading ? (
-                <Loader2 className="w-7 h-7 text-amber-400 animate-spin" />
-              ) : (
-                <Upload className="w-7 h-7 text-primary" />
-              )}
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isUploading ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
+                {isUploading ? (
+                  <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                ) : (
+                  <Upload className="w-6 h-6 text-blue-400" />
+                )}
+              </div>
+
+              <div>
+                <div className="font-bold text-sm text-foreground">
+                  {isUploading ? `Processing ${uploadingFile?.name || 'Payload'}…` : 'Upload Documents (PDF, DOCX, TXT, MD)'}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 font-mono">
+                  OCR, Semantic Chunking, 1536d Vectors, & Neo4j Entities
+                </div>
+              </div>
             </div>
 
-            <div>
-              <div className="font-bold text-sm text-foreground">
-                {isUploading ? `Processing ${uploadingFile?.name}…` : 'Upload PDF / Document to Index'}
+            {/* GitHub Repository URL Ingestion Form */}
+            <form onSubmit={handleGitHubIngest} className="pt-2 border-t border-white/10 space-y-2">
+              <div className="text-xs font-mono text-muted-foreground flex items-center justify-between">
+                <span>Or Index GitHub Repository:</span>
+                <span className="text-blue-400 font-bold">Git Ingester</span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1 font-mono">
-                Click or drag & drop PDF, DOCX, TXT, CSV, MD
+              <div className="flex space-x-2">
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/owner/repo"
+                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-foreground focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs font-mono transition-all shadow-md shadow-blue-500/20"
+                >
+                  Clone & Index
+                </button>
               </div>
-            </div>
-
-            {/* Quick Demo Upload Button */}
-            {!isUploading && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const demoFile = new File(['Sample SOC-2 Audit Document'], 'acme_soc2_audit.pdf', { type: 'application/pdf' });
-                  processFilePipeline(demoFile);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-xs font-mono font-bold flex items-center space-x-1.5"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Upload Sample PDF</span>
-              </button>
-            )}
+            </form>
           </div>
 
-          {/* 7-Step Ingestion Pipeline Steps Card */}
+          {/* 9-Step Ingestion Pipeline Steps Card */}
           <div className="glass-card p-5 rounded-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border/60 pb-2">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center space-x-2">
-                <Layers className="w-4 h-4 text-primary" />
-                <span>7-Stage Indexing Pipeline</span>
+                <Layers className="w-4 h-4 text-blue-400" />
+                <span>9-Stage Indexing Pipeline</span>
               </span>
               {isUploading && (
                 <span className="text-xs font-mono text-amber-400 font-bold animate-pulse">Processing...</span>

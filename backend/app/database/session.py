@@ -13,7 +13,7 @@ def get_engine():
 
     return create_async_engine(
         db_url,
-        echo=settings.DEBUG,
+        echo=False,
         future=True,
         pool_pre_ping=True,
         connect_args=connect_args

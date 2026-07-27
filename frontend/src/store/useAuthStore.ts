@@ -20,6 +20,11 @@ interface AuthState {
   fetchLoginHistory: () => Promise<void>;
   fetchPendingInvites: () => Promise<void>;
   acceptInvite: (inviteToken: string) => Promise<boolean>;
+  updatePreferences: (data: Partial<User>) => Promise<boolean>;
+  uploadAvatar: (avatarData: string) => Promise<boolean>;
+  deleteAccount: () => Promise<boolean>;
+  resendVerification: (email: string) => Promise<boolean>;
+  verifyEmail: (token: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -218,5 +223,97 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Accept invite error:', err);
     }
     return false;
+  },
+
+  updatePreferences: async (data) => {
+    const token = get().token;
+    if (!token) return false;
+    try {
+      const res = await fetch('/api/v1/auth/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        set({ user: updatedUser });
+        return true;
+      }
+    } catch (err) {
+      console.error('Update preferences error:', err);
+    }
+    return false;
+  },
+
+  uploadAvatar: async (avatarData) => {
+    const token = get().token;
+    if (!token) return false;
+    try {
+      const res = await fetch('/api/v1/auth/me/avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ avatar_data: avatarData })
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        set({ user: updatedUser });
+        return true;
+      }
+    } catch (err) {
+      console.error('Upload avatar error:', err);
+    }
+    return false;
+  },
+
+  deleteAccount: async () => {
+    const token = get().token;
+    if (!token) return false;
+    try {
+      const res = await fetch('/api/v1/auth/me', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        await get().logout();
+        return true;
+      }
+    } catch (err) {
+      console.error('Delete account error:', err);
+    }
+    return false;
+  },
+
+  resendVerification: async (email) => {
+    try {
+      const res = await fetch('/api/v1/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      return false;
+    }
+  },
+
+  verifyEmail: async (tokenStr) => {
+    try {
+      const res = await fetch('/api/v1/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokenStr })
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Verify email error:', err);
+      return false;
+    }
   }
 }));

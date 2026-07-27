@@ -55,6 +55,7 @@ export interface TelemetryStoreState {
   };
   streamRateTokensSec: number;
   isLive: boolean;
+  hasLiveApi: boolean;
   tickCounter: number;
   startTicker: () => void;
   stopTicker: () => void;
@@ -109,10 +110,10 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
     running_jobs: 2,
     queued_tasks: 11,
     worker_status: '3 Workers Active',
-    database_health: 'PostgreSQL 16 Healthy',
-    redis_health: 'Redis 7 Connected',
-    neo4j_status: 'Connected (1,420 Nodes)',
-    qdrant_status: 'Connected (3,890 Vectors)',
+    database_health: 'Database Engine Healthy',
+    redis_health: 'Redis Status Check',
+    neo4j_status: 'Graph RAG Active',
+    qdrant_status: 'Vector Store Active',
     api_usage_total: 1420,
     token_usage_total: 1845200,
     cost_today_usd: 33.21,
@@ -134,6 +135,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
   },
   streamRateTokensSec: 88.5,
   isLive: true,
+  hasLiveApi: false,
   tickCounter: 0,
 
   updateFromApi: (data: any) => {
@@ -155,6 +157,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
     set((state) => {
       const updatedHw = [...state.hardwareHistory.slice(-14), newHwPoint];
       return {
+        hasLiveApi: true,
         summary: { ...state.summary, ...sm },
         runningAgents: agents.length > 0 ? agents : state.runningAgents,
         hardwareHistory: updatedHw,
@@ -190,6 +193,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
 
     timerId = setInterval(() => {
       const state = get();
+      if (state.hasLiveApi) return;
       const nextTick = state.tickCounter + 1;
       const agentCount = AGENT_SEQUENCE[nextTick % AGENT_SEQUENCE.length];
       const tokenIncrement = Math.floor(65 + Math.random() * 95);

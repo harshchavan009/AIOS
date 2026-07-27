@@ -13,11 +13,13 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   if (!isOpen) return null;
 
   const SHORTCUTS = [
-    { key: '⌘ + K', description: 'Open Global Command Palette' },
-    { key: '⌘ + Shift + D', description: 'Toggle Theme System (Graphite vs Light)' },
+    { key: '⌘ + K / Ctrl + K', description: 'Global Search Command Palette' },
+    { key: 'Ctrl + / / ⌘ + /', description: 'AI Assistant & Shortcuts Cheatsheet' },
     { key: 'N', description: 'Open Notifications Panel' },
+    { key: 'P', description: 'Create New Prompt (Prompt Studio)' },
+    { key: 'A', description: 'Create New Agent (Agent Builder)' },
+    { key: 'D', description: 'Open Infrastructure Dashboard' },
     { key: 'Esc', description: 'Close Modals & Dropdown Menus' },
-    { key: '⌘ + /', description: 'Open Keyboard Shortcuts Cheatsheet' },
   ];
 
   return (

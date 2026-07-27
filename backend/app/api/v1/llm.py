@@ -379,6 +379,8 @@ async def get_model_registry(current_user: User = Depends(get_current_user)):
 
 
 # ── Health check: ping all providers concurrently ─────────────────────────────
+@router.get("/providers")
+@router.get("/providers/health")
 @router.get("/registry/health")
 async def check_all_providers_health(current_user: User = Depends(get_current_user)):
     """

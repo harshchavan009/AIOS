@@ -1,3 +1,4 @@
+import time
 import asyncio
 import json
 from typing import List, Dict, Any, Optional
@@ -23,16 +24,26 @@ class EvaluateRequest(BaseModel):
     retrieved_context: List[str] = Field(default_factory=list)
 
 
+_cached_db_counts: tuple[int, int] = (2, 1)
+_last_db_counts_time: float = 0.0
+
+
 async def _get_real_db_counts(db: AsyncSession) -> tuple[int, int]:
+    global _cached_db_counts, _last_db_counts_time
+    now = time.time()
+    if now - _last_db_counts_time < 10.0:
+        return _cached_db_counts
     try:
         res_users = await db.execute(select(func.count(User.id)))
         users_count = res_users.scalar() or 2
 
         res_sess = await db.execute(select(func.count(UserSession.id)).where(UserSession.is_revoked == False))
         sess_count = res_sess.scalar() or 1
-        return users_count, sess_count
+        _cached_db_counts = (users_count, sess_count)
+        _last_db_counts_time = now
+        return _cached_db_counts
     except Exception:
-        return 2, 1
+        return _cached_db_counts
 
 
 @router.get("/metrics", status_code=status.HTTP_200_OK)

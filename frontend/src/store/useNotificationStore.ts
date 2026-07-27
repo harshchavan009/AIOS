@@ -1,8 +1,25 @@
 import { create } from 'zustand';
 
+export type NotificationType =
+  | 'login'
+  | 'workflow'
+  | 'document'
+  | 'agent'
+  | 'eval'
+  | 'key'
+  | 'knowledge'
+  | 'prompt_approved'
+  | 'document_indexed'
+  | 'workflow_completed'
+  | 'model_unavailable'
+  | 'token_limit'
+  | 'agent_failed'
+  | 'billing_reminder'
+  | 'deployment_completed';
+
 export interface NotificationItem {
   id: string;
-  type: 'login' | 'workflow' | 'document' | 'agent' | 'eval' | 'key' | 'knowledge';
+  type: NotificationType;
   title: string;
   description: string;
   timestamp: string;
@@ -23,42 +40,66 @@ interface NotificationState {
 const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n-1',
-    type: 'agent',
-    title: 'Planner finished',
-    description: 'Planner Agent completed task decomposition DAG into 4 subtasks',
+    type: 'prompt_approved',
+    title: 'Prompt approved',
+    description: 'System prompt "SOC-2 Audit Guardrail" passed RAGAS review and was approved by Lead Architect',
     timestamp: 'Just now',
     isRead: false
   },
   {
     id: 'n-2',
-    type: 'knowledge',
-    title: 'Retriever indexed 320 chunks',
-    description: 'Retriever Agent indexed 320 semantic chunks into Qdrant HNSW vector index',
-    timestamp: '1 min ago',
+    type: 'document_indexed',
+    title: 'Document indexed',
+    description: 'File "acme_soc2_audit.pdf" (1,250 words, 8 chunks) successfully indexed into Qdrant & Neo4j',
+    timestamp: '2 mins ago',
     isRead: false
   },
   {
     id: 'n-3',
-    type: 'knowledge',
-    title: 'Neo4j synced',
-    description: 'Neo4j Knowledge Graph synced 14,820 entity nodes & 32,400 relationships',
-    timestamp: '3 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-4',
-    type: 'workflow',
-    title: 'Workflow deployed',
-    description: 'LangGraph multi-agent DAG workflow deployed to production Celery swarm',
+    type: 'workflow_completed',
+    title: 'Workflow completed',
+    description: 'LangGraph multi-agent DAG workflow executed cleanly across all 6 node steps in 0.65s',
     timestamp: '5 mins ago',
     isRead: false
   },
   {
+    id: 'n-4',
+    type: 'model_unavailable',
+    title: 'Model unavailable',
+    description: 'LLM endpoint "claude-3-5-sonnet" timed out; failover routed to "gpt-4o" fallback node',
+    timestamp: '8 mins ago',
+    isRead: false
+  },
+  {
     id: 'n-5',
-    type: 'key',
-    title: 'API key created',
-    description: 'New production API key (aios_live_key_2026) created for Acme Workspace',
-    timestamp: '10 mins ago',
+    type: 'token_limit',
+    title: 'Token limit reached',
+    description: 'Monthly token usage reached 85% threshold (8,420,000 / 10,000,000 tokens for Pro Tier)',
+    timestamp: '12 mins ago',
+    isRead: false
+  },
+  {
+    id: 'n-6',
+    type: 'agent_failed',
+    title: 'Agent failed',
+    description: 'Python Tool Agent encountered sandbox timeout exception; automatic retry initiated',
+    timestamp: '15 mins ago',
+    isRead: false
+  },
+  {
+    id: 'n-7',
+    type: 'billing_reminder',
+    title: 'Billing reminder',
+    description: 'Pro Subscription renewal scheduled for August 1, 2026 ($299/mo via Stripe)',
+    timestamp: '20 mins ago',
+    isRead: false
+  },
+  {
+    id: 'n-8',
+    type: 'deployment_completed',
+    title: 'Deployment completed',
+    description: 'Swarm Agent "Custom LangGraph Swarm Agent" successfully deployed to production Celery cluster',
+    timestamp: '25 mins ago',
     isRead: false
   }
 ];

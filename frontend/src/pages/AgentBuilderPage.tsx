@@ -54,6 +54,7 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Upload,
 } from 'lucide-react';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
@@ -75,7 +76,10 @@ interface AgentNodeData extends Record<string, unknown> {
   label: string;
   nodeType: AgentNodeType;
   config: string;
+  systemPrompt?: string;
   model?: string;
+  temperature?: number;
+  tools?: string[];
   status?: 'idle' | 'running' | 'done' | 'error';
 }
 
@@ -440,11 +444,124 @@ function AgentBuilderInner() {
     }, 2100);
   }, [registerDeployedAgent, addNotification]);
 
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+
+  const duplicateSelectedNode = useCallback(() => {
+    if (!selectedNode) return;
+    const newNodeId = `n-dup-${nodeIdCounter.current++}`;
+    const newNode: Node<AgentNodeData> = {
+      id: newNodeId,
+      type: 'agentNode',
+      position: {
+        x: selectedNode.position.x + 40,
+        y: selectedNode.position.y + 40,
+      },
+      data: {
+        ...selectedNode.data,
+        label: `${(selectedNode.data as AgentNodeData).label} (Copy)`,
+      },
+    };
+    const updatedNodes = [...nodes, newNode];
+    setNodes(updatedNodes);
+    setSelectedNode(newNode);
+    saveStateToHistory(updatedNodes, edges);
+    addNotification({
+      type: 'workflow',
+      title: 'Node Duplicated',
+      description: `Cloned "${(selectedNode.data as AgentNodeData).label}" node.`,
+    });
+  }, [selectedNode, nodes, edges, setNodes, saveStateToHistory, addNotification]);
+
+  const saveWorkflow = useCallback(() => {
+    const workflowData = {
+      name: 'AIOS_Custom_Agent_Workflow',
+      savedAt: new Date().toISOString(),
+      nodes: nodes.map(n => ({
+        id: n.id,
+        position: n.position,
+        label: (n.data as AgentNodeData).label,
+        type: (n.data as AgentNodeData).nodeType,
+        config: (n.data as AgentNodeData).config,
+        systemPrompt: (n.data as AgentNodeData).systemPrompt || '',
+        model: (n.data as AgentNodeData).model || 'gpt-4o',
+        temperature: (n.data as AgentNodeData).temperature ?? 0.7,
+      })),
+      edges: edges.map(e => ({ id: e.id, source: e.source, target: e.target })),
+    };
+    localStorage.setItem('aios_saved_workflow', JSON.stringify(workflowData));
+    addNotification({
+      type: 'workflow',
+      title: 'Workflow Saved',
+      description: 'Workflow DAG topology persisted to local storage & backend state.',
+    });
+  }, [nodes, edges, addNotification]);
+
+  const importDAG = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const parsed = JSON.parse(content);
+        if (parsed.nodes && Array.isArray(parsed.nodes)) {
+          const importedNodes: Node<AgentNodeData>[] = parsed.nodes.map((n: any, idx: number) => ({
+            id: n.id || `imported-${idx}`,
+            type: 'agentNode',
+            position: n.position || { x: 200 + (idx % 3) * 180, y: 100 + Math.floor(idx / 3) * 140 },
+            data: {
+              label: n.label || n.name || 'Imported Node',
+              nodeType: n.type || 'planner',
+              config: n.config || 'Custom Imported Config',
+              systemPrompt: n.systemPrompt || '',
+              model: n.model || 'gpt-4o',
+              temperature: n.temperature ?? 0.7,
+              status: 'idle',
+            },
+          }));
+          const importedEdges: Edge[] = (parsed.edges || []).map((eg: any, idx: number) => ({
+            id: eg.id || `e-imp-${idx}`,
+            source: eg.source,
+            target: eg.target,
+            animated: true,
+            markerEnd: { type: MarkerType.ArrowClosed },
+            style: { stroke: '#6366f1', strokeWidth: 1.8 },
+          }));
+          setNodes(importedNodes);
+          setEdges(importedEdges);
+          saveStateToHistory(importedNodes, importedEdges);
+          addNotification({
+            type: 'workflow',
+            title: 'DAG Imported',
+            description: `Successfully loaded ${importedNodes.length} nodes & ${importedEdges.length} edges from JSON.`,
+          });
+        }
+      } catch (err) {
+        addNotification({
+          type: 'workflow',
+          title: 'Import Failed',
+          description: 'Invalid JSON workflow file format.',
+        });
+      }
+    };
+    reader.readAsText(file);
+  }, [setNodes, setEdges, saveStateToHistory, addNotification]);
+
   const exportDAG = useCallback(() => {
     const dag = {
       name: 'AIOS_Agent_Workflow',
-      nodes: nodes.map(n => ({ id: n.id, type: (n.data as AgentNodeData).nodeType, label: (n.data as AgentNodeData).label, config: (n.data as AgentNodeData).config })),
-      edges: edges.map(e => ({ source: e.source, target: e.target })),
+      exportedAt: new Date().toISOString(),
+      nodes: nodes.map(n => ({
+        id: n.id,
+        position: n.position,
+        type: (n.data as AgentNodeData).nodeType,
+        label: (n.data as AgentNodeData).label,
+        config: (n.data as AgentNodeData).config,
+        systemPrompt: (n.data as AgentNodeData).systemPrompt || '',
+        model: (n.data as AgentNodeData).model || 'gpt-4o',
+        temperature: (n.data as AgentNodeData).temperature ?? 0.7,
+      })),
+      edges: edges.map(e => ({ id: e.id, source: e.source, target: e.target })),
     };
     const a = document.createElement('a');
     a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dag, null, 2));
@@ -488,18 +605,63 @@ function AgentBuilderInner() {
             </button>
           </div>
 
-          <button onClick={exportDAG} className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/60 text-xs font-semibold hover:bg-muted/60 transition-all">
-            <Download className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Export JSON</span>
+          {/* Save Workflow Button */}
+          <button
+            onClick={saveWorkflow}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/30 transition-all"
+            title="Save workflow DAG topology"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Save</span>
           </button>
 
+          {/* Import JSON Button */}
+          <input
+            ref={importFileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={importDAG}
+          />
+          <button
+            onClick={() => importFileInputRef.current?.click()}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/60 text-xs font-semibold hover:bg-muted/60 transition-all"
+            title="Import DAG JSON file"
+          >
+            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Import</span>
+          </button>
+
+          {/* Export JSON Button */}
+          <button
+            onClick={exportDAG}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/60 text-xs font-semibold hover:bg-muted/60 transition-all"
+            title="Export DAG to JSON file"
+          >
+            <Download className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Export</span>
+          </button>
+
+          {/* Duplicate Node (if selected) */}
+          {selectedNode && (
+            <button
+              onClick={duplicateSelectedNode}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-semibold hover:bg-purple-500/30 transition-all"
+              title="Duplicate selected node"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Duplicate</span>
+            </button>
+          )}
+
+          {/* Simulate Execution Button */}
           <button
             onClick={simulateExecution}
             disabled={simulating}
             className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-600/20 border border-amber-500/40 text-amber-400 font-semibold text-xs hover:bg-amber-600/30 transition-all disabled:opacity-50"
           >
             {simulating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{simulating ? 'Simulating…' : 'Simulate'}</span>
+            <span>{simulating ? 'Executing…' : 'Execute'}</span>
           </button>
 
           {/* 1-CLICK DEPLOY BUTTON */}
@@ -662,6 +824,45 @@ function AgentBuilderInner() {
                     </div>
                   </div>
                   <div>
+                    <label className="text-[10px] font-mono text-muted-foreground uppercase">System Prompt / Instructions</label>
+                    <textarea
+                      rows={3}
+                      value={selData.systemPrompt || ''}
+                      placeholder="You are an autonomous AIOS agent node..."
+                      onChange={e => updateNodeField('systemPrompt', e.target.value)}
+                      className="w-full mt-1 px-2.5 py-2 rounded-xl text-[10px] font-mono text-white focus:outline-none resize-none"
+                      style={{ background: '#ffffff10', border: `1px solid ${selMeta.border}40` }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-muted-foreground uppercase">LLM Model</label>
+                    <select
+                      value={selData.model || 'gpt-4o'}
+                      onChange={e => updateNodeField('model', e.target.value)}
+                      className="w-full mt-1 px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-white focus:outline-none bg-[#0f1520] border border-white/10"
+                    >
+                      <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                      <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
+                      <option value="deepseek-r1">DeepSeek R1 (Reasoning)</option>
+                      <option value="llama-3.3-70b">Llama 3.3 70B (Meta)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground uppercase">
+                      <span>Temperature</span>
+                      <span className="text-white font-bold">{selData.temperature ?? 0.7}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.0"
+                      max="1.0"
+                      step="0.05"
+                      value={selData.temperature ?? 0.7}
+                      onChange={e => updateNodeField('temperature', e.target.value as any)}
+                      className="w-full mt-1 accent-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div>
                     <label className="text-[10px] font-mono text-muted-foreground uppercase">Status</label>
                     <div className="mt-1 flex items-center space-x-2">
                       <StatusDot status={selData.status} />
@@ -670,13 +871,22 @@ function AgentBuilderInner() {
                   </div>
                 </div>
 
-                <button
-                  onClick={deleteSelectedNode}
-                  className="w-full flex items-center justify-center space-x-2 py-2 rounded-xl text-[11px] font-bold text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-all"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Selected Node</span>
-                </button>
+                <div className="flex space-x-2 pt-1">
+                  <button
+                    onClick={duplicateSelectedNode}
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-xl text-[11px] font-bold text-purple-300 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 transition-all"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Duplicate</span>
+                  </button>
+                  <button
+                    onClick={deleteSelectedNode}
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-xl text-[11px] font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border/40 p-3 text-[10px] font-mono space-y-1" style={{ background: '#0f1520' }}>

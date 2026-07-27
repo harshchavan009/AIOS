@@ -40,11 +40,13 @@ import { PageSkeleton } from '../components/ui/Skeleton';
 import { ActivityTimelinePanel } from '../components/common/ActivityTimelinePanel';
 import { EnterpriseChartContainer } from '../components/common/EnterpriseChartContainer';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
 export const DashboardPage: React.FC = () => {
   const { summary, runningAgents, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
+  const { currentWorkspace } = useWorkspaceStore();
   const [pipelineActiveNode, setPipelineActiveNode] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [timeRange, setTimeRange] = useState<string>('Live');
   const [activeSeries, setActiveSeries] = useState<Record<string, boolean>>({
     cpu: true,
@@ -118,6 +120,45 @@ export const DashboardPage: React.FC = () => {
             <span>SSE Live Stream: Connected (2s)</span>
           </div>
           <Badge variant="success">All 7 Docker Containers Healthy</Badge>
+        </div>
+      </div>
+
+      {/* Active Workspace Scoped Resource Bar */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-purple-900/20 border border-blue-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 font-extrabold text-sm">
+            {currentWorkspace?.name ? currentWorkspace.name.charAt(0) : 'W'}
+          </div>
+          <div>
+            <div className="font-extrabold text-sm text-foreground flex items-center space-x-2">
+              <span>{currentWorkspace?.name || 'My Startup'}</span>
+              <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-[10px]">
+                {currentWorkspace?.resources?.settings?.environment || currentWorkspace?.resources?.analytics?.environment || 'Active Workspace'}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground font-mono">Scoped Multi-Tenant Isolation Enforced</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            👥 Members: <strong className="text-blue-400 font-bold">{currentWorkspace?.resources?.users || 4}</strong>
+          </span>
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            📄 Documents: <strong className="text-emerald-400 font-bold">{currentWorkspace?.resources?.documents || 18}</strong>
+          </span>
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            🔑 API Keys: <strong className="text-amber-400 font-bold">{currentWorkspace?.resources?.apiKeys || 3}</strong>
+          </span>
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            🤖 Agents: <strong className="text-purple-400 font-bold">{currentWorkspace?.resources?.agents || 4}</strong>
+          </span>
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            ✨ Prompts: <strong className="text-cyan-400 font-bold">{currentWorkspace?.resources?.prompts || 12}</strong>
+          </span>
+          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+            📊 Analytics: <strong className="text-pink-400 font-bold">{currentWorkspace?.resources?.analytics?.tokens_today ? (currentWorkspace.resources.analytics.tokens_today / 1000).toFixed(0) + 'k tokens' : '480k tokens'}</strong>
+          </span>
         </div>
       </div>
 
