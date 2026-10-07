@@ -1,0 +1,25 @@
+# Git & IDE
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.coverage
+htmlcov
+.venv
+venv/
+ENV/
+*.db
+*.sqlite
+*.sqlite3
+
+# Local runtime data
+data/

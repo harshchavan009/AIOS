@@ -1,0 +1,35 @@
+# Git & IDE
+.git
+.github
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# Frontend (deployed separately to Vercel)
+frontend/node_modules
+frontend/dist
+frontend/build
+
+# Python artifacts & local databases
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.coverage
+htmlcov
+.venv
+venv/
+ENV/
+*.db
+*.sqlite
+*.sqlite3
+
+# Local runtime data
+data/
+pgdata/
+redisdata/
+qdrantdata/
+neo4jdata/
