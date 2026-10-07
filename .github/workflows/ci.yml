@@ -19,25 +19,37 @@ jobs:
           POSTGRES_DB: aios_db
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:7-alpine
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.14
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
         run: |
           cd backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
+          python -m pip install -r requirements.txt
+          python -m pip install pytest pytest-asyncio pytest-cov aiosqlite
 
       - name: Run Backend Test Suite
         env:
@@ -46,7 +58,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
         run: |
           cd backend
-          PYTHONPATH=. pytest tests/ -v --cov=app
+          python -m pytest tests/ -v --cov=app
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -57,6 +69,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies & Build Vite Bundle
         run: |
