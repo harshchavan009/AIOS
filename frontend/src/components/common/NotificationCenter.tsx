@@ -115,40 +115,28 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         }}
         aria-label={`Notifications (${unreadCount} unread)`}
         aria-expanded={isOpen}
-        className={`p-2 rounded-xl border transition-all relative focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-          isLight
-            ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-700'
-            : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-300 hover:text-white'
-        }`}
+        className="p-1.5 rounded border border-border bg-secondary text-foreground hover:bg-muted transition-colors relative focus:outline-none"
       >
-        <Bell className="w-4 h-4" />
+        <Bell className="w-4 h-4 text-muted-foreground hover:text-foreground" strokeWidth={1.5} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white shadow-md animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Enterprise Right-Side Dropdown Notification Center */}
+      {/* Right-Side Dropdown Notification Center */}
       {isOpen && (
         <div
-          className={`absolute right-0 mt-3 w-96 sm:w-[440px] rounded-2xl border shadow-2xl z-50 overflow-hidden transform transition-all duration-200 ease-out origin-top-right ${
-            isLight
-              ? 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111827]'
-              : 'bg-[#0E121B] border-white/[0.08] text-[#F8FAFC]'
-          }`}
+          className="absolute right-0 mt-2 w-80 sm:w-96 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden text-foreground transform transition-all duration-100 ease-out origin-top-right"
         >
           {/* Top Header */}
-          <div
-            className={`p-4 border-b flex items-center justify-between ${
-              isLight ? 'bg-[#FAFAFA] border-[#E5E7EB]' : 'bg-[#0A0D14] border-white/[0.06]'
-            }`}
-          >
+          <div className="p-3 border-b border-border bg-secondary/30 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Bell className="w-4 h-4 text-blue-500 animate-bounce" />
-              <h3 className="text-sm font-bold tracking-tight">Enterprise Notification Center</h3>
+              <Bell className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+              <h3 className="text-xs font-semibold">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
                   {unreadCount} new
                 </span>
               )}

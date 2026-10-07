@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles,
-  Bot,
-  Cpu,
-  Database,
-  CheckCircle2,
+  Check,
   ArrowRight,
   ArrowLeft,
   X,
-  Zap,
-  Network,
-  Terminal,
-  Shield,
-  Layers,
-  Check,
-  Rocket
+  Bot,
+  Cpu,
+  Database,
+  Rocket,
 } from 'lucide-react';
-import { useThemeStore } from '../../store/useThemeStore';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { useNotificationStore } from '../../store/useNotificationStore';
 
 interface OnboardingModalProps {
@@ -25,405 +19,317 @@ interface OnboardingModalProps {
   onClose: () => void;
 }
 
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [agentName, setAgentName] = useState('Enterprise Compliance Auditor');
-  const [agentRole, setAgentRole] = useState('Task Decomposition & Knowledge Audit');
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
-  const [temperature, setTemperature] = useState(0.2);
-  const [enableGraphRAG, setEnableGraphRAG] = useState(true);
-  const [enablePythonTool, setEnablePythonTool] = useState(true);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployProgress, setDeployProgress] = useState(0);
-  const [deployLogs, setDeployLogs] = useState<string[]>([]);
+const STEPS = [
+  { num: 1, title: 'Agent Profile', icon: Bot },
+  { num: 2, title: 'Model Gateway', icon: Cpu },
+  { num: 3, title: 'Knowledge & RAG', icon: Database },
+  { num: 4, title: 'Deploy', icon: Rocket },
+];
 
+export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { theme } = useThemeStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const isLight = theme === 'light';
+  // Restore saved step & config from localStorage
+  const [step, setStep] = useState<number>(() => {
+    const saved = localStorage.getItem('aios_onboarding_step');
+    return saved ? Math.min(Math.max(parseInt(saved, 10), 1), 4) : 1;
+  });
+
+  const [agentName, setAgentName] = useState(() => localStorage.getItem('aios_onboard_name') || '');
+  const [agentRole, setAgentRole] = useState(() => localStorage.getItem('aios_onboard_role') || '');
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aios_onboard_model') || 'claude-3-5-sonnet');
+  const [enableGraphRAG, setEnableGraphRAG] = useState(true);
+  const [enableSandbox, setEnableSandbox] = useState(true);
+
+  // Persist progress to localStorage
+  useEffect(() => {
+    localStorage.setItem('aios_onboarding_step', step.toString());
+  }, [step]);
 
   useEffect(() => {
-    if (step === 4 && !isDeploying && deployProgress === 0) {
-      setIsDeploying(true);
-      setDeployLogs(['[1/4] Initializing LangGraph DAG Orchestrator...']);
+    localStorage.setItem('aios_onboard_name', agentName);
+  }, [agentName]);
 
-      const t1 = setTimeout(() => {
-        setDeployProgress(35);
-        setDeployLogs((prev) => [...prev, '[2/4] Binding LLM router & provider API keys...']);
-      }, 700);
+  useEffect(() => {
+    localStorage.setItem('aios_onboard_role', agentRole);
+  }, [agentRole]);
 
-      const t2 = setTimeout(() => {
-        setDeployProgress(70);
-        setDeployLogs((prev) => [...prev, '[3/4] Connecting Neo4j Knowledge Graph & Qdrant Vector Store...']);
-      }, 1400);
-
-      const t3 = setTimeout(() => {
-        setDeployProgress(100);
-        setIsDeploying(false);
-        setDeployLogs((prev) => [...prev, '[4/4] ✓ Agent deployed successfully! Active workers: 4/6']);
-        
-        addNotification({
-          type: 'agent',
-          title: 'Agent Deployed',
-          description: `${agentName} successfully initialized and online in LangGraph cluster.`,
-        });
-      }, 2100);
-
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-      };
-    }
-  }, [step, isDeploying, deployProgress, agentName, addNotification]);
+  useEffect(() => {
+    localStorage.setItem('aios_onboard_model', selectedModel);
+  }, [selectedModel]);
 
   if (!isOpen) return null;
 
-  const handleFinish = (path: string) => {
+  const handleSkip = () => {
     localStorage.setItem('aios_onboarding_completed', 'true');
+    onClose();
+  };
+
+  const handleFinish = (path: string = '/dashboard') => {
+    localStorage.setItem('aios_onboarding_completed', 'true');
+    addNotification({
+      type: 'agent',
+      title: 'Agent Initialized',
+      description: `${agentName || 'Default Agent'} successfully configured and ready in workspace.`,
+    });
     onClose();
     navigate(path);
   };
 
   const MODELS = [
-    { id: 'gpt-4o', name: 'OpenAI GPT-4o', desc: 'Flagship multi-modal model with fast function calling', badge: 'Recommended' },
-    { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', desc: 'Superior reasoning, coding, and structured analysis', badge: 'High Precision' },
-    { id: 'gemini-1-5-pro', name: 'Gemini 1.5 Pro', desc: '2 Million token context window & multi-modal RAG', badge: 'Large Context' },
-    { id: 'llama-3-70b', name: 'Llama 3 70B (Groq)', desc: 'Ultra-low latency inference on Groq LPU cluster', badge: 'Fastest' },
+    { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', note: 'Recommended for code & multi-step tool reasoning' },
+    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', note: 'Low-latency multimodal model with fast function calling' },
+    { id: 'gemini-1-5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', note: 'High context window for long-document indexing' },
+    { id: 'llama-3-3-70b', name: 'Llama 3.3 70B', provider: 'Groq / Self-hosted', note: 'Open-weights model for air-gapped environments' },
   ];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-lg animate-fade-in"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-100"
+      onClick={handleSkip}
     >
       <div
-        className={`w-full max-w-2xl border rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300 ${
-          isLight
-            ? 'bg-white border-gray-200 text-gray-900 shadow-blue-500/10'
-            : 'bg-[#0E121B] border-white/10 text-white shadow-black/90'
-        }`}
+        className="w-full max-w-xl border border-border rounded-lg shadow-lg overflow-hidden bg-card text-card-foreground transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Step Progress Header */}
-        <div className={`p-6 border-b ${isLight ? 'bg-gray-50/70 border-gray-200' : 'bg-[#080B10] border-white/10'}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-blue-500 text-white shadow-md">
-                <Sparkles className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <h2 className="text-base font-extrabold tracking-tight">AIOS Agent Onboarding Wizard</h2>
-                <p className="text-xs text-muted-foreground">Build, configure, and deploy your first AI Agent in 4 guided steps</p>
-              </div>
+        {/* Header with Title and Step Progress */}
+        <div className="p-5 border-b border-border bg-card">
+          <div className="flex items-center justify-between pb-3">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Set up your AIOS workspace
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Step {step} of 4 • {STEPS[step - 1].title}
+              </p>
             </div>
             <button
               type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-muted-foreground transition-colors"
+              onClick={handleSkip}
+              aria-label="Skip onboarding"
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Stepper Indicator */}
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { num: 1, label: 'Welcome' },
-              { num: 2, label: 'Configure LLM' },
-              { num: 3, label: 'Knowledge RAG' },
-              { num: 4, label: 'Deploy' },
-            ].map((s) => {
-              const isActive = step === s.num;
-              const isDone = step > s.num;
+          {/* Clean hairline progress bar */}
+          <div className="grid grid-cols-4 gap-2 pt-1">
+            {STEPS.map((s) => {
+              const isCompleted = step > s.num;
+              const isCurrent = step === s.num;
               return (
-                <div key={s.num} className="flex flex-col space-y-1.5">
+                <div key={s.num} className="space-y-1">
                   <div
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      isDone
-                        ? 'bg-emerald-400'
-                        : isActive
-                        ? 'bg-blue-500 shadow-sm shadow-blue-500/50'
-                        : 'bg-white/10'
+                    className={`h-1 rounded-full transition-colors ${
+                      isCompleted || isCurrent ? 'bg-primary' : 'bg-secondary'
                     }`}
                   />
-                  <div className="flex items-center justify-between text-[11px] font-mono">
-                    <span className={isActive ? 'text-blue-500 font-bold' : isDone ? 'text-emerald-400 font-bold' : 'text-muted-foreground'}>
-                      {s.num}. {s.label}
-                    </span>
-                    {isDone && <Check className="w-3 h-3 text-emerald-400" />}
-                  </div>
+                  <span className={`block text-[10px] font-medium truncate ${
+                    isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                  }`}>
+                    {s.title}
+                  </span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Step Content Area */}
-        <div className="p-6 md:p-8 space-y-6">
-          {/* STEP 1: Welcome & Agent Identity */}
+        {/* Step Body */}
+        <div className="p-6 space-y-4 min-h-[260px]">
+          {/* Step 1: Agent Profile */}
           {step === 1 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="space-y-2">
-                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-mono font-bold border border-blue-500/20">
-                  <span>👋 Welcome to AIOS</span>
-                </div>
-                <h3 className="text-2xl font-extrabold tracking-tight">Let's build your first AI Agent</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  AIOS orchestrates multi-agent worker nodes powered by LangGraph, Graph RAG, and multi-model LLM routers. Specify a name and role for your initial agent worker.
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-foreground">Define your first agent</h3>
+                <p className="text-xs text-muted-foreground">
+                  Give your primary agent worker an identity and assign its core operational responsibility.
                 </p>
               </div>
 
-              <div className="space-y-4 font-sans">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agent Name</label>
-                  <input
-                    type="text"
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isLight ? 'bg-gray-50 border-gray-300 text-gray-900' : 'bg-white/5 border-white/10 text-white'
-                    }`}
-                    value={agentName}
-                    onChange={(e) => setAgentName(e.target.value)}
-                    placeholder="e.g. Code Architect Agent"
-                  />
-                </div>
+              <div className="space-y-3 pt-1">
+                <Input
+                  id="onboard-agent-name"
+                  label="Agent name"
+                  placeholder="e.g. Research Analyst or Code Auditor"
+                  value={agentName}
+                  onChange={(e) => setAgentName(e.target.value)}
+                  autoFocus
+                />
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agent Task & Role</label>
-                  <input
-                    type="text"
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isLight ? 'bg-gray-50 border-gray-300 text-gray-900' : 'bg-white/5 border-white/10 text-white'
-                    }`}
-                    value={agentRole}
-                    onChange={(e) => setAgentRole(e.target.value)}
-                    placeholder="e.g. LangGraph Task Decomposition & Knowledge Graph Audit"
-                  />
-                </div>
+                <Input
+                  id="onboard-agent-role"
+                  label="Role description"
+                  placeholder="e.g. Retrieve relevant documentation and generate verified answers"
+                  value={agentRole}
+                  onChange={(e) => setAgentRole(e.target.value)}
+                />
               </div>
             </div>
           )}
 
-          {/* STEP 2: Configure LLM */}
+          {/* Step 2: Model Gateway */}
           {step === 2 && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-3">
               <div className="space-y-1">
-                <h3 className="text-xl font-extrabold tracking-tight">Configure LLM Provider & Parameters</h3>
-                <p className="text-xs text-muted-foreground">Select the primary model engine and fine-tune reasoning parameters</p>
+                <h3 className="text-sm font-semibold text-foreground">Select primary LLM</h3>
+                <p className="text-xs text-muted-foreground">
+                  Choose the default foundation model for this agent. You can configure fallback rules anytime.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2 pt-1">
                 {MODELS.map((m) => {
-                  const isSel = selectedModel === m.id;
+                  const isSelected = selectedModel === m.id;
                   return (
-                    <div
+                    <button
                       key={m.id}
+                      type="button"
                       onClick={() => setSelectedModel(m.id)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                        isSel
-                          ? 'bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/30'
-                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                      className={`w-full p-3 rounded border text-left flex items-start justify-between transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 text-foreground shadow-xs'
+                          : 'border-border bg-background hover:bg-secondary text-muted-foreground'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-extrabold text-foreground">{m.name}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[9px] font-mono font-bold">
-                          {m.badge}
-                        </span>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-semibold text-foreground">{m.name}</span>
+                          <span className="text-[10px] text-muted-foreground">({m.provider})</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{m.note}</p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{m.desc}</p>
-                    </div>
+                      {isSelected && <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />}
+                    </button>
                   );
                 })}
               </div>
-
-              {/* Temperature Slider */}
-              <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span>Temperature (Creativity vs Determinism)</span>
-                  <span className="font-mono text-blue-400 font-bold">{temperature}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={temperature}
-                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                  className="w-full accent-blue-500 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-                  <span>0.0 (Exact & Deterministic)</span>
-                  <span>1.0 (Creative Stream)</span>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* STEP 3: Connect Knowledge (RAG & Tools) */}
+          {/* Step 3: Knowledge & RAG */}
           {step === 3 && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-xl font-extrabold tracking-tight">Connect Knowledge Base & Tool Bindings</h3>
-                <p className="text-xs text-muted-foreground">Attach Neo4j Knowledge Graph, Qdrant vector retrieval, and code sandbox execution</p>
-              </div>
-
-              <div className="space-y-3 font-sans">
-                <div
-                  onClick={() => setEnableGraphRAG(!enableGraphRAG)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                    enableGraphRAG
-                      ? 'bg-teal-500/10 border-teal-500/50'
-                      : 'bg-white/5 border-white/10'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3.5">
-                    <div className="p-2.5 rounded-xl bg-teal-500/20 text-teal-400">
-                      <Network className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold text-foreground">Neo4j Graph RAG & Qdrant Vector Store</div>
-                      <div className="text-[11px] text-muted-foreground">Query 1,420 entity nodes and semantic vector chunk embeddings</div>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={enableGraphRAG}
-                    onChange={() => {}}
-                    className="w-4 h-4 accent-teal-500 cursor-pointer"
-                  />
-                </div>
-
-                <div
-                  onClick={() => setEnablePythonTool(!enablePythonTool)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                    enablePythonTool
-                      ? 'bg-amber-500/10 border-amber-500/50'
-                      : 'bg-white/5 border-white/10'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3.5">
-                    <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400">
-                      <Terminal className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold text-foreground">Python Code Execution Sandbox (MCP)</div>
-                      <div className="text-[11px] text-muted-foreground">Run calculations, code scripts, and API tool calls securely</div>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={enablePythonTool}
-                    onChange={() => {}}
-                    className="w-4 h-4 accent-amber-500 cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: Deployment & Success */}
-          {step === 4 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center space-y-2 py-2">
-                {isDeploying ? (
-                  <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mx-auto text-blue-500 animate-bounce">
-                    <Rocket className="w-8 h-8" />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
-                    <CheckCircle2 className="w-8 h-8" />
-                  </div>
-                )}
-
-                <h3 className="text-2xl font-extrabold tracking-tight">
-                  {isDeploying ? 'Deploying Agent Worker Node...' : '🚀 Agent Successfully Deployed!'}
-                </h3>
-                <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                  {isDeploying
-                    ? 'Orchestrating LangGraph DAG nodes, binding multi-model router, and syncing vectors.'
-                    : `${agentName} is now active and ready in your AIOS workspace.`}
+                <h3 className="text-sm font-semibold text-foreground">Enable tools and memory</h3>
+                <p className="text-xs text-muted-foreground">
+                  Connect retrieval pipelines and execution sandboxes for autonomous capability.
                 </p>
               </div>
 
-              {/* Progress Bar & Deployment Terminal Logs */}
-              <div className="space-y-3">
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-emerald-400 h-full transition-all duration-500"
-                    style={{ width: `${deployProgress}%` }}
+              <div className="space-y-2.5 pt-1">
+                <label className="flex items-start gap-3 p-3 rounded border border-border bg-background hover:bg-secondary transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableGraphRAG}
+                    onChange={(e) => setEnableGraphRAG(e.target.checked)}
+                    className="mt-0.5 rounded border-border text-primary focus:ring-primary w-4 h-4"
                   />
-                </div>
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-semibold text-foreground block">Hybrid Graph RAG</span>
+                    <span className="text-xs text-muted-foreground block">
+                      Connect Qdrant dense vector search with Neo4j entity relationships for grounded answers.
+                    </span>
+                  </div>
+                </label>
 
-                <div className="p-4 rounded-2xl bg-[#07090F] border border-white/10 font-mono text-xs space-y-1.5 max-h-36 overflow-y-auto">
-                  {deployLogs.map((log, idx) => (
-                    <div key={idx} className={log.includes('✓') ? 'text-emerald-400 font-bold' : 'text-gray-300'}>
-                      {log}
-                    </div>
-                  ))}
+                <label className="flex items-start gap-3 p-3 rounded border border-border bg-background hover:bg-secondary transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableSandbox}
+                    onChange={(e) => setEnableSandbox(e.target.checked)}
+                    className="mt-0.5 rounded border-border text-primary focus:ring-primary w-4 h-4"
+                  />
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-semibold text-foreground block">Python Tool Sandbox</span>
+                    <span className="text-xs text-muted-foreground block">
+                      Permit agent to write and execute sandboxed code for data analysis and math computation.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Ready to Deploy */}
+          {step === 4 && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-foreground">Configuration summary</h3>
+                <p className="text-xs text-muted-foreground">
+                  Your agent is configured and ready to be loaded into your workspace.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded border border-border bg-secondary/30 space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Agent Name</span>
+                  <span className="font-medium text-foreground">{agentName || 'Default Assistant'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Role</span>
+                  <span className="font-medium text-foreground">{agentRole || 'General Assistant'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Foundation Model</span>
+                  <span className="font-medium text-foreground">{selectedModel}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-muted-foreground">Capabilities</span>
+                  <span className="font-medium text-foreground">
+                    {[enableGraphRAG && 'Graph RAG', enableSandbox && 'Python Sandbox'].filter(Boolean).join(', ') || 'Standard LLM'}
+                  </span>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Modal Footer Controls */}
-        <div className={`p-5 border-t flex items-center justify-between ${isLight ? 'bg-gray-50/70 border-gray-200' : 'bg-[#080B10] border-white/10'}`}>
-          {step > 1 && step < 4 ? (
-            <button
-              type="button"
-              onClick={() => setStep((prev) => (prev - 1) as any)}
-              className="px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold flex items-center space-x-2 transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
-          ) : (
-            <div />
-          )}
+        {/* Footer Navigation Actions */}
+        <div className="p-4 border-t border-border bg-card flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={handleSkip}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Skip setup
+          </Button>
 
-          {step < 3 && (
-            <button
-              type="button"
-              onClick={() => setStep((prev) => (prev + 1) as any)}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-2 transition-all shadow-lg shadow-blue-500/25 ml-auto"
-            >
-              <span>Next Step</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
+          <div className="flex items-center space-x-2">
+            {step > 1 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setStep((prev) => prev - 1)}
+                leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
+              >
+                Back
+              </Button>
+            )}
 
-          {step === 3 && (
-            <button
-              type="button"
-              onClick={() => setStep(4)}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center space-x-2 transition-all shadow-lg shadow-emerald-500/25 ml-auto animate-pulse"
-            >
-              <span>Deploy Agent</span>
-              <Rocket className="w-4 h-4" />
-            </button>
-          )}
-
-          {step === 4 && !isDeploying && (
-            <div className="flex items-center space-x-3 ml-auto">
-              <button
-                type="button"
+            {step < 4 ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setStep((prev) => prev + 1)}
+                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => handleFinish('/dashboard')}
-                className="px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold text-gray-300 transition-all"
+                rightIcon={<Check className="w-3.5 h-3.5" />}
               >
-                Go to Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFinish('/agents')}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-2 transition-all shadow-lg shadow-blue-500/25"
-              >
-                <span>Open Agent Workspace</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+                Launch Workspace
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

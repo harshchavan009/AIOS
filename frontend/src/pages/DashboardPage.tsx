@@ -1,30 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bot,
   Zap,
-  Network,
   Clock,
-  Cpu,
-  HardDrive,
-  Database,
-  Server,
-  Radio,
-  Box,
-  CheckCircle2,
-  ArrowRight,
-  TrendingUp,
-  Activity,
   DollarSign,
-  Briefcase,
-  ListOrdered,
-  Cpu as GpuIcon,
-  Workflow,
+  ArrowRight,
+  RotateCcw,
+  Plus,
   Search,
+  Filter,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ChevronRight,
+  ExternalLink,
+  Cpu,
+  Layers,
   Terminal,
-  Brain,
-  ShieldCheck,
   FileText,
-  Sparkles,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -35,391 +29,615 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { PageSkeleton } from '../components/ui/Skeleton';
-import { ActivityTimelinePanel } from '../components/common/ActivityTimelinePanel';
-import { EnterpriseChartContainer } from '../components/common/EnterpriseChartContainer';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
+interface ExecutionRun {
+  id: string;
+  workflow: string;
+  agent: string;
+  status: 'completed' | 'running' | 'failed';
+  trigger: 'REST API' | 'Manual' | 'Webhook' | 'Schedule';
+  duration: string;
+  tokens: number;
+  costUsd: number;
+  timestamp: string;
+  steps: {
+    name: string;
+    duration: string;
+    status: 'completed' | 'running' | 'failed';
+    model: string;
+    tokens: number;
+  }[];
+}
+
+const INITIAL_RUNS: ExecutionRun[] = [
+  {
+    id: 'run_8492',
+    workflow: 'Financial Research Swarm',
+    agent: 'Planner + Retriever + Critic',
+    status: 'completed',
+    trigger: 'REST API',
+    duration: '340ms',
+    tokens: 1420,
+    costUsd: 0.0031,
+    timestamp: 'Just now',
+    steps: [
+      { name: 'dag:planner.decompose_goal', duration: '112ms', status: 'completed', model: 'Claude 3.5 Sonnet', tokens: 420 },
+      { name: 'rag:retriever.hybrid_search', duration: '44ms', status: 'completed', model: 'Qdrant + Neo4j', tokens: 0 },
+      { name: 'sandbox:python.ebitda_modeling', duration: '68ms', status: 'completed', model: 'Isolated Sandbox', tokens: 140 },
+      { name: 'model:gpt-4o.citation_synthesis', duration: '116ms', status: 'completed', model: 'GPT-4o', tokens: 860 },
+    ],
+  },
+  {
+    id: 'run_8491',
+    workflow: 'Graph RAG 10-K Knowledge Index',
+    agent: 'GraphRAG Ingestion Agent',
+    status: 'completed',
+    trigger: 'Webhook',
+    duration: '1.2s',
+    tokens: 3810,
+    costUsd: 0.0084,
+    timestamp: '2m ago',
+    steps: [
+      { name: 'rag:document.chunk_and_embed', duration: '340ms', status: 'completed', model: 'Text-Embedding-3-Large', tokens: 1200 },
+      { name: 'rag:neo4j.entity_relationship_sync', duration: '280ms', status: 'completed', model: 'Neo4j Cypher Engine', tokens: 610 },
+      { name: 'eval:ragas.groundedness_check', duration: '580ms', status: 'completed', model: 'GPT-4o Mini', tokens: 2000 },
+    ],
+  },
+  {
+    id: 'run_8490',
+    workflow: 'Autonomous Code Review Swarm',
+    agent: 'Code Architect Agent',
+    status: 'running',
+    trigger: 'Webhook',
+    duration: '890ms',
+    tokens: 2150,
+    costUsd: 0.0047,
+    timestamp: '4m ago',
+    steps: [
+      { name: 'git:repo.diff_extraction', duration: '120ms', status: 'completed', model: 'GitHub Integration', tokens: 350 },
+      { name: 'dag:critic.static_ast_analysis', duration: '410ms', status: 'completed', model: 'Claude 3.5 Sonnet', tokens: 1100 },
+      { name: 'model:claude.security_audit', duration: '360ms', status: 'running', model: 'Claude 3.5 Sonnet', tokens: 700 },
+    ],
+  },
+  {
+    id: 'run_8489',
+    workflow: 'Customer Ticket Semantic Classifier',
+    agent: 'Router Agent',
+    status: 'completed',
+    trigger: 'Schedule',
+    duration: '210ms',
+    tokens: 640,
+    costUsd: 0.0014,
+    timestamp: '14m ago',
+    steps: [
+      { name: 'model:gemini.intent_classification', duration: '140ms', status: 'completed', model: 'Gemini 1.5 Pro', tokens: 480 },
+      { name: 'db:postgres.record_intent', duration: '70ms', status: 'completed', model: 'Asyncpg Storage', tokens: 160 },
+    ],
+  },
+  {
+    id: 'run_8488',
+    workflow: 'Enterprise Policy Compliance Audit',
+    agent: 'Compliance Agent',
+    status: 'failed',
+    trigger: 'Manual',
+    duration: '4.8s',
+    tokens: 4200,
+    costUsd: 0.0092,
+    timestamp: '32m ago',
+    steps: [
+      { name: 'rag:policy.hierarchical_search', duration: '620ms', status: 'completed', model: 'Qdrant Store', tokens: 1400 },
+      { name: 'model:claude.compliance_check', duration: '4.18s', status: 'failed', model: 'Claude 3.5 Sonnet', tokens: 2800 },
+    ],
+  },
+];
+
 export const DashboardPage: React.FC = () => {
-  const { summary, runningAgents, hardwareHistory, llmLatencies, streamRateTokensSec } = useLiveTelemetryStore();
+  const navigate = useNavigate();
+  const { summary, hardwareHistory, streamRateTokensSec } = useLiveTelemetryStore();
   const { currentWorkspace } = useWorkspaceStore();
-  const [pipelineActiveNode, setPipelineActiveNode] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [timeRange, setTimeRange] = useState<string>('Live');
-  const [activeSeries, setActiveSeries] = useState<Record<string, boolean>>({
-    cpu: true,
-    ram: true,
-    gpu: true,
-  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'completed' | 'failed'>('all');
+  const [selectedRunId, setSelectedRunId] = useState<string>('run_8492');
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 450);
+    const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  const toggleSeries = (key: string) => {
-    setActiveSeries((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const pipelineNodes = [
-    { name: 'FastAPI', role: 'REST Gateway', detail: 'Async Request Routing', color: 'from-blue-500 to-indigo-500', textColor: 'text-blue-400' },
-    { name: 'Redis', role: 'Message Broker', detail: `Cache & PubSub (1.2ms)`, color: 'from-rose-500 to-red-500', textColor: 'text-rose-400' },
-    { name: 'Celery', role: 'Task Queue', detail: `${summary.active_agents} Active Worker Threads`, color: 'from-amber-500 to-yellow-500', textColor: 'text-amber-400' },
-    { name: 'Worker', role: 'DAG Executor', detail: 'LangGraph State Orchestrator', color: 'from-emerald-500 to-teal-500', textColor: 'text-emerald-400' },
-    { name: 'LLM', role: 'Multi-Model Router', detail: 'GPT-4o / Claude 3.5 / Gemini', color: 'from-purple-500 to-indigo-600', textColor: 'text-purple-400' },
-    { name: 'Streaming', role: 'SSE Output', detail: `${streamRateTokensSec} tokens/sec`, color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' }
-  ];
-
-  // Animate Dataflow Pipeline Pulse Cycle
-  useEffect(() => {
-    const pipelineInterval = setInterval(() => {
-      setPipelineActiveNode((prev) => (prev + 1) % pipelineNodes.length);
-    }, 1200);
-    return () => clearInterval(pipelineInterval);
-  }, [pipelineNodes.length]);
-
   if (isLoading) {
-    return <PageSkeleton title="Loading Enterprise Infrastructure Dashboard..." />;
+    return <PageSkeleton title="Loading Enterprise Dashboard..." />;
   }
 
-  const metricCards = [
-    { label: 'Active Agents', value: `${summary.active_agents}/6`, sub: 'LangGraph Worker Swarm', icon: Bot, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Running Jobs', value: summary.running_jobs, sub: 'Active Workflows', icon: Briefcase, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Queued Tasks', value: summary.queued_tasks, sub: 'Celery Task Queue', icon: ListOrdered, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Worker Status', value: summary.worker_status, sub: 'Celery Worker Pool', icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Database Health', value: summary.database_health, sub: `Postgres 16 Connected`, icon: Database, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-    { label: 'Redis Health', value: summary.redis_health, sub: `Latency: 1.2ms`, icon: Server, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-    { label: 'Neo4j Status', value: summary.neo4j_status, sub: `Graph Nodes Synced`, icon: Network, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-    { label: 'Qdrant Status', value: summary.qdrant_status, sub: `Vector Embeddings Store`, icon: Database, color: 'text-teal-400', bg: 'bg-teal-500/10' },
-    { label: 'API Usage', value: summary.api_usage_total.toLocaleString(), sub: 'Total Requests Executed', icon: TrendingUp, color: 'text-sky-400', bg: 'bg-sky-500/10' },
-    { label: 'Token Usage', value: summary.token_usage_total.toLocaleString(), sub: `+${streamRateTokensSec} tokens/s`, icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    { label: 'Cost Today', value: `$${summary.cost_today_usd.toFixed(2)}`, sub: 'Daily Aggregated Usage', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Monthly Cost', value: `$${summary.monthly_cost_usd.toFixed(2)}`, sub: 'Budget: $1,000.00 / mo', icon: DollarSign, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-    { label: 'Average Latency', value: `${summary.average_latency_ms} ms`, sub: 'FastAPI p50 Loop', icon: Clock, color: 'text-pink-400', bg: 'bg-pink-500/10' },
-    { label: 'GPU Usage', value: `${summary.gpu_usage_percent}%`, sub: summary.gpu_memory, icon: GpuIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'CPU Usage', value: `${summary.cpu_usage_percent}%`, sub: 'Host CPU Load', icon: Cpu, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Memory Usage', value: `${summary.memory_usage_percent}%`, sub: 'System RAM Utilization', icon: HardDrive, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Container Status', value: summary.container_status, sub: 'Docker Swarm Active', icon: Box, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  ];
+  if (hasError) {
+    return (
+      <div className="py-12">
+        <ErrorState
+          title="Telemetry service disconnected"
+          description="Failed to establish connection with FastAPI telemetry SSE stream."
+          onRetry={() => {
+            setHasError(false);
+            setIsLoading(true);
+            setTimeout(() => setIsLoading(false), 400);
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Filter runs by search query and status filter
+  const filteredRuns = INITIAL_RUNS.filter((run) => {
+    const matchesSearch =
+      run.workflow.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      run.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      run.agent.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || run.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectedRun = INITIAL_RUNS.find((r) => r.id === selectedRunId) || INITIAL_RUNS[0];
 
   return (
-    <div className="space-y-8 animate-fade-in font-sans">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 font-sans">
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. Page Header */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-border">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Enterprise Infrastructure Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
-            Real-time live telemetry, 17 system metric indicators, Docker cluster state, and SSE streaming pipeline.
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+            Enterprise Dashboard
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            System execution telemetry, active agent swarms, and runtime cost accounting.
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="px-3 py-1.5 rounded-xl bg-card border border-border/60 text-xs font-mono text-muted-foreground flex items-center space-x-2">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>SSE Live Stream: Connected (2s)</span>
+
+        <div className="flex items-center space-x-2.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-card text-xs text-muted-foreground font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Streaming Live</span>
           </div>
-          <Badge variant="success">All 7 Docker Containers Healthy</Badge>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => setIsLoading(false), 250);
+            }}
+            leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+          >
+            Refresh
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/agents')}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+          >
+            New Run
+          </Button>
         </div>
       </div>
 
-      {/* Active Workspace Scoped Resource Bar */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-purple-900/20 border border-blue-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 font-extrabold text-sm">
-            {currentWorkspace?.name ? currentWorkspace.name.charAt(0) : 'W'}
-          </div>
-          <div>
-            <div className="font-extrabold text-sm text-foreground flex items-center space-x-2">
-              <span>{currentWorkspace?.name || 'My Startup'}</span>
-              <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-[10px]">
-                {currentWorkspace?.resources?.settings?.environment || currentWorkspace?.resources?.analytics?.environment || 'Active Workspace'}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. Top Metric Tiles (4 Key Metrics, Not 17 Equal Cards) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Tile 1: Active Agents & Swarms */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Active Swarms</span>
+              <Bot className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="flex items-baseline space-x-2 pt-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground font-mono">
+                {summary.active_agents}/6
+              </span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                4 nodes online
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground font-mono">Scoped Multi-Tenant Isolation Enforced</p>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <p className="text-xs text-muted-foreground">LangGraph distributed worker swarm</p>
+          </CardContent>
+        </Card>
 
-        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            👥 Members: <strong className="text-blue-400 font-bold">{currentWorkspace?.resources?.users || 4}</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            📄 Documents: <strong className="text-emerald-400 font-bold">{currentWorkspace?.resources?.documents || 18}</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            🔑 API Keys: <strong className="text-amber-400 font-bold">{currentWorkspace?.resources?.apiKeys || 3}</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            🤖 Agents: <strong className="text-purple-400 font-bold">{currentWorkspace?.resources?.agents || 4}</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            ✨ Prompts: <strong className="text-cyan-400 font-bold">{currentWorkspace?.resources?.prompts || 12}</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-            📊 Analytics: <strong className="text-pink-400 font-bold">{currentWorkspace?.resources?.analytics?.tokens_today ? (currentWorkspace.resources.analytics.tokens_today / 1000).toFixed(0) + 'k tokens' : '480k tokens'}</strong>
-          </span>
-        </div>
+        {/* Tile 2: Token Throughput */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Token Throughput</span>
+              <Zap className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="flex items-baseline space-x-2 pt-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground font-mono">
+                {streamRateTokensSec}
+              </span>
+              <span className="text-xs text-muted-foreground font-mono">tokens/sec</span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <p className="text-xs text-muted-foreground font-mono">
+              {summary.token_usage_total.toLocaleString()} total processed
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tile 3: Average Latency (p50 / p95) */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Average Latency</span>
+              <Clock className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="flex items-baseline space-x-2 pt-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground font-mono">
+                {summary.average_latency_ms}
+              </span>
+              <span className="text-xs text-muted-foreground font-mono">ms (p50)</span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <p className="text-xs text-muted-foreground">FastAPI event loop execution</p>
+          </CardContent>
+        </Card>
+
+        {/* Tile 4: Spend Run-Rate */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Cost Today</span>
+              <DollarSign className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="flex items-baseline space-x-2 pt-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground font-mono">
+                ${summary.cost_today_usd.toFixed(2)}
+              </span>
+              <span className="text-xs text-muted-foreground font-mono">
+                / ${summary.monthly_cost_usd.toFixed(0)} mo
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <p className="text-xs text-muted-foreground">Aggregated across all providers</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Running Agents Live Execution Grid */}
-      <div className="glass-card p-6 rounded-2xl space-y-4 border border-border/70 bg-card/60 backdrop-blur-xl">
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
-            <h3 className="text-base font-extrabold tracking-tight">Running Agents</h3>
-          </div>
-          <div className="flex items-center space-x-2 text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-emerald-400 font-bold">
-              {runningAgents.filter(a => a.status === 'Running' || a.status.includes('Searching') || a.status.includes('Executing')).length} / {runningAgents.length} Active Nodes
-            </span>
-          </div>
-        </div>
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. Execution Runs Table & Trace Detail Inspector */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Runs Table Section (8 cols) */}
+        <div className="lg:col-span-8 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Workflow Execution Runs
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Recent agent DAG pipeline invocations and execution status.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {runningAgents.map((agent) => {
-            const getStatusBadge = (status: string) => {
-              if (status === 'Running') {
-                return { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', isPulse: true };
-              } else if (status.includes('Searching') || status.includes('Executing')) {
-                return { bg: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30', isPulse: true };
-              } else if (status === 'Waiting') {
-                return { bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30', isPulse: false };
-              } else {
-                return { bg: 'bg-purple-500/10 text-purple-400 border-purple-500/30', isPulse: false };
-              }
-            };
-
-            const statusStyle = getStatusBadge(agent.status);
-
-            return (
-              <div
-                key={agent.name}
-                className="p-4 rounded-xl bg-muted/30 border border-border/40 hover:border-primary/50 transition-all duration-300 space-y-3 flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      {agent.name === 'Planner' && <Workflow className="w-4 h-4 text-emerald-400" />}
-                      {agent.name === 'Retriever' && <Search className="w-4 h-4 text-cyan-400" />}
-                      {agent.name === 'Python Tool' && <Terminal className="w-4 h-4 text-blue-400" />}
-                      {agent.name === 'Reasoning' && <Brain className="w-4 h-4 text-amber-400" />}
-                      {agent.name === 'Critic' && <ShieldCheck className="w-4 h-4 text-purple-400" />}
-                      {agent.name === 'Response' && <FileText className="w-4 h-4 text-teal-400" />}
-                    </div>
-                    <span className="font-extrabold text-sm text-foreground">{agent.name}</span>
-                  </div>
-
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-mono border font-bold flex items-center space-x-1.5 ${statusStyle.bg}`}>
-                    {statusStyle.isPulse && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
-                    <span>{agent.status}</span>
-                  </span>
-                </div>
-
-                <div className="text-xs font-mono text-muted-foreground bg-background/60 p-2.5 rounded-lg border border-border/30">
-                  {agent.detail}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Live Dataflow Pipeline Visual Diagram */}
-      <div className="glass-card p-6 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center space-x-2">
-            <Zap className="w-5 h-5 text-primary animate-pulse" />
-            <h3 className="text-base font-bold">Live Execution Dataflow Pipeline</h3>
-          </div>
-          <span className="text-xs font-mono text-emerald-400">
-            Streaming Rate: {streamRateTokensSec} tokens/sec
-          </span>
-        </div>
-
-        {/* Pipeline Nodes Flow */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {pipelineNodes.map((node, idx) => {
-            const isActive = idx === pipelineActiveNode;
-            return (
-              <div key={node.name} className="flex flex-col items-center space-y-2 relative">
-                <div
-                  className={`w-full p-4 rounded-xl border transition-all duration-500 space-y-2 relative overflow-hidden ${
-                    isActive
-                      ? `bg-primary/10 border-primary ring-2 ring-primary shadow-lg shadow-primary/20 scale-105 z-10`
-                      : 'bg-muted/30 border-border/40 text-muted-foreground'
+            {/* Filter buttons */}
+            <div className="flex items-center space-x-1.5">
+              {(['all', 'running', 'completed', 'failed'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  className={`px-2.5 py-1 rounded text-xs capitalize transition-colors ${
+                    statusFilter === s
+                      ? 'bg-secondary text-foreground font-semibold border border-border'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {isActive && (
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${node.color} animate-pulse`} />
-                  )}
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
 
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Filter by workflow name, agent, or run ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 text-xs rounded bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          {filteredRuns.length === 0 ? (
+            <EmptyState
+              title="No execution runs found"
+              description={`No runs matched the query "${searchQuery}".`}
+              actionLabel="Clear Filter"
+              onAction={() => {
+                setSearchQuery('');
+                setStatusFilter('all');
+              }}
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-24">Status</TableHead>
+                  <TableHead className="w-24">Run ID</TableHead>
+                  <TableHead>Workflow / DAG</TableHead>
+                  <TableHead className="w-20">Trigger</TableHead>
+                  <TableHead className="w-20 text-right">Duration</TableHead>
+                  <TableHead className="w-20 text-right">Tokens</TableHead>
+                  <TableHead className="w-16 text-right">Cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRuns.map((run) => {
+                  const isSelected = run.id === selectedRunId;
+                  return (
+                    <TableRow
+                      key={run.id}
+                      onClick={() => setSelectedRunId(run.id)}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected ? 'bg-secondary/70 font-medium' : ''
+                      }`}
+                    >
+                      <TableCell>
+                        <Badge
+                          variant={
+                            run.status === 'completed'
+                              ? 'success'
+                              : run.status === 'running'
+                              ? 'info'
+                              : 'destructive'
+                          }
+                          dot
+                        >
+                          {run.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-foreground">
+                        {run.id}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-0.5">
+                          <div className="font-medium text-foreground truncate max-w-[200px] sm:max-w-xs">
+                            {run.workflow}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {run.agent}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {run.trigger}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground text-xs">
+                        {run.duration}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground text-xs">
+                        {run.tokens.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground text-xs">
+                        ${run.costUsd.toFixed(4)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        {/* Selected Run Trace Detail Inspector (4 cols) */}
+        <div className="lg:col-span-4 rounded-lg border border-border bg-card p-4 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div>
+              <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span>Run Trace Detail</span>
+                <span className="font-mono text-muted-foreground">({selectedRun.id})</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Step-by-step DAG telemetry and latency breakdown.
+              </p>
+            </div>
+            <Badge
+              variant={
+                selectedRun.status === 'completed'
+                  ? 'success'
+                  : selectedRun.status === 'running'
+                  ? 'info'
+                  : 'destructive'
+              }
+              dot
+            >
+              {selectedRun.status}
+            </Badge>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-3 gap-2 p-2.5 rounded bg-secondary/50 text-center text-xs font-mono">
+            <div>
+              <span className="text-[10px] text-muted-foreground block font-sans">Latency</span>
+              <span className="font-semibold text-foreground">{selectedRun.duration}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-muted-foreground block font-sans">Tokens</span>
+              <span className="font-semibold text-foreground">{selectedRun.tokens.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-muted-foreground block font-sans">Cost</span>
+              <span className="font-semibold text-foreground">${selectedRun.costUsd.toFixed(4)}</span>
+            </div>
+          </div>
+
+          {/* Step Timeline */}
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-foreground block">
+              Execution Timeline ({selectedRun.steps.length} steps)
+            </span>
+
+            <div className="space-y-1.5">
+              {selectedRun.steps.map((st, idx) => (
+                <div
+                  key={idx}
+                  className="p-2.5 rounded border border-border/80 bg-background space-y-1 text-xs"
+                >
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold ${isActive ? node.textColor : 'text-foreground'}`}>
-                      {node.name}
+                    <span className="font-mono text-xs font-medium text-foreground truncate max-w-[180px]">
+                      {st.name}
                     </span>
-                    {isActive ? (
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500/60" />
-                    )}
+                    <span className="font-mono text-[11px] text-muted-foreground">{st.duration}</span>
                   </div>
-
-                  <div className="text-[10px] font-mono text-muted-foreground">{node.role}</div>
-                </div>
-
-                {/* Connector Arrow */}
-                {idx < pipelineNodes.length - 1 && (
-                  <div className="hidden lg:flex items-center justify-center absolute -right-3 top-1/2 -translate-y-1/2 z-20">
-                    <ArrowRight className={`w-4 h-4 ${idx <= pipelineActiveNode ? 'text-primary animate-pulse' : 'text-muted-foreground/30'}`} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Active Node Detail */}
-        <div className="p-3 rounded-xl bg-[#090d16] border border-border/60 flex items-center justify-between text-xs font-mono">
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-primary font-bold">{pipelineNodes[pipelineActiveNode].name}:</span>
-            <span className="text-gray-300">{pipelineNodes[pipelineActiveNode].detail}</span>
-          </div>
-          <span className="text-muted-foreground text-[10px]">Real-Time SSE Stream</span>
-        </div>
-      </div>
-
-      {/* 17 Live Metric Cards */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold tracking-tight">Live System Indicators (17 Realtime Metrics)</h2>
-          <Badge variant="info">Live Stream Active</Badge>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {metricCards.map((card, idx) => {
-            const Icon = card.icon;
-            return (
-              <div key={idx} className="glass-card glass-card-hover p-4 rounded-2xl space-y-2 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{card.label}</span>
-                  <div className={`p-2 rounded-xl ${card.bg} ${card.color}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                    <span>{st.model}</span>
+                    {st.tokens > 0 && <span className="font-mono">{st.tokens} tok</span>}
                   </div>
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{card.value}</div>
-                <div className="text-[10px] text-muted-foreground font-mono truncate">{card.sub}</div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-border flex justify-between">
+            <Button
+              variant="secondary"
+              size="xs"
+              className="w-full text-xs"
+              onClick={() => navigate('/agents')}
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+            >
+              Inspect in Agent Studio
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 4. Real-Time Hardware Telemetry Sparkline Chart */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 rounded-lg border border-border bg-card p-5 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                Host System Telemetry
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Live CPU and memory utilization across active worker threads.
+              </p>
+            </div>
+            <div className="flex items-center space-x-3 text-xs font-mono text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                CPU: {summary.cpu_usage_percent}%
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                RAM: {summary.memory_usage_percent}%
+              </span>
+            </div>
+          </div>
+
+          <div className="h-48 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={hardwareHistory}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.15)" />
+                <XAxis dataKey="time" stroke="rgba(128, 128, 128, 0.6)" fontSize={10} />
+                <YAxis stroke="rgba(128, 128, 128, 0.6)" fontSize={10} domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cpu"
+                  name="CPU (%)"
+                  stroke="#2563eb"
+                  fill="#2563eb"
+                  fillOpacity={0.15}
+                  strokeWidth={1.5}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="ram"
+                  name="RAM (%)"
+                  stroke="#10b981"
+                  fill="#10b981"
+                  fillOpacity={0.15}
+                  strokeWidth={1.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Foundation Models Gateway Status (4 cols) */}
+        <div className="lg:col-span-4 rounded-lg border border-border bg-card p-5 space-y-3 shadow-xs">
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight text-foreground">
+              Model Gateway Availability
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Provider response latency and health status.
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-1 text-xs">
+            <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-medium text-foreground">Claude 3.5 Sonnet</span>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Live Hardware Telemetry Area Chart & Activity Timeline Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <EnterpriseChartContainer
-          title="Real-Time Host Hardware Load"
-          subtitle="Live time-series tracking of CPU, RAM, and GPU utilization"
-          icon={Cpu}
-          data={hardwareHistory}
-          csvFilename="hardware_telemetry.csv"
-          activeTimeRange={timeRange}
-          onTimeRangeChange={(r) => setTimeRange(r)}
-          seriesList={[
-            { key: 'cpu', name: 'CPU Utilization', color: '#3b82f6' },
-            { key: 'ram', name: 'RAM Allocation', color: '#a855f7' },
-            { key: 'gpu', name: 'GPU Utilization', color: '#f59e0b' },
-          ]}
-          activeSeries={activeSeries}
-          onToggleSeries={toggleSeries}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={hardwareHistory}>
-              <defs>
-                <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="ramGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
-              <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0E121B',
-                  borderColor: 'rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-                }}
-              />
-              {activeSeries.cpu !== false && (
-                <Area type="monotone" dataKey="cpu" name="CPU Utilization (%)" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cpuGrad)" />
-              )}
-              {activeSeries.ram !== false && (
-                <Area type="monotone" dataKey="ram" name="RAM Allocation (%)" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#ramGrad)" />
-              )}
-              {activeSeries.gpu !== false && (
-                <Area type="monotone" dataKey="gpu" name="GPU Utilization (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gpuGrad)" />
-              )}
-            </AreaChart>
-          </ResponsiveContainer>
-        </EnterpriseChartContainer>
-
-        {/* Live Enterprise Activity Feed Timeline Panel */}
-        <ActivityTimelinePanel />
-      </div>
-
-      {/* LLM Model Provider Latency Monitors */}
-      <div className="glass-card p-6 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border/60">
-          <h3 className="text-base font-bold flex items-center space-x-2">
-            <Bot className="w-5 h-5 text-primary" />
-            <span>Multi-Provider LLM Latency Monitors</span>
-          </h3>
-          <span className="text-xs font-mono text-muted-foreground">P95 Response Latencies</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-bold text-foreground">OpenAI GPT-4o</span>
+              <span className="font-mono text-muted-foreground">284ms • $0.003</span>
             </div>
-            <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-              {llmLatencies.openai_gpt4o_ms} ms
-            </span>
+
+            <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-medium text-foreground">OpenAI GPT-4o</span>
+              </div>
+              <span className="font-mono text-muted-foreground">312ms • $0.0025</span>
+            </div>
+
+            <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-medium text-foreground">Gemini 1.5 Pro</span>
+              </div>
+              <span className="font-mono text-muted-foreground">340ms • $0.0012</span>
+            </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />
-              <span className="font-bold text-foreground">Anthropic Claude 3.5</span>
-            </div>
-            <span className="px-3 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
-              {llmLatencies.anthropic_claude_ms} ms
-            </span>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/40 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
-              <span className="font-bold text-foreground">Google Gemini 1.5</span>
-            </div>
-            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
-              {llmLatencies.google_gemini_ms} ms
-            </span>
-          </div>
+          <Button
+            variant="secondary"
+            size="xs"
+            className="w-full text-xs mt-2"
+            onClick={() => navigate('/models')}
+          >
+            Manage Model Gateway
+          </Button>
         </div>
       </div>
     </div>

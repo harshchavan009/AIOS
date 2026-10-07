@@ -553,26 +553,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/75 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-100 font-sans"
       onClick={onClose}
     >
       <div
-        className={`w-full max-w-2xl border rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 ${
-          isLight
-            ? 'bg-white border-gray-200 text-gray-900 shadow-blue-500/10'
-            : 'bg-[#0E121B] border-white/10 text-white shadow-black/80'
-        }`}
+        className="w-full max-w-2xl border border-border rounded-lg shadow-lg overflow-hidden bg-card text-card-foreground transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className={`flex items-center px-4 py-3.5 border-b ${isLight ? 'border-gray-200 bg-gray-50/50' : 'border-white/10 bg-[#080B10]'}`}>
-          <Search className="w-5 h-5 text-blue-500 mr-3 shrink-0" />
+        <div className="flex items-center px-4 py-3 border-b border-border bg-card">
+          <Search className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
           <input
             type="text"
-            className={`w-full bg-transparent placeholder:text-muted-foreground focus:outline-none text-base font-medium ${
-              isLight ? 'text-gray-900' : 'text-white'
-            }`}
-            placeholder="Search everything (Pages, Prompts, Agents, Workflows, Knowledge Base, Documents, Models, Users)..."
+            className="w-full bg-transparent placeholder:text-muted-foreground focus:outline-none text-sm font-normal text-foreground"
+            placeholder="Search pages, agents, tools, models, settings..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -580,16 +574,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/10 text-muted-foreground transition-colors shrink-0 ml-2"
+            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0 ml-2"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Category Filter Pills Bar */}
-        <div className={`flex items-center space-x-1 px-4 py-2 border-b overflow-x-auto scrollbar-none text-xs font-medium ${
-          isLight ? 'border-gray-200 bg-gray-100/60' : 'border-white/[0.06] bg-[#0A0D15]'
-        }`}>
+        <div className="flex items-center space-x-1 px-3 py-1.5 border-b border-border overflow-x-auto bg-secondary/30 text-xs">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategoryFilter === cat;
             return (
@@ -597,12 +589,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-lg transition-all whitespace-nowrap text-xs font-semibold ${
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm font-bold'
-                    : isLight
-                    ? 'text-gray-600 hover:bg-gray-200'
-                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-primary text-white shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 }`}
               >
                 {cat}
@@ -612,13 +602,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         </div>
 
         {/* Command List View */}
-        <div className="max-h-[26rem] overflow-y-auto p-2 divide-y divide-white/[0.04]" ref={listRef}>
+        <div className="max-h-[26rem] overflow-y-auto p-1.5 divide-y divide-border/40" ref={listRef}>
           {filteredCommands.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground text-sm space-y-2">
-              <Command className="w-8 h-8 mx-auto text-gray-500 opacity-50" />
-              <p>No matching entities found for "{query}"</p>
-              <p className="text-xs opacity-60 font-mono">
-                Try searching "Dashboard", "Planner Agent", "Neo4j", "GPT-4o", or "Harsh"
+            <div className="p-10 text-center text-muted-foreground text-xs space-y-1.5">
+              <Command className="w-6 h-6 mx-auto text-muted-foreground/60" />
+              <p className="font-medium text-foreground">No matching items for "{query}"</p>
+              <p className="text-muted-foreground text-xs">
+                Try searching "Dashboard", "Planner", "Graph RAG", or "Settings"
               </p>
             </div>
           ) : (
@@ -627,10 +617,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               if (catItems.length === 0) return null;
 
               return (
-                <div key={cat} className="py-1.5">
-                  <div className="px-3 py-1 text-[10px] font-bold font-mono text-muted-foreground/70 uppercase tracking-wider flex items-center justify-between">
+                <div key={cat} className="py-1">
+                  <div className="px-3 py-1 text-xs font-medium text-muted-foreground flex items-center justify-between">
                     <span>{cat}</span>
-                    <span className="text-[9px] opacity-60 font-sans">{catItems.length} items</span>
+                    <span className="text-xs text-muted-foreground/60">{catItems.length}</span>
                   </div>
                   <div className="space-y-0.5 mt-0.5">
                     {catItems.map((cmd) => {
@@ -644,32 +634,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                           type="button"
                           onClick={cmd.action}
                           onMouseEnter={() => setSelectedIndex(globalIdx)}
-                          className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left group ${
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left group transition-colors ${
                             isSelected
-                              ? isLight
-                                ? 'bg-blue-50 text-blue-900 border border-blue-200 shadow-sm'
-                                : 'bg-blue-600/15 border border-blue-500/30 text-white'
-                              : 'border border-transparent hover:bg-white/[0.03]'
+                              ? 'bg-secondary text-foreground'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                           }`}
                         >
-                          <div className="flex items-center space-x-3 min-w-0">
-                            <div
-                              className={`p-2 rounded-lg shrink-0 transition-colors ${
-                                isSelected
-                                  ? 'bg-blue-500 text-white shadow-md'
-                                  : isLight
-                                  ? 'bg-gray-100 text-gray-600'
-                                  : 'bg-white/5 text-gray-400 group-hover:text-white'
-                              }`}
-                            >
-                              <Icon className="w-4 h-4" />
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className={`p-1.5 rounded shrink-0 ${isSelected ? 'bg-background text-foreground' : 'bg-secondary/80 text-muted-foreground'}`}>
+                              <Icon className="w-3.5 h-3.5" />
                             </div>
                             <div className="min-w-0">
-                              <div className={`text-xs font-bold truncate ${isSelected ? 'text-blue-500' : ''}`}>
+                              <div className={`text-xs font-medium truncate ${isSelected ? 'text-foreground' : ''}`}>
                                 {cmd.title}
                               </div>
                               {cmd.subtitle && (
-                                <div className="text-[11px] text-muted-foreground truncate font-sans opacity-80">
+                                <div className="text-xs text-muted-foreground truncate">
                                   {cmd.subtitle}
                                 </div>
                               )}
@@ -678,15 +658,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
                           <div className="flex items-center space-x-2 shrink-0 ml-3">
                             {cmd.shortcut && (
-                              <kbd className={`px-1.5 py-0.5 text-[10px] font-mono rounded border ${
-                                isLight
-                                  ? 'bg-white border-gray-200 text-gray-500'
-                                  : 'bg-white/5 border-white/10 text-gray-400'
-                              }`}>
+                              <kbd className="px-1.5 py-0.5 text-xs font-mono rounded border border-border bg-background text-muted-foreground">
                                 {cmd.shortcut}
                               </kbd>
                             )}
-                            <ArrowRight className={`w-3.5 h-3.5 transition-opacity ${isSelected ? 'opacity-100 text-blue-500' : 'opacity-0'}`} />
+                            <ArrowRight className={`w-3.5 h-3.5 transition-opacity ${isSelected ? 'opacity-100 text-primary' : 'opacity-0'}`} />
                           </div>
                         </button>
                       );
@@ -699,30 +675,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         </div>
 
         {/* Footer Navigation Hints */}
-        <div className={`px-4 py-2.5 border-t flex items-center justify-between text-[11px] text-muted-foreground ${
-          isLight ? 'bg-gray-50 border-gray-200' : 'bg-[#080B10] border-white/10'
-        }`}>
-          <div className="flex items-center space-x-4">
+        <div className="px-3.5 py-2 border-t border-border bg-secondary/30 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center space-x-3">
             <span className="flex items-center space-x-1">
-              <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">Ctrl / ⌘ + K</kbd>
+              <kbd className="px-1 py-0.5 bg-background rounded text-[10px] font-mono border border-border">⌘K</kbd>
               <span>Toggle</span>
             </span>
             <span className="flex items-center space-x-1">
-              <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">↑↓</kbd>
+              <kbd className="px-1 py-0.5 bg-background rounded text-[10px] font-mono border border-border">↑↓</kbd>
               <span>Navigate</span>
             </span>
             <span className="flex items-center space-x-1">
-              <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">↵</kbd>
+              <kbd className="px-1 py-0.5 bg-background rounded text-[10px] font-mono border border-border">↵</kbd>
               <span>Select</span>
             </span>
             <span className="flex items-center space-x-1">
-              <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px] font-mono border border-white/10">Esc</kbd>
+              <kbd className="px-1 py-0.5 bg-background rounded text-[10px] font-mono border border-border">Esc</kbd>
               <span>Close</span>
             </span>
           </div>
 
-          <div className="flex items-center space-x-1 font-mono text-[10px]">
-            <span className="text-blue-500 font-bold">AIOS</span> Global Search
+          <div className="text-xs text-muted-foreground">
+            Search
           </div>
         </div>
       </div>

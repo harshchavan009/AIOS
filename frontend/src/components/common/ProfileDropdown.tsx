@@ -3,20 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
   Building2,
-  FolderKanban,
   Key,
   CreditCard,
   Settings as SettingsIcon,
   Keyboard,
-  FileText,
   LogOut,
-  ShieldCheck,
   ChevronDown,
   Sparkles,
   LifeBuoy,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useThemeStore } from '../../store/useThemeStore';
 
 interface ProfileDropdownProps {
   isOpen: boolean;
@@ -34,11 +30,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onOpenOnboarding
 }) => {
   const { user, logout } = useAuthStore();
-  const { theme } = useThemeStore();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const isLight = theme === 'light';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,135 +71,100 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         }}
         aria-label="User Profile Menu"
         aria-expanded={isOpen}
-        className={`flex items-center space-x-2.5 pl-2 border-l hover:opacity-90 transition-opacity focus:outline-none ${
-          isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'
-        }`}
+        className="flex items-center space-x-2 pl-2 border-l border-border hover:opacity-90 transition-opacity focus:outline-none"
       >
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
+        <div className="w-7 h-7 rounded bg-secondary border border-border flex items-center justify-center text-foreground font-semibold text-xs">
           {userInitial}
         </div>
         <div className="hidden md:block text-left">
-          <div className={`text-xs font-semibold flex items-center space-x-1 ${isLight ? 'text-[#111827]' : 'text-[#F8FAFC]'}`}>
-            <span>{user?.full_name || 'AIOS Administrator'}</span>
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+          <div className="text-xs font-medium text-foreground">
+            {user?.full_name || 'AIOS Administrator'}
           </div>
-          <div className={`text-[10px] uppercase tracking-wider font-mono -mt-0.5 ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+          <div className="text-[10px] text-muted-foreground uppercase font-mono leading-none">
             {user?.role || 'Admin'}
           </div>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden md:block" />
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
       </button>
 
       {/* Dropdown Card */}
       {isOpen && (
         <div
-          className={`absolute right-0 mt-3 w-64 rounded-2xl border shadow-2xl z-50 overflow-hidden transform transition-all duration-200 ease-out origin-top-right ${
-            isLight
-              ? 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111827]'
-              : 'bg-[#111827] border-white/[0.08] text-[#F8FAFC]'
-          }`}
+          className="absolute right-0 mt-2 w-60 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden text-foreground transform transition-all duration-100 ease-out origin-top-right"
         >
           {/* User Info Header */}
-          <div
-            className={`p-4 border-b space-y-1 ${
-              isLight ? 'bg-[#FAFAFA] border-[#E5E7EB]' : 'bg-[#0F1117] border-white/[0.06]'
-            }`}
-          >
-            <div className="flex items-center space-x-2">
-              <span className={`text-xs font-bold truncate ${isLight ? 'text-[#111827]' : 'text-[#F8FAFC]'}`}>
+          <div className="p-3 border-b border-border bg-secondary/30 space-y-0.5">
+            <div className="flex items-center space-x-1.5">
+              <span className="text-xs font-semibold truncate text-foreground">
                 {user?.full_name || 'AIOS Administrator'}
               </span>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-secondary text-muted-foreground border border-border">
                 {user?.role || 'Admin'}
               </span>
             </div>
-            <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@aios.dev'}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@aios.dev'}</p>
           </div>
 
           {/* User Avatar Menu Items */}
-          <div className="p-2 space-y-0.5" role="menu">
+          <div className="p-1.5 space-y-0.5" role="menu">
             <button
               type="button"
               role="menuitem"
               onClick={() => handleNavigate('/settings?tab=profile')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <UserIcon className="w-4 h-4 text-blue-500" />
-              <span>Profile</span>
+              <UserIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Profile Settings</span>
             </button>
 
             <button
               type="button"
               role="menuitem"
               onClick={() => handleNavigate('/settings?tab=organization')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <Building2 className="w-4 h-4 text-sky-500" />
+              <Building2 className="w-3.5 h-3.5" strokeWidth={1.5} />
               <span>Organization</span>
             </button>
 
             <button
               type="button"
               role="menuitem"
-              onClick={() => handleNavigate('/workspace')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
-            >
-              <FolderKanban className="w-4 h-4 text-indigo-500" />
-              <span>Workspace</span>
-            </button>
-
-            <button
-              type="button"
-              role="menuitem"
               onClick={() => handleNavigate('/settings?tab=api-keys')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <Key className="w-4 h-4 text-amber-500" />
+              <Key className="w-3.5 h-3.5" strokeWidth={1.5} />
               <span>API Keys</span>
             </button>
 
             <button
               type="button"
               role="menuitem"
-              onClick={() => handleNavigate('/settings?tab=billing')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              onClick={() => handleNavigate('/billing')}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <CreditCard className="w-4 h-4 text-emerald-500" />
-              <span>Billing</span>
+              <CreditCard className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Billing & Plans</span>
             </button>
 
             <button
               type="button"
               role="menuitem"
               onClick={() => handleNavigate('/settings')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <SettingsIcon className="w-4 h-4 text-purple-500" />
-              <span>Settings</span>
+              <SettingsIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>System Settings</span>
             </button>
 
             <button
               type="button"
               role="menuitem"
               onClick={() => window.open('https://github.com/harshchavan009/AIOS', '_blank')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <LifeBuoy className="w-4 h-4 text-teal-500" />
-              <span>Support</span>
+              <LifeBuoy className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Support & Docs</span>
             </button>
 
             {onOpenOnboarding && (
@@ -217,16 +175,14 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                   onClose();
                   onOpenOnboarding();
                 }}
-                className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                  isLight ? 'text-blue-600 hover:bg-blue-50' : 'text-blue-400 hover:bg-blue-500/10'
-                }`}
+                className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-primary hover:bg-primary/10 transition-colors"
               >
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                <span>Guided Onboarding</span>
+                <Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <span>Onboarding Wizard</span>
               </button>
             )}
 
-            <div className={`my-1 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`} />
+            <div className="my-1 border-t border-border" />
 
             <button
               type="button"
@@ -235,29 +191,27 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 onClose();
                 onOpenShortcuts();
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                isLight ? 'text-gray-700 hover:bg-gray-100 hover:text-black' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'
-              }`}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <div className="flex items-center space-x-2.5">
-                <Keyboard className="w-4 h-4 text-pink-500" />
+              <div className="flex items-center space-x-2">
+                <Keyboard className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>Keyboard Shortcuts</span>
               </div>
-              <kbd className={`px-1.5 py-0.5 text-[10px] font-mono border rounded ${isLight ? 'bg-gray-100 border-[#E5E7EB] text-gray-600' : 'bg-[#07090D] border-white/[0.06] text-gray-400'}`}>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border rounded bg-background text-muted-foreground">
                 ⌘/
               </kbd>
             </button>
 
-            <div className={`my-1 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.06]'}`} />
+            <div className="my-1 border-t border-border" />
 
             <button
               type="button"
               role="menuitem"
               onClick={handleLogout}
-              className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors"
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-xs text-destructive hover:bg-destructive/10 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
+              <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Log out</span>
             </button>
           </div>
         </div>
@@ -265,4 +219,3 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     </div>
   );
 };
-

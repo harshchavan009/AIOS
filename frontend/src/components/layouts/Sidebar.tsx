@@ -4,59 +4,76 @@ import {
   LayoutDashboard,
   Bot,
   Network,
-  SlidersHorizontal,
-  Home,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
-  BrainCircuit,
-  Brain,
   Sliders,
-  Layers,
+  Sparkles,
+  Brain,
   Cpu,
-  Award,
-  Database,
-  ShoppingBag,
   BarChart2,
-  BookOpen,
-  Code2,
-  CreditCard,
+  SlidersHorizontal,
   X,
+  Layers,
+  LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useThemeStore } from '../../store/useThemeStore';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
 }
 
+interface NavGroup {
+  label?: string;
+  items: {
+    label: string;
+    icon: LucideIcon;
+    path: string;
+    statusDot?: boolean;
+  }[];
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseMobile }) => {
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuthStore();
-  const { theme } = useThemeStore();
 
-  const isLight = theme === 'light';
-
-  const NAV_ITEMS = [
-    { label: 'Landing Page', icon: Home, path: '/' },
-    { label: 'Enterprise Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'AI Playground', icon: Sliders, path: '/playground', badge: 'Multi-LLM' },
-    { label: 'Prompt Studio', icon: Sparkles, path: '/prompt-studio' },
-    { label: 'Visual Agent Builder', icon: Layers, path: '/agent-builder', badge: 'No-Code' },
-    { label: 'Multi-Agent Studio', icon: Bot, path: '/agents', badge: '6 Active' },
-    { label: 'Graph RAG & Memory', icon: Network, path: '/graph-rag' },
-    { label: 'Second Brain Vault', icon: Brain, path: '/second-brain', badge: 'Vector' },
-    { label: 'Model Management', icon: Cpu, path: '/models' },
-    { label: 'Evaluation Studio', icon: Award, path: '/evaluation' },
-    { label: 'Knowledge Base', icon: Database, path: '/knowledge' },
-    { label: 'Agent Marketplace', icon: ShoppingBag, path: '/marketplace' },
-    { label: 'Documentation', icon: BookOpen, path: '/docs', badge: 'v1.0' },
-    { label: 'REST API Explorer', icon: Code2, path: '/api-explorer' },
-    { label: 'Enterprise Analytics', icon: BarChart2, path: '/analytics' },
-    { label: 'SaaS Billing', icon: CreditCard, path: '/billing', badge: '4 Tiers' },
-    { label: 'System Settings', icon: SlidersHorizontal, path: '/settings' },
+  const NAV_GROUPS: NavGroup[] = [
+    {
+      items: [
+        { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+      ],
+    },
+    {
+      label: 'Build',
+      items: [
+        { label: 'Agent Studio', icon: Bot, path: '/agents', statusDot: true },
+        { label: 'Visual Builder', icon: Layers, path: '/agent-builder' },
+        { label: 'Prompt Studio', icon: Sparkles, path: '/prompt-studio' },
+        { label: 'Playground', icon: Sliders, path: '/playground' },
+      ],
+    },
+    {
+      label: 'Data',
+      items: [
+        { label: 'Graph RAG', icon: Network, path: '/graph-rag' },
+        { label: 'Second Brain', icon: Brain, path: '/second-brain' },
+      ],
+    },
+    {
+      label: 'Evaluate',
+      items: [
+        { label: 'Evaluation', icon: BarChart2, path: '/evaluation' },
+        { label: 'Analytics', icon: BarChart2, path: '/analytics' },
+      ],
+    },
+    {
+      label: 'Account',
+      items: [
+        { label: 'Model Gateway', icon: Cpu, path: '/models' },
+        { label: 'Settings', icon: SlidersHorizontal, path: '/settings' },
+      ],
+    },
   ];
 
   return (
@@ -65,119 +82,109 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
       {isMobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-40 lg:hidden transition-opacity"
         />
       )}
 
-      {/* Main Sidebar (Desktop Sticky + Mobile Slide-over Drawer) */}
+      {/* Main Sidebar */}
       <aside
-        className={`h-screen flex flex-col justify-between transition-all duration-300 z-50 backdrop-blur-[30px] ${
-          isLight
-            ? 'bg-[#FAFAFA]/95 border-r border-[#E5E7EB]'
-            : 'bg-[#0E121B]/95 border-r border-white/[0.08] shadow-[1px_0_30px_rgba(0,0,0,0.4)]'
-        } ${
-          /* Mobile Drawer Position */
+        className={`h-screen flex flex-col justify-between z-50 bg-card border-r border-border transition-all duration-150 ${
           isMobileOpen
-            ? 'fixed inset-y-0 left-0 w-64 shadow-2xl translate-x-0'
+            ? 'fixed inset-y-0 left-0 w-60 shadow-lg translate-x-0'
             : 'fixed lg:sticky top-0 -translate-x-full lg:translate-x-0'
-        } ${collapsed ? 'lg:w-20' : 'lg:w-64'}`}
+        } ${collapsed ? 'lg:w-16' : 'lg:w-56'}`}
       >
-      <div>
-        {/* Brand Header */}
-        <div
-          className={`h-16 flex items-center justify-between px-4 border-b ${
-            isLight ? 'border-[#E5E7EB]' : 'border-white/[0.08]'
-          }`}
-        >
-          <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 shrink-0 border border-white/20">
-              <BrainCircuit className="w-6 h-6 text-white" />
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className={`font-extrabold text-base tracking-wider ${isLight ? 'text-[#111827]' : 'text-white'}`}>
-                  AIOS
-                </span>
-                <span className={`text-[10px] font-mono -mt-1 uppercase ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
-                  Apple Pro Studio
-                </span>
+        <div className="flex flex-col h-full overflow-hidden">
+          {/* Brand Header */}
+          <div className="h-13 flex items-center justify-between px-3.5 border-b border-border shrink-0">
+            <div className="flex items-center space-x-2.5 overflow-hidden">
+              <div className="w-7 h-7 rounded bg-primary flex items-center justify-center text-white font-semibold text-xs shrink-0">
+                AI
               </div>
-            )}
+              {!collapsed && (
+                <div className="flex flex-col min-w-0">
+                  <span className="font-semibold text-sm tracking-tight text-foreground truncate">
+                    AIOS
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => setCollapsed(!collapsed)}
+                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                className="hidden lg:flex p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                aria-label="Close sidebar"
+                className="lg:hidden p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center space-x-1">
+
+          {/* Navigation Items Grouped */}
+          <nav className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto">
+            {NAV_GROUPS.map((group, groupIdx) => (
+              <div key={groupIdx} className="space-y-0.5">
+                {group.label && !collapsed && (
+                  <div className="px-2 pt-1 pb-1 text-[11px] font-medium text-muted-foreground/70 tracking-normal">
+                    {group.label}
+                  </div>
+                )}
+                {group.items.map((item, itemIdx) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={itemIdx}
+                      to={item.path}
+                      onClick={onCloseMobile}
+                      title={collapsed ? item.label : undefined}
+                      className={({ isActive }) =>
+                        `flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-secondary text-foreground font-semibold shadow-xs'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                        } ${collapsed ? 'justify-center px-0' : ''}`
+                      }
+                    >
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                      </div>
+                      {!collapsed && item.statusDot && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          {/* Footer Sign Out */}
+          <div className="p-2.5 border-t border-border shrink-0">
             <button
               type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              className={`hidden lg:flex p-1.5 rounded-lg border transition-colors ${
-                isLight
-                  ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
-                  : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
+              onClick={logout}
+              title={collapsed ? 'Sign Out' : undefined}
+              className={`w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ${
+                collapsed ? 'justify-center px-0' : ''
               }`}
             >
-              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={onCloseMobile}
-              className={`lg:hidden p-2 rounded-lg border transition-colors ${
-                isLight
-                  ? 'border-[#E5E7EB] hover:bg-[#F3F4F6] text-gray-600'
-                  : 'border-white/[0.08] hover:bg-white/[0.06] text-gray-400'
-              }`}
-            >
-              <X className="w-5 h-5" />
+              <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+              {!collapsed && <span>Sign Out</span>}
             </button>
           </div>
         </div>
-
-        {/* Navigation Items */}
-        <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
-          {NAV_ITEMS.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={idx}
-                to={item.path}
-                onClick={onCloseMobile}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group active:scale-[0.98] ${
-                    isActive
-                      ? isLight
-                        ? 'bg-[#0B84FF] text-white shadow-md shadow-blue-500/20'
-                        : 'bg-gradient-to-r from-[#0B84FF] to-[#0066CC] text-white border border-white/20 shadow-lg shadow-blue-500/25'
-                      : isLight
-                      ? 'text-gray-700 hover:bg-[#F3F4F6] hover:text-black'
-                      : 'text-gray-300 hover:bg-white/[0.06] hover:text-white'
-                  }`
-                }
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon className={`w-4 h-4 shrink-0 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </div>
-                {!collapsed && item.badge && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-500/10 text-[#10B981] border border-emerald-500/20">
-                    {item.badge}
-                  </span>
-                )}
-              </NavLink>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Footer Sign Out */}
-      <div className={`p-3 border-t ${isLight ? 'border-[#E5E7EB]' : 'border-white/[0.08]'}`}>
-        <button
-          type="button"
-          onClick={logout}
-          className="w-full flex items-center space-x-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 transition-colors"
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
-        </button>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 };

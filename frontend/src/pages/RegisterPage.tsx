@@ -1,38 +1,60 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BrainCircuit, Lock, Mail, User, ArrowRight, ShieldCheck, Github, Globe } from 'lucide-react';
-import { AuroraBackground } from '../components/common/AuroraBackground';
-import { NeuralCanvas } from '../components/common/NeuralCanvas';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Badge } from '../components/ui/Badge';
 import { useAuthStore } from '../store/useAuthStore';
 
+const GoogleIcon = () => (
+  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+  </svg>
+);
+
+const GitHubIcon = () => (
+  <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 24 24">
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+  </svg>
+);
+
 export const RegisterPage: React.FC = () => {
-  const [fullName, setFullName] = useState('Senior AI Systems Engineer');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { setAuth, oauthLogin } = useAuthStore();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!fullName.trim() || !email.trim() || !password) {
+      setError('Please fill out all required fields.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1. Register User
+      // 1. Register User via backend
       const signupRes = await fetch('/api/v1/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName, role: 'engineer' }),
+        body: JSON.stringify({ email: email.trim(), password, full_name: fullName.trim(), role: 'engineer' }),
       });
 
       if (!signupRes.ok) {
-        const data = await signupRes.json();
+        const data = await signupRes.json().catch(() => ({}));
         throw new Error(data?.error?.message || data?.detail || 'Registration failed.');
       }
 
@@ -40,7 +62,7 @@ export const RegisterPage: React.FC = () => {
       const loginRes = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (loginRes.ok) {
@@ -57,153 +79,135 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
+  const handleOAuth = async (provider: 'google' | 'github') => {
+    setError('');
+    setLoading(true);
+    try {
+      await oauthLogin(provider, true);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(`OAuth authentication with ${provider} failed.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuroraBackground className="min-h-screen flex items-center justify-center p-4 md:p-8 font-sans selection:bg-primary/30">
-      <div className="w-full max-w-6xl rounded-3xl border border-white/10 glass-card overflow-hidden grid grid-cols-1 lg:grid-cols-12 shadow-2xl relative">
-        
-        {/* Left Column: AI Mesh Illustration */}
-        <div className="lg:col-span-6 bg-gradient-to-br from-[#0b0f19]/90 to-[#111827]/90 p-8 md:p-12 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-r border-white/10 overflow-hidden">
-          <NeuralCanvas />
-
-          <div className="relative z-10">
-            <div className="flex items-center space-x-3 mb-8 cursor-pointer" onClick={() => navigate('/')}>
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                <BrainCircuit className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <span className="font-extrabold text-2xl tracking-wider gradient-text">
-                  AIOS
-                </span>
-                <div className="text-[10px] text-muted-foreground font-mono -mt-1 uppercase">
-                  Enterprise OS
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 max-w-md">
-              <Badge variant="info" pulse>
-                Join Enterprise AIOS Workspace
-              </Badge>
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white">
-                Create Your Account
-              </h1>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Access next-generation multi-agent orchestrations, Graph RAG indexing, and LLM model gateway metrics.
-              </p>
-            </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-primary">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Brand Mark */}
+        <Link to="/" className="flex items-center justify-center space-x-2.5 mb-6 group">
+          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-semibold text-sm">
+            AI
           </div>
+          <span className="font-semibold text-lg tracking-tight text-foreground">AIOS</span>
+        </Link>
 
-          <div className="relative z-10 pt-12 space-y-4">
-            <div className="flex items-center space-x-2 text-xs text-gray-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>SOC-2 Type II Certified • OAuth2 & RBAC Enforced</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Glassmorphism Register Form */}
-        <div className="lg:col-span-6 p-8 md:p-12 flex flex-col justify-center bg-[#07090e]/70 relative z-10">
-          <div className="max-w-md mx-auto w-full space-y-6">
-            
-            <div className="flex rounded-xl bg-muted/40 p-1 border border-white/10">
-              <button
-                type="button"
-                onClick={() => navigate('/login')}
-                className="flex-1 py-2 text-xs font-bold rounded-lg text-muted-foreground hover:text-white transition-all"
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                className="flex-1 py-2 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all"
-              >
-                Register Account
-              </button>
-            </div>
-
-            <div className="text-left space-y-1">
-              <h2 className="text-2xl font-bold tracking-tight text-white">Get Started with AIOS</h2>
-              <p className="text-xs text-muted-foreground">Create an account to build multi-agent workflows.</p>
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium text-center">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleRegister} className="space-y-4">
-              <Input
-                label="Full Name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                leftIcon={<User className="w-4 h-4" />}
-                placeholder="Senior AI Engineer"
-                required
-              />
-
-              <Input
-                label="Enterprise Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                leftIcon={<Mail className="w-4 h-4" />}
-                placeholder="engineer@enterprise.ai"
-                required
-              />
-
-              <Input
-                label="Password"
-                isPassword
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="w-4 h-4" />}
-                placeholder="••••••••••••"
-                required
-              />
-
-              <Button
-                type="submit"
-                variant="gradient"
-                size="lg"
-                className="w-full shadow-2xl"
-                isLoading={loading}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Create Account
-              </Button>
-            </form>
-
-            <div className="relative flex items-center justify-center my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
-              </div>
-              <span className="relative px-4 text-[10px] font-mono text-muted-foreground bg-[#07090e] uppercase">
-                Or Continue With
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
-              >
-                <Globe className="w-4 h-4 text-blue-400" />
-                <span>Google</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-semibold transition-colors"
-              >
-                <Github className="w-4 h-4 text-white" />
-                <span>GitHub</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <h1 className="text-center text-xl font-semibold tracking-tight text-foreground">
+          Create your AIOS account
+        </h1>
+        <p className="mt-1.5 text-center text-xs text-muted-foreground">
+          Start orchestrating multi-agent systems and Graph RAG pipelines in minutes.
+        </p>
       </div>
-    </AuroraBackground>
+
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-xs space-y-5">
+          {/* SSO Authentication Buttons */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => handleOAuth('google')}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+            >
+              <GoogleIcon />
+              <span>Sign up with Google</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOAuth('github')}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+            >
+              <GitHubIcon />
+              <span>Sign up with GitHub</span>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center">
+            <div className="w-full border-t border-border" />
+            <span className="bg-card px-2 text-[11px] text-muted-foreground uppercase font-medium absolute">
+              Or register with email
+            </span>
+          </div>
+
+          {/* Inline Error State */}
+          {error && (
+            <div className="p-3 rounded border border-destructive/30 bg-destructive/5 text-xs text-destructive">
+              {error}
+            </div>
+          )}
+
+          {/* Registration Form */}
+          <form onSubmit={handleRegister} className="space-y-4">
+            <Input
+              id="register-name"
+              label="Full name"
+              type="text"
+              placeholder="Alex Johnson"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              autoComplete="name"
+              required
+            />
+
+            <Input
+              id="register-email"
+              label="Work email"
+              type="email"
+              placeholder="alex@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+
+            <Input
+              id="register-password"
+              label="Password"
+              type="password"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              hint="Must be at least 8 characters long"
+              isPassword
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              className="w-full text-xs"
+              isLoading={loading}
+            >
+              Create Account
+            </Button>
+          </form>
+        </div>
+
+        {/* Auth Switch Link */}
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Already have an account?{' '}
+          <Link to="/login" className="text-primary font-medium hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 };

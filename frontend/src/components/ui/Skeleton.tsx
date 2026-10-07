@@ -7,11 +7,9 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Skeleton: React.FC<SkeletonProps> = ({ className = '', ...props }) => {
   return (
     <div
-      className={`animate-pulse rounded-xl bg-white/[0.06] border border-white/[0.04] relative overflow-hidden ${className}`}
+      className={`animate-pulse rounded bg-secondary/80 border border-border/40 ${className}`}
       {...props}
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent animate-shimmer" />
-    </div>
+    />
   );
 };
 
@@ -21,7 +19,7 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
-          className={`h-4 ${i === lines - 1 && lines > 1 ? 'w-2/3' : 'w-full'}`}
+          className={`h-3.5 ${i === lines - 1 && lines > 1 ? 'w-2/3' : 'w-full'}`}
         />
       ))}
     </div>
@@ -30,74 +28,55 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
 
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
-    <div className={`glass-card p-5 rounded-2xl space-y-3 ${className}`}>
+    <div className={`p-4 rounded-lg bg-card border border-border space-y-3 ${className}`}>
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-8 w-8 rounded-xl" />
+        <Skeleton className="h-6 w-6 rounded" />
       </div>
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-3 w-40" />
+      <Skeleton className="h-7 w-28" />
+      <Skeleton className="h-3 w-36" />
     </div>
   );
 };
 
 export const PageSkeleton: React.FC<{ title?: string }> = ({ title = 'Loading Module...' }) => {
   return (
-    <div className="space-y-8 animate-fade-in font-sans p-2">
+    <div className="space-y-6 font-sans p-2 animate-in fade-in duration-150">
       {/* Header Skeleton */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64 md:w-96" />
-          <Skeleton className="h-4 w-80 md:w-[32rem]" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-6 w-56 md:w-80" />
+          <Skeleton className="h-3.5 w-72 md:w-96" />
         </div>
-        <div className="flex items-center space-x-3">
-          <Skeleton className="h-8 w-32 rounded-xl" />
-          <Skeleton className="h-8 w-28 rounded-xl" />
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-8 w-24 rounded" />
+          <Skeleton className="h-8 w-28 rounded" />
         </div>
       </div>
 
-      {/* KPI Cards Grid Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* KPI 4 Cards Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
       </div>
 
-      {/* Main Content / Charts Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-card p-6 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-24 rounded-full" />
-          </div>
-          <div className="h-64 w-full flex flex-col justify-end space-y-2 p-2">
-            <div className="flex items-end space-x-3 h-48">
-              <Skeleton className="h-3/4 w-full rounded-t-lg" />
-              <Skeleton className="h-1/2 w-full rounded-t-lg" />
-              <Skeleton className="h-full w-full rounded-t-lg" />
-              <Skeleton className="h-2/3 w-full rounded-t-lg" />
-              <Skeleton className="h-4/5 w-full rounded-t-lg" />
-            </div>
-            <Skeleton className="h-3 w-full" />
-          </div>
+      {/* Table / Content Skeleton */}
+      <div className="p-5 rounded-lg bg-card border border-border space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-border">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-7 w-20 rounded" />
         </div>
-
-        <div className="glass-card p-6 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-24 rounded-full" />
-          </div>
-          <div className="h-64 w-full flex flex-col justify-end space-y-2 p-2">
-            <div className="flex items-end space-x-3 h-48">
-              <Skeleton className="h-1/2 w-full rounded-t-lg" />
-              <Skeleton className="h-4/5 w-full rounded-t-lg" />
-              <Skeleton className="h-2/3 w-full rounded-t-lg" />
-              <Skeleton className="h-full w-full rounded-t-lg" />
-              <Skeleton className="h-3/5 w-full rounded-t-lg" />
+        <div className="space-y-2 pt-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-border/40">
+              <Skeleton className="h-3.5 w-36" />
+              <Skeleton className="h-3.5 w-24" />
+              <Skeleton className="h-3.5 w-16" />
+              <Skeleton className="h-3.5 w-20" />
             </div>
-            <Skeleton className="h-3 w-full" />
-          </div>
+          ))}
         </div>
       </div>
     </div>

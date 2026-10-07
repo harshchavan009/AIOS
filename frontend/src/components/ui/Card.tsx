@@ -1,54 +1,63 @@
 import React from 'react';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'glass' | 'glowing' | 'solid';
-  hoverEffect?: boolean;
+  variant?: 'default' | 'subtle' | 'outline' | 'glass';
+  hover?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(({
   children,
-  variant = 'glass',
-  hoverEffect = true,
+  variant = 'default',
+  hover = false,
   className = '',
   ...props
-}) => {
-  const base = 'rounded-2xl p-6 transition-all duration-300 relative overflow-hidden';
+}, ref) => {
+  const base = 'rounded-lg border border-border transition-colors duration-150';
   
   const variants = {
-    glass: 'glass-card',
-    glowing: 'glass-card border-primary/30 shadow-2xl shadow-primary/10',
-    solid: 'bg-card border border-border/80 text-card-foreground',
+    default: 'bg-card text-card-foreground shadow-xs',
+    subtle: 'bg-secondary/40 text-card-foreground',
+    outline: 'bg-transparent text-card-foreground',
+    glass: 'bg-card text-card-foreground shadow-xs',
   };
 
-  const hover = hoverEffect ? 'glass-card-hover' : '';
+  const hoverStyle = hover ? 'hover:border-foreground/25 hover:bg-card/90' : '';
 
   return (
-    <div className={`${base} ${variants[variant]} ${hover} ${className}`} {...props}>
+    <div ref={ref} className={`${base} ${variants[variant] || variants.default} ${hoverStyle} ${className}`} {...props}>
       {children}
     </div>
   );
-};
+});
+
+Card.displayName = 'Card';
 
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
-  <div className={`flex flex-col space-y-1.5 pb-4 border-b border-border/40 ${className}`} {...props}>
+  <div className={`p-5 pb-3 flex flex-col space-y-1 ${className}`} {...props}>
     {children}
   </div>
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ children, className = '', ...props }) => (
-  <h3 className={`text-lg font-bold tracking-tight text-foreground ${className}`} {...props}>
+  <h3 className={`text-sm font-semibold tracking-tight text-foreground ${className}`} {...props}>
     {children}
   </h3>
 );
 
 export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ children, className = '', ...props }) => (
-  <p className={`text-xs text-muted-foreground leading-relaxed ${className}`} {...props}>
+  <p className={`text-xs text-muted-foreground leading-normal ${className}`} {...props}>
     {children}
   </p>
 );
 
 export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
-  <div className={`pt-4 ${className}`} {...props}>
+  <div className={`p-5 pt-0 ${className}`} {...props}>
+    {children}
+  </div>
+);
+
+export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
+  <div className={`p-5 pt-3 border-t border-border flex items-center justify-between ${className}`} {...props}>
     {children}
   </div>
 );

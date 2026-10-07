@@ -124,58 +124,39 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [toggleTheme, onOpenCommandPalette, navigate]);
 
   return (
-    <header
-      className={`h-16 sticky top-0 z-30 flex items-center justify-between px-6 transition-colors duration-300 backdrop-blur-[24px] ${
-        isLight
-          ? 'bg-white/90 border-b border-[#E5E7EB] text-[#111827]'
-          : 'bg-[#0E121B]/82 border-b border-white/[0.08] text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
-      }`}
-    >
+    <header className="h-13 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 bg-card/95 border-b border-border text-foreground">
       {/* Left: Mobile Menu Toggle, Workspace Switcher & Global Search */}
-      <div className="flex items-center space-x-2 sm:space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Mobile Hamburger Drawer Button */}
         <button
           type="button"
           onClick={onToggleMobileMenu}
           aria-label="Toggle Navigation Drawer"
-          className={`lg:hidden p-2.5 rounded-xl border flex items-center justify-center transition-all min-h-[44px] min-w-[44px] touch-manipulation active:scale-95 ${
-            isLight
-              ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827] hover:bg-[#E5E7EB]'
-              : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200 hover:bg-[#20283A]'
-          }`}
+          className="lg:hidden p-1.5 rounded border border-border bg-secondary text-foreground hover:bg-muted transition-colors"
         >
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {isMobileMenuOpen ? <X className="w-4 h-4" strokeWidth={1.5} /> : <Menu className="w-4 h-4" strokeWidth={1.5} />}
         </button>
-        {/* Interactive Workspace Switcher Dropdown */}
+
+        {/* Workspace Switcher Dropdown */}
         <div className="relative hidden sm:block" ref={workspaceRef}>
           <button
             type="button"
             onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all hover:border-blue-500/50 ${
-              isLight
-                ? 'bg-[#F3F4F6] border-[#E5E7EB] text-[#111827]'
-                : 'bg-[#181E2C]/80 border-white/[0.08] text-gray-200'
-            }`}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded border border-border bg-secondary text-xs text-foreground hover:bg-muted transition-colors"
           >
-            <Building2 className="w-3.5 h-3.5 text-[#0B84FF]" />
-            <span className="font-medium">{currentOrganization?.name || 'Acme Enterprise'}</span>
-            <span className="font-mono opacity-50">/</span>
-            <span className="text-sky-400 font-mono font-bold">{currentWorkspace?.name || 'Workspace A'}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-1" />
+            <Building2 className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <span className="font-normal text-muted-foreground">{currentOrganization?.name || 'Acme Enterprise'}</span>
+            <span className="text-muted-foreground/40">/</span>
+            <span className="font-medium text-foreground">{currentWorkspace?.name || 'Production'}</span>
+            <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" strokeWidth={1.5} />
           </button>
 
           {/* Workspace Switcher Menu */}
           {isWorkspaceOpen && (
-            <div
-              className={`absolute left-0 mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in p-3 space-y-3 ${
-                isLight
-                  ? 'bg-white border-gray-200 text-gray-900'
-                  : 'bg-[#0E121B] border-white/10 text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-border/40 px-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-muted-foreground">Select Workspace</span>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">{workspaces.length} Environments Available</span>
+            <div className="absolute left-0 mt-1.5 w-72 rounded-lg border border-border bg-card shadow-lg z-50 p-2.5 space-y-2 text-foreground animate-in fade-in duration-100">
+              <div className="flex items-center justify-between pb-1.5 border-b border-border px-1">
+                <span className="text-xs font-medium text-muted-foreground">Workspaces</span>
+                <span className="text-xs text-muted-foreground">{workspaces.length} total</span>
               </div>
 
               {/* Workspaces List: My Startup, OpenAI Team, Finance Team, Healthcare, Research Lab */}
@@ -292,30 +273,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs transition-all w-32 sm:w-52 md:w-72 justify-between group focus:outline-none focus:ring-2 focus:ring-blue-500/50 touch-manipulation active:scale-95 ${
-            isLight
-              ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-600'
-              : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-400'
-          }`}
+          className="flex items-center space-x-2 px-2.5 py-1.5 rounded border border-border bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors w-32 sm:w-48 md:w-64 justify-between"
         >
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 group-hover:text-[#0B84FF] transition-colors" />
-            <span className="text-xs">Search AIOS...</span>
+            <Search className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <span className="text-xs">Search...</span>
           </div>
-          <kbd
-            className={`hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono border rounded ${
-              isLight
-                ? 'bg-white border-[#E5E7EB] text-gray-600'
-                : 'bg-[#0B0E17] border-white/[0.08] text-gray-400'
-            }`}
-          >
+          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono border border-border rounded bg-background text-muted-foreground">
             ⌘K
           </kbd>
         </button>
       </div>
 
       {/* Right: Actions & Production Controls */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2">
         {/* 1. Live System Health Metric & Popover */}
         <SystemHealthPopover
           isOpen={activeDropdown === 'health'}
@@ -330,18 +301,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             e.stopPropagation();
             toggleTheme();
           }}
-          aria-label={`Switch to ${theme === 'graphite' ? 'Light' : 'Graphite'} theme (⌘+Shift+D)`}
-          title={`Switch to ${theme === 'graphite' ? 'Light Enterprise' : 'Apple Pro Obsidian'} theme (⌘+Shift+D)`}
-          className={`p-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-            isLight
-              ? 'bg-[#F3F4F6] hover:bg-[#E5E7EB] border-[#E5E7EB] text-gray-800'
-              : 'bg-[#181E2C]/80 hover:bg-[#20283A] border-white/[0.08] text-gray-400 hover:text-white'
-          }`}
+          aria-label={`Switch theme (current: ${theme})`}
+          title="Toggle Dark / Light theme (⌘+Shift+D)"
+          className="p-1.5 rounded border border-border bg-secondary text-foreground hover:bg-muted transition-colors"
         >
           {theme === 'graphite' ? (
-            <Sun className="w-4 h-4 text-amber-400" />
+            <Sun className="w-4 h-4 text-muted-foreground hover:text-foreground" strokeWidth={1.5} />
           ) : (
-            <Moon className="w-4 h-4 text-blue-500" />
+            <Moon className="w-4 h-4 text-muted-foreground hover:text-foreground" strokeWidth={1.5} />
           )}
         </button>
 
