@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.exceptions import AIOSException, aios_exception_handler, global_exception_handler
 from app.core.logging import logger
 from app.core.middleware.request_tracing import RequestTracingMiddleware
+from app.core.middleware.rate_limiter import RateLimiterMiddleware
 from app.database.init_db import init_db_and_seed
 from app.database.session import engine
 
@@ -35,13 +36,25 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Tracing Middleware
+# Tracing & Rate Limiting Middleware
 app.add_middleware(RequestTracingMiddleware)
+app.add_middleware(RateLimiterMiddleware)
 
-# CORS Setup
+# CORS Setup - Compute allowed origins
+cors_origins = list(settings.BACKEND_CORS_ORIGINS) if isinstance(settings.BACKEND_CORS_ORIGINS, list) else [str(settings.BACKEND_CORS_ORIGINS)]
+if settings.CORS_ORIGINS:
+    extra = [o.strip().rstrip("/") for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+    for o in extra:
+        if o not in cors_origins:
+            cors_origins.append(o)
+if settings.FRONTEND_URL:
+    clean_fe = settings.FRONTEND_URL.strip().rstrip("/")
+    if clean_fe not in cors_origins:
+        cors_origins.append(clean_fe)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,7 +70,31 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/healthz", tags=["Health"], include_in_schema=False)
 async def top_healthz():
-    return {"status": "healthy", "platform": "AIOS"}
+    return {
+        "status": "healthy",
+        "platform": "AIOS",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "environment": settings.ENVIRONMENT
+    }
+
+
+@app.get("/readyz", tags=["Health"], include_in_schema=False)
+async def top_readyz():
+    from app.database.session import AsyncSessionLocal
+    from sqlalchemy import text
+    db_status = "unhealthy"
+    try:
+        async with AsyncSessionLocal() as session:
+            res = await session.execute(text("SELECT 1"))
+            if res.scalar() == 1:
+                db_status = "healthy"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    return {
+        "status": "ready" if db_status == "healthy" else "not_ready",
+        "database": db_status
+    }
 
 
 # Single-Port Unified Frontend SPA Static Mounting
@@ -75,6 +112,7 @@ if os.path.exists(dist_path):
             or full_path.startswith("docs")
             or full_path.startswith("redoc")
             or full_path.startswith("healthz")
+            or full_path.startswith("readyz")
         ):
             raise HTTPException(status_code=404, detail="API route not found")
 
@@ -89,5 +127,13 @@ else:
             "service": settings.PROJECT_NAME,
             "status": "online",
             "documentation": "/docs",
-            "message": "AIOS Unified Platform. Build frontend via 'npm run build' in frontend/ to serve single-link UI."
+            "message": "AIOS Unified Platform API Service"
         }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", settings.PORT))
+    host = os.environ.get("HOST", settings.HOST)
+    uvicorn.run("app.main:app", host=host, port=port, reload=False)
+

@@ -68,29 +68,36 @@ class ValidationException(AIOSException):
 
 
 async def aios_exception_handler(request: Request, exc: AIOSException) -> JSONResponse:
-    logger.error(f"AIOS Exception caught: {exc.message} | Path: {request.url.path}")
+    correlation_id = getattr(request.state, "correlation_id", None)
+    logger.error(f"AIOS Exception caught: {exc.message} | Path: {request.url.path} | CID: {correlation_id}")
     return JSONResponse(
         status_code=exc.status_code,
         content={
+            "detail": exc.message,
             "error": {
                 "message": exc.message,
                 "status_code": exc.status_code,
                 "details": exc.details,
-                "path": str(request.url.path)
-            }
+                "path": str(request.url.path),
+            },
+            "correlation_id": correlation_id,
         }
     )
 
 
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception(f"Unhandled Exception: {str(exc)} | Path: {request.url.path}")
+    correlation_id = getattr(request.state, "correlation_id", None)
+    logger.exception(f"Unhandled Exception: {str(exc)} | Path: {request.url.path} | CID: {correlation_id}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
+            "detail": "An internal server error occurred.",
             "error": {
                 "message": "An internal server error occurred.",
                 "status_code": 500,
-                "path": str(request.url.path)
-            }
+                "path": str(request.url.path),
+            },
+            "correlation_id": correlation_id,
         }
     )
+

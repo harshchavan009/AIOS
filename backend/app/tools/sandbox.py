@@ -27,14 +27,52 @@ class PythonSandboxTool(BaseTool):
                 execution_time_ms=0.0
             )
 
+        # Security validation against arbitrary OS execution
+        dangerous_patterns = ["import os", "import subprocess", "import sys", "import shutil", "__import__", "open(", "eval(", "exec("]
+        for pattern in dangerous_patterns:
+            if pattern in code:
+                return ToolResult(
+                    success=False,
+                    output="",
+                    error=f"Security Violation: '{pattern}' is restricted in the production sandbox.",
+                    execution_time_ms=0.0
+                )
+
         # Execute code in safe scope capture
         stdout_capture = io.StringIO()
         old_stdout = sys.stdout
         sys.stdout = stdout_capture
 
         try:
+            safe_builtins = {
+                "print": print,
+                "range": range,
+                "len": len,
+                "int": int,
+                "float": float,
+                "str": str,
+                "dict": dict,
+                "list": list,
+                "set": set,
+                "tuple": tuple,
+                "bool": bool,
+                "sum": sum,
+                "min": min,
+                "max": max,
+                "abs": abs,
+                "round": round,
+                "sorted": sorted,
+                "enumerate": enumerate,
+                "zip": zip,
+                "map": map,
+                "filter": filter,
+                "isinstance": isinstance,
+                "True": True,
+                "False": False,
+                "None": None,
+            }
             local_scope: Dict[str, Any] = {}
-            exec(code, {"__builtins__": __builtins__}, local_scope)
+            exec(code, {"__builtins__": safe_builtins}, local_scope)
             sys.stdout = old_stdout
             output_str = stdout_capture.getvalue()
             if not output_str and "result" in local_scope:

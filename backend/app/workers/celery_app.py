@@ -1,10 +1,11 @@
 from celery import Celery
 import time
+from app.core.config import settings
 
 celery_app = Celery(
     "aios_tasks",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0"
+    broker=settings.REDIS_URL,
+    backend=settings.REDIS_URL
 )
 
 celery_app.conf.update(

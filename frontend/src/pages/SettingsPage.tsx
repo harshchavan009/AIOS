@@ -225,7 +225,8 @@ export const SettingsPage: React.FC = () => {
     };
 
     setMembersList(prev => [newMember, ...prev]);
-    const link = `http://localhost:8000/invite?token=inv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const link = `${origin}/invite?token=inv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     setGeneratedInviteLink(link);
 
     addNotification({

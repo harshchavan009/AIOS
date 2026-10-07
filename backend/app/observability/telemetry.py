@@ -129,17 +129,45 @@ class AIOSTelemetryService:
             ram_usage = 42.0
             disk_usage = 32.0
 
-        # Check real infrastructure TCP ports
-        redis_ok, redis_latency = _check_tcp("localhost", 6379)
-        neo4j_ok, neo4j_latency = _check_tcp("localhost", 7687)
-        qdrant_ok, qdrant_latency = _check_tcp("localhost", 6333)
-        postgres_ok, postgres_latency = (True, 1.2)
+        from urllib.parse import urlparse
 
-        redis_status_str = f"Redis 7 Connected ({redis_latency}ms)" if redis_ok else "Redis Standalone / In-Memory Cache"
+        def _parse_host_port(target: str, def_port: int) -> tuple[str, int]:
+            try:
+                if "://" in target:
+                    p = urlparse(target)
+                    return p.hostname or "localhost", p.port or def_port
+                elif ":" in target:
+                    h, pt = target.split(":", 1)
+                    return h, int(pt)
+                return target or "localhost", def_port
+            except Exception:
+                return "localhost", def_port
+
+        # Check real infrastructure TCP ports dynamically from environment settings
+        r_host, r_port = _parse_host_port(settings.REDIS_URL, 6379)
+        redis_ok, redis_latency = _check_tcp(r_host, r_port)
+
+        n_host, n_port = _parse_host_port(settings.NEO4J_URI, 7687)
+        neo4j_ok, neo4j_latency = _check_tcp(n_host, n_port)
+
+        q_target = settings.QDRANT_URL or f"{settings.QDRANT_HOST}:{settings.QDRANT_PORT}"
+        q_host, q_port = _parse_host_port(q_target, 6333)
+        qdrant_ok, qdrant_latency = _check_tcp(q_host, q_port)
+
+        # Postgres connectivity
+        pg_target = settings.DATABASE_URL
+        if "sqlite" in pg_target:
+            postgres_ok, postgres_latency = (True, 0.4)
+        else:
+            pg_host, pg_port = _parse_host_port(pg_target, 5432)
+            postgres_ok, postgres_latency = _check_tcp(pg_host, pg_port)
+
+        redis_status_str = f"Redis Connected ({redis_latency}ms)" if redis_ok else "Redis Standalone / In-Memory Cache"
         neo4j_nodes_count = len(graph_rag_pipeline.graph_store.nodes)
         neo4j_status_str = f"Neo4j Connected ({neo4j_nodes_count} Nodes)" if neo4j_ok else f"Graph RAG Engine Active ({neo4j_nodes_count} Nodes)"
         qdrant_vectors_count = len(graph_rag_pipeline.vector_store.index)
         qdrant_status_str = f"Qdrant Connected ({qdrant_vectors_count} Vectors)" if qdrant_ok else f"Vector Store Active ({qdrant_vectors_count} Vectors)"
+
 
         summary = self.get_metrics_summary()
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.core.dependencies.auth_deps import get_current_user
 from app.models.user import User
 from app.rag.pipeline import graph_rag_pipeline
+from app.core.storage import storage_service
 import json
 
 router = APIRouter(prefix="/rag", tags=["Graph RAG Engine"])
@@ -103,6 +104,9 @@ async def upload_and_index_document(
     raw_bytes = await file.read()
     file_size_kb = round(len(raw_bytes) / 1024, 1)
 
+    # Persist uploaded file to storage (local disk or S3/MinIO)
+    await storage_service.save_file(file.filename, raw_bytes)
+
     # Parse text from file
     text = parse_file_content(file.filename, raw_bytes)
     word_count = len(text.split())
@@ -185,6 +189,10 @@ async def upload_stream_pipeline(
     raw_bytes = await file.read()
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ".txt"
     file_size_kb = round(len(raw_bytes) / 1024, 1)
+
+    # Persist uploaded file to storage (local disk or S3/MinIO)
+    await storage_service.save_file(file.filename, raw_bytes)
+
     text = parse_file_content(file.filename, raw_bytes)
     word_count = len(text.split())
 

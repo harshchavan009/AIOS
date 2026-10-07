@@ -9,6 +9,7 @@ import { AICopilotWidget } from '../common/AICopilotWidget';
 import { PageTransition } from '../common/PageTransition';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
+import { getApiUrl } from '../../config/api';
 
 export const AppLayout: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -31,7 +32,7 @@ export const AppLayout: React.FC = () => {
     // Subscribe to SSE backend telemetry if available
     let eventSource: EventSource | null = null;
     try {
-      eventSource = new EventSource('/api/v1/observability/stream');
+      eventSource = new EventSource(getApiUrl('/api/v1/observability/stream'));
       eventSource.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);

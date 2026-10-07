@@ -1,6 +1,7 @@
 fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 pydantic[email]>=2.7.0
+pydantic-settings>=2.2.0
 email-validator>=2.1.0
 sqlalchemy[asyncio]>=2.0.30
 asyncpg>=0.29.0
@@ -17,7 +18,9 @@ neo4j>=5.20.0
 minio>=7.2.7
 langchain>=0.2.0
 langgraph>=0.0.50
+psutil>=5.9.0
 pytest>=8.2.0
 pytest-asyncio>=0.23.0
 pytest-cov>=5.0.0
 aiosqlite>=0.20.0
+

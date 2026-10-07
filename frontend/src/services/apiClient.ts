@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+import { getApiUrl } from '../config/api';
 
 export class ApiError extends Error {
   status: number;
@@ -27,7 +27,8 @@ export async function apiClient<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  let response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = getApiUrl(endpoint);
+  let response = await fetch(url, {
     ...options,
     headers,
   });
@@ -37,7 +38,7 @@ export async function apiClient<T>(
     const refreshToken = localStorage.getItem('aios_refresh_token');
     if (refreshToken) {
       try {
-        const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+        const refreshResponse = await fetch(getApiUrl('/auth/refresh'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
@@ -50,11 +51,12 @@ export async function apiClient<T>(
 
           // Retry original request with new token
           headers['Authorization'] = `Bearer ${refreshData.access_token}`;
-          response = await fetch(`${BASE_URL}${endpoint}`, {
+          response = await fetch(url, {
             ...options,
             headers,
           });
         } else {
+
           // Token refresh failed - clear storage
           localStorage.removeItem('aios_access_token');
           localStorage.removeItem('aios_refresh_token');
