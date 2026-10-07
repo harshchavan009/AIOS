@@ -56,9 +56,10 @@ jobs:
           ENVIRONMENT: testing
           DATABASE_URL: postgresql+asyncpg://aios_user:aios_secure_pass_2026@localhost:5432/aios_db
           REDIS_URL: redis://localhost:6379/0
+          PYTHONPATH: .
         run: |
           cd backend
-          python -m pytest tests/ -v --cov=app
+          python -m pytest tests/ -v
 
   test-frontend:
     runs-on: ubuntu-latest

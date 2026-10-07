@@ -8,7 +8,7 @@ from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
 
-# Shared memory SQLite for async testing
+# Shared memory SQLite for async testing with aiosqlite driver
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 test_engine = create_async_engine(
