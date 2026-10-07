@@ -6,15 +6,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR-AIOS-BACKEND.onrender.com/api/$1"
+      "destination": "https://aios-1-wc28.onrender.com/api/$1"
     },
     {
       "source": "/healthz",
-      "destination": "https://YOUR-AIOS-BACKEND.onrender.com/healthz"
+      "destination": "https://aios-1-wc28.onrender.com/healthz"
     },
     {
       "source": "/readyz",
-      "destination": "https://YOUR-AIOS-BACKEND.onrender.com/readyz"
+      "destination": "https://aios-1-wc28.onrender.com/readyz"
     },
     {
       "source": "/(.*)",
@@ -22,6 +22,23 @@
     }
   ],
   "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "X-Accel-Buffering",
+          "value": "no"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

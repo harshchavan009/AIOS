@@ -84,6 +84,7 @@ export const App: React.FC = () => {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/playground" element={<PlaygroundPage />} />
               <Route path="/prompt-studio" element={<PromptStudioPage />} />
+              <Route path="/prompts" element={<PromptStudioPage />} />
               <Route path="/agent-builder" element={<AgentBuilderPage />} />
               <Route path="/models" element={<ModelManagementPage />} />
               <Route path="/evaluation" element={<EvaluationStudioPage />} />
@@ -95,6 +96,7 @@ export const App: React.FC = () => {
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/knowledge-graph" element={<GraphRAGPage />} />
               <Route path="/graph-rag" element={<GraphRAGPage />} />
+              <Route path="/rag" element={<GraphRAGPage />} />
               <Route path="/repositories" element={<AutoDevPage />} />
               <Route path="/autodev" element={<AutoDevPage />} />
               <Route path="/documents" element={<SecondBrainPage />} />
@@ -102,6 +104,7 @@ export const App: React.FC = () => {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/billing" element={<BillingPage />} />
               <Route path="/docs" element={<ApiExplorerPage />} />
+              <Route path="/documentation" element={<ApiExplorerPage />} />
               <Route path="/api-explorer" element={<ApiExplorerPage />} />
               <Route path="/docs/api" element={<ApiExplorerPage />} />
             </Route>

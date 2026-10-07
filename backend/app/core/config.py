@@ -76,10 +76,11 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
 
     # Canonical Frontend Origin (Vercel canonical URL or custom domain)
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "https://aios-opal.vercel.app"
 
     # CORS Origins (Supports comma-separated strings or JSON arrays)
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [
+        "https://aios-opal.vercel.app",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",

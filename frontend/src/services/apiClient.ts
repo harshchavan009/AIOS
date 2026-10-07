@@ -28,10 +28,15 @@ export async function apiClient<T>(
   }
 
   const url = getApiUrl(endpoint);
-  let response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError('AIOS backend is temporarily unavailable. Please try again.', 503);
+  }
 
   // Handle Token Expiration & Automatic Refresh (401)
   if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
@@ -51,12 +56,15 @@ export async function apiClient<T>(
 
           // Retry original request with new token
           headers['Authorization'] = `Bearer ${refreshData.access_token}`;
-          response = await fetch(url, {
-            ...options,
-            headers,
-          });
+          try {
+            response = await fetch(url, {
+              ...options,
+              headers,
+            });
+          } catch {
+            throw new ApiError('AIOS backend is temporarily unavailable. Please try again.', 503);
+          }
         } else {
-
           // Token refresh failed - clear storage
           localStorage.removeItem('aios_access_token');
           localStorage.removeItem('aios_refresh_token');
@@ -71,13 +79,15 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
-    let errorData;
+    let errorData: any;
     try {
       errorData = await response.json();
     } catch {
       errorData = { error: { message: response.statusText } };
     }
-    const message = errorData?.error?.message || errorData?.detail || 'An unknown network error occurred';
+    const message = (response.status >= 500)
+      ? 'AIOS backend is temporarily unavailable. Please try again.'
+      : (errorData?.error?.message || errorData?.detail || 'An unexpected error occurred. Please try again.');
     throw new ApiError(message, response.status, errorData?.error?.details);
   }
 

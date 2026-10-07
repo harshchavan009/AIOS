@@ -28,9 +28,9 @@ services:
           name: aios-redis
           property: connectionString
       - key: FRONTEND_URL
-        value: https://your-aios-app.vercel.app
+        value: https://aios-opal.vercel.app
       - key: BACKEND_CORS_ORIGINS
-        value: "https://your-aios-app.vercel.app,http://localhost:5173"
+        value: "https://aios-opal.vercel.app,http://localhost:5173"
       # AI Model Providers (Enter keys in Render Dashboard)
       - key: OPENAI_API_KEY
         sync: false
