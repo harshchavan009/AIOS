@@ -55,7 +55,10 @@ import {
   Copy,
   Check,
   Upload,
+  MoreHorizontal,
 } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 
@@ -120,14 +123,14 @@ function AgentNode({ data, selected }: NodeProps) {
     <div
       style={{
         background: meta.bg,
-        border: `1.5px solid ${selected ? meta.color : meta.border + '80'}`,
-        boxShadow: selected ? meta.glow : 'none',
-        borderRadius: 16,
+        border: `1px solid ${selected ? meta.color : meta.border + '80'}`,
+        boxShadow: 'none',
+        borderRadius: 8,
         width: '100%',
         height: '100%',
         minWidth: 200,
         minHeight: 90,
-        transition: 'all 0.15s ease',
+        transition: 'border-color 0.15s ease',
       }}
       className="px-4 py-3 select-none flex flex-col justify-between relative group"
     >
@@ -239,6 +242,7 @@ function AgentBuilderInner() {
   // Undo / Redo History Stack
   const [historyStack, setHistoryStack] = useState<{ nodes: Node<AgentNodeData>[]; edges: Edge[] }[]>([]);
   const [historyPointer, setHistoryPointer] = useState<number>(-1);
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const isUndoRedoAction = useRef(false);
 
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -572,115 +576,119 @@ function AgentBuilderInner() {
   const selData = selectedNode?.data as AgentNodeData | undefined;
   const selMeta = selData ? NODE_META[selData.nodeType] : null;
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] min-h-[600px] font-sans animate-fade-in">
-      {/* ── Header Bar ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 flex-shrink-0">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <Layers className="w-7 h-7 text-primary" />
-            <span>Visual Agent Builder (LangGraph Studio)</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            1-Click Deploy: Deploy Workflow → LangGraph Compilation → FastAPI Backend → Production Running Agent.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <div className="flex rounded-xl bg-card border border-border/60 p-1 space-x-1">
-            <button
-              onClick={handleUndo}
-              disabled={historyPointer <= 0}
-              title="Undo (Ctrl+Z)"
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-white disabled:opacity-30 transition-all"
-            >
-              <Undo2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleRedo}
-              disabled={historyPointer >= historyStack.length - 1}
-              title="Redo (Ctrl+Y)"
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-white disabled:opacity-30 transition-all"
-            >
-              <Redo2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Save Workflow Button */}
-          <button
-            onClick={saveWorkflow}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/30 transition-all"
-            title="Save workflow DAG topology"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Save</span>
-          </button>
-
-          {/* Import JSON Button */}
-          <input
-            ref={importFileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={importDAG}
-          />
-          <button
-            onClick={() => importFileInputRef.current?.click()}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/60 text-xs font-semibold hover:bg-muted/60 transition-all"
-            title="Import DAG JSON file"
-          >
-            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Import</span>
-          </button>
-
-          {/* Export JSON Button */}
-          <button
-            onClick={exportDAG}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/60 text-xs font-semibold hover:bg-muted/60 transition-all"
-            title="Export DAG to JSON file"
-          >
-            <Download className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Export</span>
-          </button>
-
-          {/* Duplicate Node (if selected) */}
-          {selectedNode && (
-            <button
-              onClick={duplicateSelectedNode}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-semibold hover:bg-purple-500/30 transition-all"
-              title="Duplicate selected node"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span>Duplicate</span>
-            </button>
-          )}
-
-          {/* Simulate Execution Button */}
-          <button
-            onClick={simulateExecution}
-            disabled={simulating}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-600/20 border border-amber-500/40 text-amber-400 font-semibold text-xs hover:bg-amber-600/30 transition-all disabled:opacity-50"
-          >
-            {simulating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{simulating ? 'Executing…' : 'Execute'}</span>
-          </button>
-
-          {/* 1-CLICK DEPLOY BUTTON */}
-          <button
-            onClick={handleOneClickDeploy}
-            className={`flex items-center space-x-2 px-5 py-2 rounded-xl font-bold text-xs shadow-xl transition-all ${
-              deployed
-                ? 'bg-emerald-600 text-white shadow-emerald-500/25 hover:bg-emerald-500'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25'
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-yellow-300 animate-spin" />
-            <span>Deploy Workflow</span>
-          </button>
-        </div>
+  const headerActions = (
+    <div className="flex items-center space-x-2">
+      <div className="flex rounded-md bg-elevated border border-border p-0.5 space-x-0.5">
+        <button
+          onClick={handleUndo}
+          disabled={historyPointer <= 0}
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+          className="p-1.5 rounded hover:bg-surface text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+        >
+          <Undo2 className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={handleRedo}
+          disabled={historyPointer >= historyStack.length - 1}
+          title="Redo (Ctrl+Y)"
+          aria-label="Redo"
+          className="p-1.5 rounded hover:bg-surface text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+        >
+          <Redo2 className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* ── Main Area ─────────────────────────────────────────────────── */}
-      <div className="flex gap-4 flex-1 min-h-0">
+      {/* Overflow Actions Menu */}
+      <div className="relative">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setIsActionsMenuOpen(prev => !prev)}
+          leftIcon={<MoreHorizontal className="w-3.5 h-3.5" />}
+        >
+          Actions
+        </Button>
+
+        {isActionsMenuOpen && (
+          <div
+            className="absolute right-0 mt-1.5 w-44 rounded-md border border-border bg-elevated shadow-md z-50 p-1 space-y-0.5"
+            onClick={() => setIsActionsMenuOpen(false)}
+          >
+            <button
+              onClick={simulateExecution}
+              disabled={simulating}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+            >
+              <Play className="w-3.5 h-3.5 text-accent" />
+              <span>{simulating ? 'Executing...' : 'Execute Simulation'}</span>
+            </button>
+            <button
+              onClick={() => importFileInputRef.current?.click()}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Import JSON</span>
+            </button>
+            <button
+              onClick={exportDAG}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Export JSON</span>
+            </button>
+            {selectedNode && (
+              <button
+                onClick={duplicateSelectedNode}
+                className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>Duplicate Node</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <input
+        ref={importFileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={importDAG}
+      />
+
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={handleOneClickDeploy}
+        disabled={deploying}
+        leftIcon={<Sparkles className="w-3.5 h-3.5 text-accent" />}
+      >
+        {deployed ? 'Deployed ✓' : 'Deploy'}
+      </Button>
+
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={saveWorkflow}
+        leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+      >
+        Save
+      </Button>
+    </div>
+  );
+
+  return (
+    <PageLayout
+      title="Visual Builder"
+      description="Design and compile autonomous multi-agent directed graphs with LangGraph integration."
+      actions={headerActions}
+      maxWidth="full"
+    >
+      <div className="flex flex-col h-[calc(100vh-13rem)] min-h-[580px] font-sans">
+        {/* ── Main Area ─────────────────────────────────────────────────── */}
+        <div className="flex gap-4 flex-1 min-h-0">
 
         {/* ── Left Drag & Drop Palette ─────────────────────────────────── */}
         <div className="w-48 flex-shrink-0 flex flex-col gap-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
@@ -718,8 +726,7 @@ function AgentBuilderInner() {
         {/* ── React Flow Canvas ─────────────────────────────────── */}
         <div
           ref={reactFlowWrapper}
-          className="flex-1 rounded-2xl overflow-hidden border border-border/40 relative"
-          style={{ background: '#080c14' }}
+          className="flex-1 rounded-lg overflow-hidden border border-border bg-surface relative"
           onDrop={onDrop}
           onDragOver={onDragOver}
         >
@@ -738,6 +745,7 @@ function AgentBuilderInner() {
             deleteKeyCode={['Delete', 'Backspace']}
             multiSelectionKeyCode="Shift"
             style={{ background: 'transparent' }}
+            proOptions={{ hideAttribution: true }}
           >
             <Background
               variant={BackgroundVariant.Dots}
@@ -746,14 +754,7 @@ function AgentBuilderInner() {
               color="#1e2a3a"
             />
             <Controls
-              style={{ background: '#0f1520', border: '1px solid #1e2a3a', borderRadius: 12 }}
-            />
-            <MiniMap
-              style={{ background: '#080c14', border: '1px solid #1e2a3a', borderRadius: 12 }}
-              nodeColor={(n) => {
-                const d = n.data as AgentNodeData;
-                return d?.nodeType ? NODE_META[d.nodeType].color : '#6366f1';
-              }}
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }}
             />
 
             <Panel position="top-center">
@@ -1087,7 +1088,8 @@ function AgentBuilderInner() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 }
 

@@ -29,6 +29,8 @@ import {
   Share2,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -180,7 +182,7 @@ const SWARM_AGENTS: AgentMeta[] = [
 const PRESET_QUERIES = [
   'Decompose a financial compliance audit workflow into a LangGraph DAG with Neo4j entity graph traversal and Python tool verification.',
   'Synthesize real-time GPU telemetry and Celery worker queue depth for auto-scaling.',
-  'Traverse 3-hop Neo4j entity relations to detect SEC 10-Q compliance gaps in Acme Corp.',
+  'Traverse 3-hop Neo4j entity relations to detect regulatory compliance gaps in quarterly filings.',
   'Execute Python MCP sandbox code to compute Portfolio VaR risk models across 10k simulations.'
 ];
 
@@ -314,68 +316,63 @@ export const AgentsPage: React.FC = () => {
     timersRef.current.push(finalTimer);
   };
 
-  return (
-    <div className="space-y-6 animate-fade-in font-sans">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <Bot className="w-8 h-8 text-primary animate-pulse" />
-            <span>Multi-Agent Studio Swarm</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Recruiter-grade interactive agent orchestration: Step-by-step DAG flow (Planner → Retriever → Python → Reasoning → Critic → Response) streaming live per-node logs.
-          </p>
-        </div>
-
-        {/* Telemetry Controls & Speed Selector */}
-        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-          <div className="flex items-center space-x-1 p-1 rounded-xl bg-card border border-border/60">
-            <span className="text-[10px] font-mono text-muted-foreground px-2">Speed:</span>
-            {[1, 2, 5].map(sp => (
-              <button
-                key={sp}
-                onClick={() => setSpeedMultiplier(sp)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
-                  speedMultiplier === sp ? 'bg-primary text-white shadow' : 'text-muted-foreground hover:text-white'
-                }`}
-              >
-                {sp}x
-              </button>
-            ))}
-          </div>
-
+  const headerActions = (
+    <>
+      <div className="flex items-center space-x-1 p-1 rounded-md bg-elevated border border-border">
+        <span className="text-[11px] font-mono text-muted-foreground px-2">Speed:</span>
+        {[1, 2, 5].map(sp => (
           <button
-            onClick={handleReset}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted transition-all"
+            key={sp}
+            onClick={() => setSpeedMultiplier(sp)}
+            className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition-colors ${
+              speedMultiplier === sp ? 'bg-surface text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
-            <RotateCcw className="w-4 h-4 text-muted-foreground" />
-            <span>Reset</span>
+            {sp}x
           </button>
-
-          <button
-            onClick={handleExecuteSwarm}
-            disabled={isExecuting || !goal.trim()}
-            className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50"
-          >
-            {isExecuting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            <span>{isExecuting ? 'Swarm Executing…' : 'Execute Swarm Workflow'}</span>
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Preset Queries Pills */}
-      <div className="space-y-2">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Sample Recruiter Prompts</div>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={handleReset}
+        leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+      >
+        Reset
+      </Button>
+
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={handleExecuteSwarm}
+        disabled={isExecuting || !goal.trim()}
+        isLoading={isExecuting}
+        leftIcon={<Play className="w-3.5 h-3.5" />}
+      >
+        Execute Swarm
+      </Button>
+    </>
+  );
+
+  return (
+    <PageLayout
+      title="Agent Studio"
+      description="Interactive agent orchestration across a directed acyclic workflow with live node telemetry."
+      actions={headerActions}
+    >
+      {/* Preset Queries */}
+      <div className="space-y-2 mb-6">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground font-mono">Sample Workflows</div>
         <div className="flex flex-wrap gap-2">
           {PRESET_QUERIES.map((q, idx) => (
             <button
               key={idx}
               onClick={() => { setGoal(q); handleReset(); }}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-mono transition-all text-left truncate max-w-md ${
+              className={`px-3 py-1.5 rounded-md border text-xs font-mono transition-colors text-left truncate max-w-md ${
                 goal === q
-                  ? 'bg-primary/10 border-primary text-white font-bold'
-                  : 'bg-muted/20 border-border/40 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                  ? 'bg-accent/15 border-accent text-accent font-medium'
+                  : 'bg-elevated border-border text-muted-foreground hover:bg-surface hover:text-foreground'
               }`}
             >
               ⚡ {q.slice(0, 65)}...
@@ -582,6 +579,6 @@ export const AgentsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

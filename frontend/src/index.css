@@ -4,73 +4,61 @@
 
 @layer base {
   :root, .dark, .graphite {
-    --background: 240 10% 3.9%;   /* #09090b Zinc 950 */
-    --foreground: 0 0% 98%;        /* #fafafa Zinc 50 */
-    --card: 240 10% 5.5%;          /* #0e0e11 */
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 5.5%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 221.2 83.2% 53.3%;  /* #2563eb Sapphire Accent */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 12%;       /* #1c1c20 */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 12%;
-    --muted-foreground: 240 5% 64.9%; /* #a1a1aa Zinc 400 */
-    --accent: 221.2 83.2% 53.3%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 5% 16%;          /* #27272a Zinc 800 (1px hairline) */
-    --input: 240 5% 16%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 6px;
+    --bg: #0B0C0E;
+    --surface: #111316;
+    --elevated: #171A1E;
+    --border: #23272D;
+    --text: #ECEEF0;
+    --muted: #8A9099;
+    --accent: #5EEAD4;
+    --accent-foreground: #0B0C0E;
 
-    /* Semantic status tokens */
-    --status-success: #10b981;
-    --status-warning: #f59e0b;
-    --status-danger: #ef4444;
-    --status-info: #3b82f6;
+    --status-success: #10B981;
+    --status-warning: #F59E0B;
+    --status-danger: #EF4444;
+    --status-info: #38BDF8;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
   }
 
   .light {
-    --background: 0 0% 100%;       /* #ffffff */
-    --foreground: 240 10% 3.9%;    /* #09090b */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 221.2 83.2% 53.3%;  /* #2563eb */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;       /* #f4f4f5 */
-    --secondary-foreground: 240 10% 3.9%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%; /* #71717a Zinc 500 */
-    --accent: 221.2 83.2% 53.3%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 90%;          /* #e4e4e7 Zinc 200 */
-    --input: 240 6% 90%;
-    --ring: 221.2 83.2% 53.3%;
+    --bg: #FAFAF9;
+    --surface: #FFFFFF;
+    --elevated: #F4F4F2;
+    --border: #E6E6E3;
+    --text: #0F1113;
+    --muted: #5F6670;
+    --accent: #0F766E;
+    --accent-foreground: #FFFFFF;
 
     --status-success: #059669;
-    --status-warning: #d97706;
-    --status-danger: #dc2626;
-    --status-info: #2563eb;
+    --status-warning: #D97706;
+    --status-danger: #DC2626;
+    --status-info: #0284C7;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
   }
 
-  * {
-    border-color: hsl(var(--border));
-  }
+html, body, #root {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+}
 
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+* {
+  border-color: var(--border);
+}
+
+body {
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
   h1, h2, h3, h4, h5, h6 {
     color: inherit;
@@ -80,35 +68,35 @@
   }
 
   code, pre, kbd {
-    font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 
 @layer components {
-  /* Precision Surface Card with Hairline Border & Subtle Elevation */
+  /* Precision Surface Card with 1px border */
   .surface-card {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 
   .surface-card-hover {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    transition: border-color 150ms ease-out, background-color 150ms ease-out;
+    transition: border-color 150ms cubic-bezier(0, 0, 0.2, 1), background-color 150ms cubic-bezier(0, 0, 0.2, 1);
   }
   .surface-card-hover:hover {
-    border-color: hsl(var(--muted-foreground) / 0.35);
+    border-color: var(--muted);
   }
 
   /* Interactive Form Control Styles */
   .ui-input {
-    background-color: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: 6px;
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
@@ -117,33 +105,35 @@
   }
   .ui-input:focus {
     outline: none;
-    border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
   .ui-input::placeholder {
-    color: hsl(var(--muted-foreground) / 0.7);
+    color: var(--muted);
+    opacity: 0.7;
   }
 
-  /* Primary Action Button: Restrained Solid with Subtle Hairline & Shadow */
+  /* Primary Action Button: Ice Teal Accent */
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: hsl(var(--primary));
-    color: #ffffff;
-    font-weight: 500;
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    font-weight: 600;
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
     border-radius: 6px;
     border: 1px solid transparent;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-    transition: background-color 150ms ease-out, opacity 150ms ease-out;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: opacity 150ms cubic-bezier(0, 0, 0.2, 1), transform 150ms cubic-bezier(0, 0, 0.2, 1);
   }
   .btn-primary:hover {
-    background-color: #1d4ed8;
+    opacity: 0.92;
   }
   .btn-primary:active {
-    background-color: #1e40af;
+    opacity: 0.85;
+    transform: translateY(0.5px);
   }
 
   /* Secondary Button: Clean Hairline Neutral */
@@ -151,19 +141,19 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: hsl(var(--secondary));
-    color: hsl(var(--foreground));
+    background-color: var(--elevated);
+    color: var(--text);
     font-weight: 500;
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
     border-radius: 6px;
-    border: 1px solid hsl(var(--border));
+    border: 1px solid var(--border);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
     transition: background-color 150ms ease-out, border-color 150ms ease-out;
   }
   .btn-secondary:hover {
-    background-color: hsl(var(--muted));
-    border-color: hsl(var(--muted-foreground) / 0.3);
+    background-color: var(--surface);
+    border-color: var(--muted);
   }
 
   /* Ghost Button */
@@ -172,7 +162,7 @@
     align-items: center;
     justify-content: center;
     background-color: transparent;
-    color: hsl(var(--muted-foreground));
+    color: var(--muted);
     font-weight: 500;
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;
@@ -180,49 +170,111 @@
     transition: color 150ms ease-out, background-color 150ms ease-out;
   }
   .btn-ghost:hover {
-    color: hsl(var(--foreground));
-    background-color: hsl(var(--secondary));
+    color: var(--text);
+    background-color: var(--elevated);
   }
 
-  /* Legacy Compatibility Aliases mapped to clean design system */
+  /* Legacy Compatibility Aliases mapped directly to Graphite + Ice Teal */
   .glass-card, .glass-card-elevated, .glass-card-dialog {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   }
   .glass-card-hover {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     transition: border-color 150ms ease-out;
   }
   .glass-card-hover:hover {
-    border-color: hsl(var(--muted-foreground) / 0.4);
+    border-color: var(--muted);
   }
   .glass-input {
-    background-color: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: 6px;
   }
   .glass-input:focus {
-    border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
+    border-color: var(--accent);
     outline: none;
   }
   .gradient-text {
-    color: hsl(var(--foreground));
+    color: var(--text);
   }
   .gradient-button {
-    background-color: hsl(var(--primary));
-    color: #ffffff;
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    font-weight: 600;
     border-radius: 6px;
-    transition: background-color 150ms ease-out;
+    transition: opacity 150ms ease-out;
   }
   .gradient-button:hover {
-    background-color: #1d4ed8;
+    opacity: 0.92;
   }
+}
+
+/* React Flow unobtrusive styling & watermark hide */
+.react-flow__attribution {
+  display: none !important;
+}
+
+.react-flow__minimap {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(11, 12, 14, 0.75) !important;
+}
+
+.react-flow__controls {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  background-color: var(--surface) !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--elevated) !important;
+  color: var(--text) !important;
+}
+
+.react-flow__controls {
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+}
+
+.react-flow__controls button {
+  background-color: var(--elevated) !important;
+  border-bottom: 1px solid var(--border) !important;
+  fill: var(--text) !important;
+  color: var(--text) !important;
+}
+
+.react-flow__controls button:hover {
+  background-color: var(--surface) !important;
+}
+
+.react-flow__controls button svg {
+  fill: var(--text) !important;
+}
+
+.react-flow__minimap {
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  background-color: var(--surface) !important;
 }
 
 /* Custom Clean Scrollbars */
@@ -234,14 +286,14 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--border);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: var(--muted);
 }
 
-/* Respect user's motion preferences */
+/* Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

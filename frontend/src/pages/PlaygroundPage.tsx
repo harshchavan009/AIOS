@@ -45,6 +45,8 @@ import {
   Code
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 export interface ModelConfig {
@@ -721,90 +723,86 @@ Execution complete with 0.0% hallucination risk.`;
 
   const selectedArenaModels = compareModels.filter(m => m.checked).map(m => m.id);
 
-  return (
-    <div className="space-y-6 animate-fade-in font-sans pb-12">
-      {/* Top Banner & Mode Toggle */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <Brain className="w-8 h-8 text-blue-400 animate-pulse" />
-            <span>Live AI Playground</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Markdown, Mermaid diagrams, Tables, Image lightbox, Token Streaming, Code highlighting, PDF upload, Copy, Regenerate, Edit, & Share.
-          </p>
-        </div>
-
-        {/* Mode Selector & Control Action Buttons */}
-        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-          <div className="flex rounded-xl bg-muted/40 p-1 border border-border/60">
-            <button
-              onClick={() => setMode('chat')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 ${
-                mode === 'chat' ? 'bg-blue-600 text-white shadow-md' : 'text-muted-foreground hover:text-white'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>ChatGPT Studio</span>
-            </button>
-            <button
-              onClick={() => setMode('compare')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 ${
-                mode === 'compare' ? 'bg-blue-600 text-white shadow-md' : 'text-muted-foreground hover:text-white'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Model Arena</span>
-            </button>
-          </div>
-
-          <button
-            onClick={handleCreateNewThread}
-            className="px-3 py-2 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted flex items-center space-x-1.5"
-          >
-            <Plus className="w-4 h-4 text-blue-400" />
-            <span>New Chat</span>
-          </button>
-
-          {/* Export Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-              className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold hover:bg-white/10 flex items-center space-x-1.5 text-foreground"
-            >
-              <Download className="w-4 h-4 text-emerald-400" />
-              <span>Export...</span>
-            </button>
-
-            {exportDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-white/10 bg-[#0e121b] p-1.5 shadow-2xl z-50 text-xs font-mono space-y-1">
-                <button
-                  onClick={() => handleExportConversation('md')}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between text-gray-200"
-                >
-                  <span>Markdown (.md)</span>
-                  <FileText className="w-3.5 h-3.5 text-blue-400" />
-                </button>
-                <button
-                  onClick={() => handleExportConversation('json')}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between text-gray-200"
-                >
-                  <span>JSON (.json)</span>
-                  <FileCode className="w-3.5 h-3.5 text-emerald-400" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => setShareModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-500/25 flex items-center space-x-1.5"
-          >
-            <Share2 className="w-4 h-4" />
-            <span>Share</span>
-          </button>
-        </div>
+  const headerActions = (
+    <div className="flex items-center space-x-2.5 flex-wrap gap-y-2">
+      <div className="flex rounded-md bg-elevated p-1 border border-border">
+        <button
+          onClick={() => setMode('chat')}
+          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors flex items-center space-x-1.5 ${
+            mode === 'chat' ? 'bg-surface text-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Chat</span>
+        </button>
+        <button
+          onClick={() => setMode('compare')}
+          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors flex items-center space-x-1.5 ${
+            mode === 'compare' ? 'bg-surface text-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Model Arena</span>
+        </button>
       </div>
+
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={handleCreateNewThread}
+        leftIcon={<Plus className="w-3.5 h-3.5" />}
+      >
+        New Chat
+      </Button>
+
+      {/* Export Dropdown */}
+      <div className="relative">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+          leftIcon={<Download className="w-3.5 h-3.5" />}
+        >
+          Export
+        </Button>
+
+        {exportDropdownOpen && (
+          <div className="absolute right-0 mt-1.5 w-44 rounded-md border border-border bg-elevated p-1 shadow-md z-50 text-xs font-mono space-y-0.5">
+            <button
+              onClick={() => handleExportConversation('md')}
+              className="w-full text-left px-2.5 py-1.5 rounded hover:bg-surface flex items-center justify-between text-foreground transition-colors"
+            >
+              <span>Markdown (.md)</span>
+              <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => handleExportConversation('json')}
+              className="w-full text-left px-2.5 py-1.5 rounded hover:bg-surface flex items-center justify-between text-foreground transition-colors"
+            >
+              <span>JSON (.json)</span>
+              <FileCode className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setShareModalOpen(true)}
+        leftIcon={<Share2 className="w-3.5 h-3.5" />}
+      >
+        Share
+      </Button>
+    </div>
+  );
+
+  return (
+    <PageLayout
+      title="Playground"
+      description="Interactive multi-model chat interface with token streaming, code evaluation, and model arena comparison."
+      actions={headerActions}
+    >
 
       {/* Main Studio Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1206,6 +1204,6 @@ Execution complete with 0.0% hallucination risk.`;
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };

@@ -15,23 +15,23 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ServerErrorPage } from './pages/ServerErrorPage';
 
-// Lazy-loaded Heavy Studio Modules for Route-Based Code Splitting
-const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const PlaygroundPage = lazy(() => import('./pages/PlaygroundPage').then((m) => ({ default: m.PlaygroundPage })));
-const PromptStudioPage = lazy(() => import('./pages/PromptStudioPage').then((m) => ({ default: m.PromptStudioPage })));
-const AgentBuilderPage = lazy(() => import('./pages/AgentBuilderPage').then((m) => ({ default: m.AgentBuilderPage })));
-const ModelManagementPage = lazy(() => import('./pages/ModelManagementPage').then((m) => ({ default: m.ModelManagementPage })));
-const EvaluationStudioPage = lazy(() => import('./pages/EvaluationStudioPage').then((m) => ({ default: m.EvaluationStudioPage })));
-const KnowledgeManagementPage = lazy(() => import('./pages/KnowledgeManagementPage').then((m) => ({ default: m.KnowledgeManagementPage })));
-const AgentMarketplacePage = lazy(() => import('./pages/AgentMarketplacePage').then((m) => ({ default: m.AgentMarketplacePage })));
-const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
-const AgentsPage = lazy(() => import('./pages/AgentsPage').then((m) => ({ default: m.AgentsPage })));
-const GraphRAGPage = lazy(() => import('./pages/GraphRAGPage').then((m) => ({ default: m.GraphRAGPage })));
-const AutoDevPage = lazy(() => import('./pages/AutoDevPage').then((m) => ({ default: m.AutoDevPage })));
-const SecondBrainPage = lazy(() => import('./pages/SecondBrainPage').then((m) => ({ default: m.SecondBrainPage })));
-const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
-const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
-const ApiExplorerPage = lazy(() => import('./pages/ApiExplorerPage').then((m) => ({ default: m.ApiExplorerPage })));
+// Eagerly loaded Studio Modules for Instant Rendering
+import { DashboardPage } from './pages/DashboardPage';
+import { PlaygroundPage } from './pages/PlaygroundPage';
+import { PromptStudioPage } from './pages/PromptStudioPage';
+import { AgentBuilderPage } from './pages/AgentBuilderPage';
+import { ModelManagementPage } from './pages/ModelManagementPage';
+import { EvaluationStudioPage } from './pages/EvaluationStudioPage';
+import { KnowledgeManagementPage } from './pages/KnowledgeManagementPage';
+import { AgentMarketplacePage } from './pages/AgentMarketplacePage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { AgentsPage } from './pages/AgentsPage';
+import { GraphRAGPage } from './pages/GraphRAGPage';
+import { AutoDevPage } from './pages/AutoDevPage';
+import { SecondBrainPage } from './pages/SecondBrainPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { BillingPage } from './pages/BillingPage';
+import { ApiExplorerPage } from './pages/ApiExplorerPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthStore();

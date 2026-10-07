@@ -45,16 +45,16 @@ interface WorkspaceState {
 }
 
 const DEFAULT_ORGS: Organization[] = [
-  { id: 'org-acme', name: 'Acme Enterprise AI', slug: 'acme-enterprise', plan: 'enterprise' },
+  { id: 'org-main', name: 'AIOS Enterprise', slug: 'aios-enterprise', plan: 'enterprise' },
   { id: 'org-labs', name: 'AIOS R&D Labs', slug: 'aios-labs', plan: 'pro' }
 ];
 
 const DEFAULT_WORKSPACES: Workspace[] = [
   {
-    id: 'ws-startup',
-    organization_id: 'org-acme',
-    name: 'My Startup',
-    slug: 'my-startup',
+    id: 'ws-prod',
+    organization_id: 'org-main',
+    name: 'Production Swarm',
+    slug: 'production-swarm',
     resources: {
       users: 4,
       documents: 18,
@@ -67,7 +67,7 @@ const DEFAULT_WORKSPACES: Workspace[] = [
   },
   {
     id: 'ws-openai',
-    organization_id: 'org-acme',
+    organization_id: 'org-main',
     name: 'OpenAI Team',
     slug: 'openai-team',
     resources: {
@@ -82,7 +82,7 @@ const DEFAULT_WORKSPACES: Workspace[] = [
   },
   {
     id: 'ws-finance',
-    organization_id: 'org-acme',
+    organization_id: 'org-main',
     name: 'Finance Team',
     slug: 'finance-team',
     resources: {
@@ -97,7 +97,7 @@ const DEFAULT_WORKSPACES: Workspace[] = [
   },
   {
     id: 'ws-healthcare',
-    organization_id: 'org-acme',
+    organization_id: 'org-main',
     name: 'Healthcare',
     slug: 'healthcare',
     resources: {
@@ -112,7 +112,7 @@ const DEFAULT_WORKSPACES: Workspace[] = [
   },
   {
     id: 'ws-research',
-    organization_id: 'org-acme',
+    organization_id: 'org-main',
     name: 'Research Lab',
     slug: 'research-lab',
     resources: {

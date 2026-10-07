@@ -37,6 +37,8 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -73,14 +75,16 @@ export const SettingsPage: React.FC = () => {
 
   const isLight = theme === 'light';
 
+  const browserTz = typeof Intl !== 'undefined' && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
+
   // State forms
-  const [profileName, setProfileName] = useState(user?.full_name || 'AIOS User');
-  const [profileEmail, setProfileEmail] = useState(user?.email || 'user@aios.dev');
+  const [profileName, setProfileName] = useState(user?.full_name || user?.email?.split('@')[0] || 'Swarm Operator');
+  const [profileEmail, setProfileEmail] = useState(user?.email || 'operator@aios.dev');
   const [userRole, setUserRole] = useState(user?.role || 'Developer');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [timezone, setTimezone] = useState('UTC-5 (Eastern Time)');
+  const [timezone, setTimezone] = useState(browserTz);
 
   // Enterprise API Keys State
   const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
@@ -341,62 +345,98 @@ export const SettingsPage: React.FC = () => {
     });
   };
 
-  const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'profile', label: 'Profile', icon: UserIcon },
-    { id: 'theme', label: 'Theme', icon: Palette },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'api-keys', label: 'API Keys', icon: Key },
-    { id: 'team', label: 'Team Members', icon: Users },
-    { id: 'audit', label: 'Audit Logs', icon: ShieldCheck },
-    { id: 'webhooks', label: 'Webhooks', icon: Webhook },
-    { id: 'oauth', label: 'OAuth & SSO', icon: Globe },
-    { id: 'security', label: 'Security', icon: Lock },
-    { id: 'organization', label: 'Organization', icon: Building2 },
-    { id: 'usage-limits', label: 'Usage Limits', icon: Sliders },
-    { id: 'pats', label: 'Personal Access Tokens', icon: Fingerprint },
+  interface TabGroup {
+    name: string;
+    tabs: {
+      id: SettingsTab;
+      label: string;
+      icon: React.ComponentType<{ className?: string }>;
+    }[];
+  }
+
+  const TAB_GROUPS: TabGroup[] = [
+    {
+      name: 'Account',
+      tabs: [
+        { id: 'profile', label: 'Profile', icon: UserIcon },
+        { id: 'theme', label: 'Theme & Appearance', icon: Palette },
+      ],
+    },
+    {
+      name: 'Workspace',
+      tabs: [
+        { id: 'organization', label: 'Organization', icon: Building2 },
+        { id: 'team', label: 'Team Members', icon: Users },
+        { id: 'usage-limits', label: 'Usage Limits', icon: Sliders },
+      ],
+    },
+    {
+      name: 'Developers',
+      tabs: [
+        { id: 'api-keys', label: 'API Keys', icon: Key },
+        { id: 'pats', label: 'Personal Access Tokens', icon: Fingerprint },
+        { id: 'webhooks', label: 'Webhooks', icon: Webhook },
+      ],
+    },
+    {
+      name: 'Security & Billing',
+      tabs: [
+        { id: 'security', label: 'Security', icon: Lock },
+        { id: 'oauth', label: 'OAuth & SSO', icon: Globe },
+        { id: 'audit', label: 'Audit Logs', icon: ShieldCheck },
+        { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
+      ],
+    },
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in font-sans pb-12">
-      {/* Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Platform Settings & Security Governance</h1>
-          <p className="text-muted-foreground text-sm">
-            Manage your account preferences, RBAC permissions, API secrets, OAuth integrations, and compliance policies.
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Badge variant="success">SOC-2 Type II Enforced</Badge>
-          <Badge variant="info">{currentOrganization?.name || 'AIOS Enterprise'}</Badge>
-        </div>
-      </div>
+    <PageLayout
+      title="Settings"
+      description="Manage account preferences, team permissions, API secrets, and workspace policies."
+      actions={
+        <Badge variant="info">
+          {currentWorkspace?.name || currentOrganization?.name || 'Production Swarm'}
+        </Badge>
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        {/* Left Sub-nav */}
+        <aside className="md:col-span-3 xl:col-span-3 surface-card p-3 rounded-lg border border-border space-y-4 md:sticky md:top-6">
+          {TAB_GROUPS.map((group) => (
+            <div key={group.name} className="space-y-1">
+              <div className="text-[11px] font-semibold text-muted uppercase tracking-wider px-2.5 py-1">
+                {group.name}
+              </div>
+              <div className="space-y-0.5">
+                {group.tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setSearchParams({ tab: tab.id }, { replace: true });
+                      }}
+                      className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors text-left ${
+                        isActive
+                          ? 'bg-accent text-accent-foreground font-semibold shadow-xs'
+                          : 'text-muted hover:text-text hover:bg-elevated'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </aside>
 
-      {/* 12 Tab Pill Navigation */}
-      <div className="flex items-center overflow-x-auto p-1.5 rounded-2xl bg-white/5 border border-white/10 space-x-1 font-mono text-xs no-scrollbar">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSearchParams({ tab: tab.id }, { replace: true });
-              }}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl shrink-0 transition-all font-semibold ${
-                isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                  : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+        {/* Right Tab Content */}
+        <main className="md:col-span-9 xl:col-span-9 min-w-0 space-y-6">
 
       {/* ── TAB 1: PROFILE ─────────────────────────────────────────────────── */}
       {activeTab === 'profile' && (
@@ -407,7 +447,7 @@ export const SettingsPage: React.FC = () => {
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Profile Avatar" className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500/50 shadow-lg shadow-blue-500/20" />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-blue-500/20">
+                  <div className="w-14 h-14 rounded-lg bg-elevated border border-border text-accent flex items-center justify-center font-bold text-2xl shadow-xs">
                     {profileName.charAt(0)}
                   </div>
                 )}
@@ -449,16 +489,22 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Timezone Preference</label>
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Timezone Preference</label>
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-foreground font-mono focus:outline-none"
+                className="w-full px-3 py-2 rounded-md bg-elevated border border-border text-xs text-text font-mono focus:outline-none focus:border-accent"
               >
-                <option value="UTC-5 (Eastern Time)">UTC-5 (Eastern Time)</option>
-                <option value="UTC+0 (Greenwich Mean Time)">UTC+0 (Greenwich Mean Time)</option>
-                <option value="UTC+5:30 (Indian Standard Time)">UTC+5:30 (Indian Standard Time)</option>
-                <option value="UTC+8 (Singapore Standard Time)">UTC+8 (Singapore Standard Time)</option>
+                <option value={browserTz}>{browserTz} (Browser Local)</option>
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                <option value="America/New_York">America/New_York (Eastern Time)</option>
+                <option value="America/Chicago">America/Chicago (Central Time)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (Pacific Time)</option>
+                <option value="Europe/London">Europe/London (GMT/BST)</option>
+                <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
               </select>
             </div>
           </div>
@@ -467,7 +513,7 @@ export const SettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={handleSaveProfile}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-blue-500/25"
+              className="btn-primary"
             >
               Save Profile Changes
             </button>
@@ -1614,6 +1660,8 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+        </main>
+      </div>
+    </PageLayout>
   );
 };

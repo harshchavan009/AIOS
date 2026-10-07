@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BrainCircuit, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
-import { AuroraBackground } from '../components/common/AuroraBackground';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
@@ -24,7 +23,7 @@ export const ForgotPasswordPage: React.FC = () => {
       const response = await fetch('/api/v1/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email.trim() }),
       });
 
       const data = await response.json();
@@ -44,87 +43,90 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <AuroraBackground className="min-h-screen flex items-center justify-center p-4 md:p-8 font-sans selection:bg-primary/30">
-      <div className="max-w-md w-full glass-card p-8 rounded-3xl space-y-6 border border-white/10 shadow-2xl relative z-10">
-        
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">
-            <BrainCircuit className="w-6 h-6 animate-pulse" />
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-primary">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Brand Mark */}
+        <Link to="/" className="flex items-center justify-center space-x-2.5 mb-6 group">
+          <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-[#0B0C0E] font-semibold text-sm">
+            AI
           </div>
-          <span className="font-extrabold text-xl tracking-wider gradient-text">
-            AIOS
-          </span>
-        </div>
+          <span className="font-semibold text-lg tracking-tight text-foreground">AIOS</span>
+        </Link>
 
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Reset Password</h1>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            Enter your enterprise email address. We will generate password reset instructions for your account.
-          </p>
-        </div>
+        <h1 className="text-center text-xl font-semibold tracking-tight text-foreground">
+          Reset your password
+        </h1>
+        <p className="mt-1.5 text-center text-xs text-muted-foreground">
+          Enter your email address to receive password reset instructions.
+        </p>
+      </div>
 
-        {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {message && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium space-y-2">
-            <div className="flex items-center space-x-2 font-bold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{message}</span>
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-xs space-y-5">
+          {error && (
+            <div className="p-3 rounded border border-destructive/30 bg-destructive/5 text-xs text-destructive flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
-            {resetToken && (
-              <div className="mt-2 pt-2 border-t border-emerald-500/20 font-mono text-[10px] break-all">
-                Reset Token: <span className="text-white">{resetToken}</span>
-                <div className="mt-2">
-                  <button
-                    onClick={() => navigate(`/reset-password?token=${resetToken}`)}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-bold text-xs hover:bg-emerald-400 transition-colors"
-                  >
-                    Proceed to Reset Password
-                  </button>
-                </div>
+          )}
+
+          {message && (
+            <div className="p-3 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs space-y-2">
+              <div className="flex items-center space-x-2 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{message}</span>
               </div>
-            )}
+              {resetToken && (
+                <div className="pt-2 border-t border-emerald-500/20 font-mono text-[10px] break-all">
+                  Reset Token: <span className="text-foreground">{resetToken}</span>
+                  <div className="mt-2">
+                    <Button
+                      variant="primary"
+                      size="xs"
+                      onClick={() => navigate(`/reset-password?token=${resetToken}`)}
+                    >
+                      Proceed to Reset Password
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <form onSubmit={handleRequestReset} className="space-y-4">
+            <Input
+              id="reset-email"
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@company.com"
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              className="w-full text-xs"
+              isLoading={loading}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+            >
+              Send Reset Instructions
+            </Button>
+          </form>
+
+          <div className="pt-2 text-center border-t border-border">
+            <Link
+              to="/login"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center space-x-1.5 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Sign In</span>
+            </Link>
           </div>
-        )}
-
-        <form onSubmit={handleRequestReset} className="space-y-4">
-          <Input
-            label="Enterprise Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            leftIcon={<Mail className="w-4 h-4" />}
-            placeholder="engineer@aios.enterprise"
-            required
-          />
-
-          <Button
-            type="submit"
-            variant="gradient"
-            size="lg"
-            className="w-full shadow-2xl"
-            isLoading={loading}
-            rightIcon={<ArrowRight className="w-4 h-4" />}
-          >
-            Send Reset Instructions
-          </Button>
-        </form>
-
-        <div className="pt-2 text-center border-t border-white/10">
-          <button
-            onClick={() => navigate('/login')}
-            className="text-xs text-muted-foreground hover:text-white flex items-center justify-center space-x-2 mx-auto font-medium transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Sign In</span>
-          </button>
         </div>
       </div>
-    </AuroraBackground>
+    </div>
   );
 };

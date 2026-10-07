@@ -98,7 +98,7 @@ export const LoginPage: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Mark */}
         <Link to="/" className="flex items-center justify-center space-x-2.5 mb-6 group">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-semibold text-sm">
+          <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-[#0B0C0E] font-semibold text-sm">
             AI
           </div>
           <span className="font-semibold text-lg tracking-tight text-foreground">AIOS</span>

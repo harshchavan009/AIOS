@@ -37,7 +37,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-13 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <a href="/" className="flex items-center space-x-2.5">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-semibold text-xs">
+              <div className="w-6 h-6 rounded bg-accent flex items-center justify-center text-[#0B0C0E] font-semibold text-xs">
                 AI
               </div>
               <span className="font-semibold text-sm tracking-tight text-foreground">AIOS</span>

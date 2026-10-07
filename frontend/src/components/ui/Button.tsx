@@ -21,7 +21,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   ...props
 }, ref) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none select-none';
+    'inline-flex items-center justify-center font-medium rounded transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:opacity-40 disabled:pointer-events-none select-none';
 
   const sizeStyles = {
     xs: 'px-2 py-1 text-xs gap-1.5 h-7',
@@ -32,20 +32,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
 
   const variantStyles: Record<string, string> = {
     primary:
-      'bg-primary text-white hover:bg-blue-600 active:bg-blue-700 shadow-xs border border-transparent',
+      'bg-accent text-accent-foreground font-semibold hover:opacity-90 active:opacity-80 shadow-xs border border-transparent',
     secondary:
-      'bg-secondary text-foreground hover:bg-muted active:bg-muted/80 border border-border shadow-xs',
+      'bg-elevated text-foreground hover:bg-surface active:bg-elevated border border-border shadow-xs',
     outline:
-      'border border-border bg-transparent hover:bg-secondary text-foreground active:bg-muted',
+      'border border-border bg-transparent hover:bg-elevated text-foreground active:bg-surface',
     ghost:
-      'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary',
+      'bg-transparent text-muted-foreground hover:text-foreground hover:bg-elevated',
     destructive:
-      'bg-destructive text-destructive-foreground hover:bg-red-600 active:bg-red-700 shadow-xs border border-transparent',
-    // Fallbacks mapped cleanly to primary & secondary
+      'bg-status-danger text-white hover:opacity-90 active:opacity-80 shadow-xs border border-transparent',
     gradient:
-      'bg-primary text-white hover:bg-blue-600 active:bg-blue-700 shadow-xs border border-transparent',
+      'bg-accent text-accent-foreground font-semibold hover:opacity-90 active:opacity-80 shadow-xs border border-transparent',
     glass:
-      'bg-card text-foreground hover:bg-secondary border border-border shadow-xs',
+      'bg-surface text-foreground hover:bg-elevated border border-border shadow-xs',
   };
 
   return (

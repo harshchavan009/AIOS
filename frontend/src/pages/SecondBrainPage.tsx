@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 interface VaultDoc {
@@ -59,52 +60,70 @@ export const SecondBrainPage: React.FC = () => {
     input.click();
   };
 
-  return (
-    <div className="space-y-8 animate-fade-in font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Second Brain & Document Vault</h1>
-          <p className="text-muted-foreground text-sm">
-            Semantic memory storage, document ingestion, and hybrid vector embedding indexer.
-          </p>
-        </div>
-        <Button onClick={handleUploadTrigger} variant="gradient" size="sm" leftIcon={<UploadCloud className="w-4 h-4" />}>
-          Upload Document
-        </Button>
-      </div>
+  const handleLoadSampleData = () => {
+    setDocuments([
+      { filename: 'enterprise_security_whitepaper.pdf', chunk_count: 48, status: 'indexed' },
+      { filename: 'system_architecture_spec.md', chunk_count: 32, status: 'indexed' },
+      { filename: 'compliance_controls_matrix.docx', chunk_count: 64, status: 'indexed' },
+    ]);
+    addNotification({
+      type: 'knowledge',
+      title: 'Sample Data Loaded',
+      description: 'Loaded 3 enterprise documents into your Second Brain memory vault.',
+    });
+  };
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  const headerActions = (
+    <Button
+      variant="primary"
+      size="sm"
+      onClick={handleUploadTrigger}
+      leftIcon={<UploadCloud className="w-3.5 h-3.5" />}
+    >
+      Upload Document
+    </Button>
+  );
+
+  return (
+    <PageLayout
+      title="Second Brain"
+      description="Semantic memory storage, document ingestion, and hybrid vector embedding indexer."
+      actions={headerActions}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {documents.length > 0 ? (
           documents.map((doc, idx) => (
-            <Card key={idx} variant="glass" className="space-y-4">
+            <Card key={idx} variant="default" className="space-y-4 p-5">
               <div className="flex items-center justify-between">
-                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
-                  <FileText className="w-6 h-6" />
+                <div className="p-2.5 rounded-md bg-accent/15 text-accent">
+                  <FileText className="w-5 h-5" />
                 </div>
                 <Badge variant="success">{doc.status.toUpperCase()}</Badge>
               </div>
               <div>
-                <h3 className="text-sm font-bold truncate">{doc.filename}</h3>
+                <h3 className="text-sm font-semibold truncate text-foreground">{doc.filename}</h3>
                 <p className="text-xs text-muted-foreground mt-1">Indexed in Graph RAG Vector Store</p>
               </div>
-              <div className="pt-3 border-t border-border/40 flex items-center justify-between text-xs font-mono text-indigo-400">
+              <div className="pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
                 <span>{doc.chunk_count} Vector Chunks</span>
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
               </div>
             </Card>
           ))
         ) : (
-          <div className="col-span-3">
+          <div className="col-span-3 py-6">
             <EmptyState
               icon={FileText}
               title="No Documents Found"
-              description="No documents in your Second Brain vault. Upload PDFs, text files, or markdown to populate your semantic memory vault."
+              description="Your semantic memory vault is currently empty. Upload documents or load sample enterprise knowledge files."
               actionLabel="Upload Document"
               onAction={handleUploadTrigger}
+              secondaryLabel="Load Sample Data"
+              onSecondaryAction={handleLoadSampleData}
             />
           </div>
         )}
       </div>
-    </div>
+    </PageLayout>
   );
 };

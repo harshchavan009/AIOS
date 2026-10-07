@@ -123,7 +123,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                 <div key={s.num} className="space-y-1">
                   <div
                     className={`h-1 rounded-full transition-colors ${
-                      isCompleted || isCurrent ? 'bg-primary' : 'bg-secondary'
+                      isCompleted || isCurrent ? 'bg-accent' : 'bg-muted/20'
                     }`}
                   />
                   <span className={`block text-[10px] font-medium truncate ${
@@ -190,7 +190,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                       onClick={() => setSelectedModel(m.id)}
                       className={`w-full p-3 rounded border text-left flex items-start justify-between transition-colors ${
                         isSelected
-                          ? 'border-primary bg-primary/5 text-foreground shadow-xs'
+                          ? 'border-accent bg-accent/10 text-foreground shadow-xs'
                           : 'border-border bg-background hover:bg-secondary text-muted-foreground'
                       }`}
                     >
@@ -201,7 +201,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                         </div>
                         <p className="text-xs text-muted-foreground">{m.note}</p>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />}
+                      {isSelected && <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" />}
                     </button>
                   );
                 })}
@@ -225,7 +225,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                     type="checkbox"
                     checked={enableGraphRAG}
                     onChange={(e) => setEnableGraphRAG(e.target.checked)}
-                    className="mt-0.5 rounded border-border text-primary focus:ring-primary w-4 h-4"
+                    className="mt-0.5 rounded border-border text-accent focus:ring-accent w-4 h-4"
                   />
                   <div className="space-y-0.5">
                     <span className="text-xs font-semibold text-foreground block">Hybrid Graph RAG</span>
@@ -240,7 +240,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                     type="checkbox"
                     checked={enableSandbox}
                     onChange={(e) => setEnableSandbox(e.target.checked)}
-                    className="mt-0.5 rounded border-border text-primary focus:ring-primary w-4 h-4"
+                    className="mt-0.5 rounded border-border text-accent focus:ring-accent w-4 h-4"
                   />
                   <div className="space-y-0.5">
                     <span className="text-xs font-semibold text-foreground block">Python Tool Sandbox</span>

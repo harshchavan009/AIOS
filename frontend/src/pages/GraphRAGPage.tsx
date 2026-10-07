@@ -26,6 +26,8 @@ import {
   Share2,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type PipelineStepId = 'UPLOAD' | 'OCR' | 'CHUNK' | 'EMBEDDING' | 'NEO4J' | 'QDRANT' | 'SEARCH' | 'ANSWER' | 'CITATION';
@@ -356,29 +358,19 @@ export const GraphRAGPage: React.FC = () => {
     return n.type === selectedEntityFilter;
   });
 
-  return (
-    <div className="space-y-6 animate-fade-in font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <Network className="w-8 h-8 text-primary animate-pulse" />
-            <span>Graph RAG Ingestion & Indexing Engine</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Full 7-step pipeline: Upload PDF → OCR → Chunk → Embedding → Neo4j → Qdrant → Ready. Extracted entity metrics & graph visualization.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2 text-[10px] font-mono">
-          <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            Neo4j Connected
-          </span>
-          <span className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400">
-            Qdrant Active
-          </span>
-        </div>
-      </div>
+  const headerActions = (
+    <div className="flex items-center space-x-2">
+      <Badge variant="success" dot>Neo4j Connected</Badge>
+      <Badge variant="info" dot>Qdrant Active</Badge>
+    </div>
+  );
 
+  return (
+    <PageLayout
+      title="Graph RAG"
+      description="Hybrid semantic retrieval combining vector similarity search with Neo4j entity graph traversal."
+      actions={headerActions}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* ── LEFT: 7-Step Ingestion Pipeline & Progress Bar ────────────────── */}
@@ -462,18 +454,18 @@ export const GraphRAGPage: React.FC = () => {
               )}
             </div>
 
-            {/* Progress Bar Requested by User: █████████ 92% */}
-            <div className="space-y-1.5 p-3 rounded-xl bg-[#080c14] border border-border/60">
+            {/* Progress Bar */}
+            <div className="space-y-1.5 p-3 rounded-lg bg-surface border border-border">
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-muted-foreground">Indexing Progress:</span>
-                <span className="text-emerald-400 font-bold">{progressPercent}%</span>
+                <span className="text-accent font-bold">{progressPercent}%</span>
               </div>
-              <div className="font-mono text-xs text-emerald-400 tracking-widest break-all select-none">
+              <div className="font-mono text-xs text-accent tracking-widest break-all select-none">
                 {renderProgressBar(progressPercent)}
               </div>
-              <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-elevated overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-400 transition-all duration-300"
+                  className="h-full bg-accent transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -670,19 +662,46 @@ export const GraphRAGPage: React.FC = () => {
                   const isPeople = node.type === 'people';
                   const isDate = node.type === 'date';
 
-                  const fillColor = isCompany ? '#34d399' : isPeople ? '#60a5fa' : isDate ? '#f59e0b' : '#c084fc';
-                  const bgColor = isCompany ? '#0a1f18' : isPeople ? '#060e1f' : isDate ? '#1e1500' : '#1a0d2e';
+                  const fillColor = isCompany ? '#34d399' : isPeople ? '#38bdf8' : isDate ? '#f59e0b' : '#a78bfa';
+                  const bgColor = isCompany ? '#0a1f18' : isPeople ? '#061325' : isDate ? '#1e1500' : '#170d2e';
 
                   return (
-                    <g key={node.id} className="cursor-pointer hover:scale-110 transition-transform">
-                      <circle cx={nx} cy={ny} r="22" fill={bgColor} stroke={fillColor} strokeWidth="2" />
-                      <text x={nx} y={ny + 3} textAnchor="middle" fill="#ffffff" fontSize="9" fontFamily="sans-serif" fontWeight="bold">
-                        {node.label.slice(0, 8)}
+                    <g key={node.id} className="cursor-pointer hover:opacity-90 transition-opacity">
+                      <title>{`${node.label} (${node.type}) — ${node.connections} connections`}</title>
+                      <circle cx={nx} cy={ny} r="26" fill={bgColor} stroke={fillColor} strokeWidth="1.5" />
+                      <text x={nx} y={ny - 2} textAnchor="middle" fill="#ffffff" fontSize="9" fontFamily="sans-serif" fontWeight="600">
+                        {node.label.length > 10 ? node.label.slice(0, 9) + '…' : node.label}
+                      </text>
+                      <text x={nx} y={ny + 9} textAnchor="middle" fill={fillColor} fontSize="8" fontFamily="monospace">
+                        {node.type}
                       </text>
                     </g>
                   );
                 })}
               </svg>
+            </div>
+
+            {/* Clean Legend */}
+            <div className="flex items-center justify-between pt-2 border-t border-border text-[11px] font-mono text-muted-foreground">
+              <div className="flex items-center space-x-4">
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#34d399] inline-block" />
+                  <span>Company</span>
+                </span>
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] inline-block" />
+                  <span>Person</span>
+                </span>
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] inline-block" />
+                  <span>Date</span>
+                </span>
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#a78bfa] inline-block" />
+                  <span>Concept</span>
+                </span>
+              </div>
+              <span>{filteredNodes.length} Nodes · {graphEdges.length} Relations</span>
             </div>
           </div>
 
@@ -700,17 +719,19 @@ export const GraphRAGPage: React.FC = () => {
               value={queryInput}
               onChange={e => setQueryInput(e.target.value)}
               rows={2}
-              className="w-full px-4 py-3 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground resize-none"
+              className="w-full px-4 py-3 rounded-md bg-surface border border-border text-xs font-mono focus:outline-none focus:border-accent text-foreground resize-none"
             />
 
-            <button
+            <Button
+              variant="primary"
               onClick={runQuery}
               disabled={isSearching || !queryInput.trim()}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+              isLoading={isSearching}
+              className="w-full"
+              leftIcon={<Sparkles className="w-3.5 h-3.5" />}
             >
-              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              <span>{isSearching ? 'Traversing Graph Knowledge…' : 'Run Hybrid Graph RAG Search'}</span>
-            </button>
+              {isSearching ? 'Traversing Graph Knowledge…' : 'Run Hybrid Graph RAG Search'}
+            </Button>
           </div>
 
           {/* Answer Output Window */}
@@ -732,6 +753,6 @@ export const GraphRAGPage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

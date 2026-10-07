@@ -36,8 +36,11 @@ import {
   Database,
   Coins,
   ShieldCheck,
+  MoreHorizontal,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 // ──────────────────────────────────────────────
@@ -290,6 +293,7 @@ export const PromptStudioPage: React.FC = () => {
   const [newPromptModal, setNewPromptModal] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState(false);
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCollection, setNewCollection] = useState('Security & Compliance');
   const [newFolder, setNewFolder] = useState('Custom Audits');
@@ -588,57 +592,67 @@ export const PromptStudioPage: React.FC = () => {
     { id: 'analytics', label: 'Execution Logs', icon: <BarChart2 className="w-3.5 h-3.5" /> },
   ] as const;
 
-  return (
-    <div className="space-y-6 animate-fade-in font-sans">
-      {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <BookMarked className="w-8 h-8 text-primary" />
-            <span>Prompt Studio & Version Registry</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Create, edit, clone, version control, rollback, evaluate RAGAS quality scores, share, and track prompt execution logs.
-          </p>
-        </div>
+  const headerActions = (
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => setNewPromptModal(true)}
+        leftIcon={<Plus className="w-3.5 h-3.5" />}
+      >
+        Create Prompt
+      </Button>
 
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-          <button
-            onClick={() => setNewPromptModal(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Prompt</span>
-          </button>
+      {/* Overflow menu for tertiary actions */}
+      <div className="relative">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setIsActionsMenuOpen(prev => !prev)}
+          leftIcon={<MoreHorizontal className="w-3.5 h-3.5" />}
+        >
+          Actions
+        </Button>
 
-          <button
-            onClick={handleDuplicatePrompt}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted transition-all"
+        {isActionsMenuOpen && (
+          <div
+            className="absolute right-0 mt-1.5 w-44 rounded-md border border-border bg-elevated shadow-md z-50 p-1 space-y-0.5"
+            onClick={() => setIsActionsMenuOpen(false)}
           >
-            <GitBranch className="w-4 h-4 text-primary" />
-            <span>Duplicate / Clone</span>
-          </button>
-
-          <button
-            onClick={() => setShareModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold hover:bg-muted transition-all"
-          >
-            <Share2 className="w-4 h-4 text-indigo-400" />
-            <span>Share</span>
-          </button>
-
-          <button
-            onClick={() => setDeleteConfirmModal(true)}
-            disabled={templates.length <= 1}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 disabled:opacity-40 transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Delete</span>
-          </button>
-        </div>
+            <button
+              onClick={handleDuplicatePrompt}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+            >
+              <GitBranch className="w-3.5 h-3.5 text-accent" />
+              <span>Duplicate / Clone</span>
+            </button>
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-foreground transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Share Prompt</span>
+            </button>
+            <button
+              onClick={() => setDeleteConfirmModal(true)}
+              disabled={templates.length <= 1}
+              className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded hover:bg-surface text-status-danger disabled:opacity-40 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Prompt</span>
+            </button>
+          </div>
+        )}
       </div>
+    </div>
+  );
 
+  return (
+    <PageLayout
+      title="Prompt Studio"
+      description="Create, version control, benchmark, and evaluate system prompt templates across models."
+      actions={headerActions}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* ────────────────── LEFT: Collections & Library Sidebar ────────────────── */}
         <div className="lg:col-span-4 space-y-4">
@@ -790,15 +804,15 @@ export const PromptStudioPage: React.FC = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center space-x-1 p-1 rounded-xl bg-muted/30 border border-border/40 overflow-x-auto">
+          <div className="flex items-center space-x-1 p-1 rounded-md bg-elevated border border-border overflow-x-auto no-scrollbar scroll-smooth">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-primary text-white shadow shadow-primary/30'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-surface text-foreground font-semibold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-surface/50'
                 }`}
               >
                 {tab.icon}
@@ -1048,7 +1062,7 @@ export const PromptStudioPage: React.FC = () => {
                 <button
                   onClick={runABTest}
                   disabled={ab.variantA === ab.variantB || ab.running}
-                  className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 disabled:opacity-40 transition-all"
+                  className="btn-primary flex items-center space-x-2 text-xs font-medium disabled:opacity-40"
                 >
                   {ab.running ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
                   <span>{ab.running ? 'Running A/B Test...' : 'Run A/B Benchmark'}</span>
@@ -1056,18 +1070,18 @@ export const PromptStudioPage: React.FC = () => {
               </div>
 
               {ab.results && (
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30 text-center space-y-3">
-                  <div className="text-sm font-extrabold text-purple-300">
-                    🏆 Winner: {ab.results.a > ab.results.b ? `Variant A (${ab.variantA})` : `Variant B (${ab.variantB})`}
+                <div className="p-4 rounded-lg bg-surface border border-border text-center space-y-3">
+                  <div className="text-sm font-semibold text-accent">
+                    Winner: {ab.results.a > ab.results.b ? `Variant A (${ab.variantA})` : `Variant B (${ab.variantB})`}
                   </div>
                   <div className="grid grid-cols-2 gap-4 font-mono text-xs">
-                    <div className="p-3 rounded-xl bg-black/40 border border-border/40">
+                    <div className="p-3 rounded bg-elevated border border-border">
                       <div className="text-muted-foreground text-[10px]">Variant A ({ab.variantA})</div>
-                      <div className="text-lg font-bold text-blue-400">{ab.results.a}% Quality</div>
+                      <div className="text-lg font-semibold text-foreground">{ab.results.a}% Quality</div>
                     </div>
-                    <div className="p-3 rounded-xl bg-black/40 border border-border/40">
+                    <div className="p-3 rounded bg-elevated border border-border">
                       <div className="text-muted-foreground text-[10px]">Variant B ({ab.variantB})</div>
-                      <div className="text-lg font-bold text-emerald-400">{ab.results.b}% Quality</div>
+                      <div className="text-lg font-semibold text-foreground">{ab.results.b}% Quality</div>
                     </div>
                   </div>
                 </div>
@@ -1365,6 +1379,6 @@ export const PromptStudioPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };

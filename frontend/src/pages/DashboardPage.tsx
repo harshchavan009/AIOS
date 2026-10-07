@@ -36,6 +36,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { PageSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { useLiveTelemetryStore } from '../store/useLiveTelemetryStore';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
@@ -145,7 +146,7 @@ export const DashboardPage: React.FC = () => {
   const { summary, hardwareHistory, streamRateTokensSec } = useLiveTelemetryStore();
   const { currentWorkspace } = useWorkspaceStore();
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'completed' | 'failed'>('all');
@@ -189,25 +190,15 @@ export const DashboardPage: React.FC = () => {
   const selectedRun = INITIAL_RUNS.find((r) => r.id === selectedRunId) || INITIAL_RUNS[0];
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 1. Page Header */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-border">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
-            Enterprise Dashboard
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            System execution telemetry, active agent swarms, and runtime cost accounting.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-2.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-card text-xs text-muted-foreground font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Streaming Live</span>
-          </div>
+    <PageLayout
+      title="Dashboard"
+      description="System execution telemetry, active agent swarms, and runtime cost accounting."
+      actions={
+        <div className="flex items-center space-x-2">
+          <Badge variant="info">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse mr-1.5" />
+            Streaming Live
+          </Badge>
 
           <Button
             variant="secondary"
@@ -230,7 +221,9 @@ export const DashboardPage: React.FC = () => {
             New Run
           </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 2. Top Metric Tiles (4 Key Metrics, Not 17 Equal Cards) */}
@@ -564,18 +557,19 @@ export const DashboardPage: React.FC = () => {
                 <YAxis stroke="rgba(128, 128, 128, 0.6)" fontSize={10} domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '6px',
+                    backgroundColor: 'var(--elevated)',
+                    borderColor: 'var(--border)',
+                    borderRadius: '8px',
                     fontSize: '11px',
+                    fontFamily: 'monospace',
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="cpu"
                   name="CPU (%)"
-                  stroke="#2563eb"
-                  fill="#2563eb"
+                  stroke="var(--accent)"
+                  fill="var(--accent)"
                   fillOpacity={0.15}
                   strokeWidth={1.5}
                 />
@@ -583,9 +577,9 @@ export const DashboardPage: React.FC = () => {
                   type="monotone"
                   dataKey="ram"
                   name="RAM (%)"
-                  stroke="#10b981"
-                  fill="#10b981"
-                  fillOpacity={0.15}
+                  stroke="var(--muted)"
+                  fill="var(--muted)"
+                  fillOpacity={0.12}
                   strokeWidth={1.5}
                 />
               </AreaChart>
@@ -607,7 +601,7 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-2 pt-1 text-xs">
             <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-accent" />
                 <span className="font-medium text-foreground">Claude 3.5 Sonnet</span>
               </div>
               <span className="font-mono text-muted-foreground">284ms • $0.003</span>
@@ -615,7 +609,7 @@ export const DashboardPage: React.FC = () => {
 
             <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-accent" />
                 <span className="font-medium text-foreground">OpenAI GPT-4o</span>
               </div>
               <span className="font-mono text-muted-foreground">312ms • $0.0025</span>
@@ -623,7 +617,7 @@ export const DashboardPage: React.FC = () => {
 
             <div className="p-2.5 rounded bg-secondary/40 border border-border flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-accent" />
                 <span className="font-medium text-foreground">Gemini 1.5 Pro</span>
               </div>
               <span className="font-mono text-muted-foreground">340ms • $0.0012</span>
@@ -640,6 +634,7 @@ export const DashboardPage: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </PageLayout>
   );
 };

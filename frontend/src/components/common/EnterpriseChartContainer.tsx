@@ -114,36 +114,36 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
   };
 
   return (
-    <div className="glass-card p-6 rounded-2xl space-y-4">
+    <div className="surface-card p-5 rounded-lg border border-border space-y-4">
       {/* Chart Control Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border/60 pb-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center space-x-3">
           {Icon && (
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 shrink-0">
-              <Icon className="w-5 h-5" />
+            <div className="p-2 rounded-md bg-elevated border border-border text-accent shrink-0">
+              <Icon className="w-4 h-4" />
             </div>
           )}
           <div>
-            <h3 className="text-base font-extrabold tracking-tight flex items-center space-x-2">
-              <span>{title}</span>
+            <h3 className="text-sm font-semibold tracking-tight text-text">
+              {title}
             </h3>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
           </div>
         </div>
 
         {/* Toolbar Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Time Filters */}
-          <div className="flex items-center space-x-1 p-1 rounded-xl bg-white/5 border border-white/10 text-xs font-mono">
+          <div className="flex items-center space-x-0.5 p-0.5 rounded-md bg-elevated border border-border text-xs font-mono">
             {timeRanges.map((range) => (
               <button
                 key={range}
                 type="button"
                 onClick={() => onTimeRangeChange && onTimeRangeChange(range)}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
                   activeTimeRange === range
-                    ? 'bg-blue-500 text-white font-bold shadow-sm'
-                    : 'text-muted-foreground hover:bg-white/5'
+                    ? 'bg-accent text-accent-foreground font-semibold shadow-xs'
+                    : 'text-muted hover:text-text hover:bg-surface'
                 }`}
               >
                 {range}
@@ -156,10 +156,10 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
             type="button"
             onClick={() => setIsZoomed(!isZoomed)}
             title={isZoomed ? 'Reset Zoom' : 'Zoom In'}
-            className={`p-2 rounded-xl border text-xs font-bold flex items-center space-x-1 transition-all ${
+            className={`p-1.5 rounded-md border text-xs font-medium flex items-center transition-colors ${
               isZoomed
-                ? 'bg-blue-500/20 border-blue-500 text-blue-400'
-                : 'border-white/10 hover:bg-white/5 text-muted-foreground'
+                ? 'bg-accent/15 border-accent text-accent'
+                : 'border-border text-muted hover:text-text hover:bg-elevated'
             }`}
           >
             {isZoomed ? <ZoomOut className="w-3.5 h-3.5" /> : <ZoomIn className="w-3.5 h-3.5" />}
@@ -170,9 +170,9 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
             type="button"
             onClick={handleExportPNG}
             title="Export Chart as PNG Image"
-            className="p-2 rounded-xl border border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white transition-all flex items-center space-x-1.5 text-xs font-semibold"
+            className="p-1.5 px-2 rounded-md border border-border hover:bg-elevated text-muted hover:text-text transition-colors flex items-center space-x-1.5 text-xs font-medium"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
+            <ImageIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">PNG</span>
           </button>
 
@@ -181,9 +181,9 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
             type="button"
             onClick={handleDownloadCSV}
             title="Download Time-series Data as CSV"
-            className="p-2 rounded-xl border border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white transition-all flex items-center space-x-1.5 text-xs font-semibold"
+            className="p-1.5 px-2 rounded-md border border-border hover:bg-elevated text-muted hover:text-text transition-colors flex items-center space-x-1.5 text-xs font-medium"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <FileSpreadsheet className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">CSV</span>
           </button>
         </div>
@@ -192,7 +192,7 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
       {/* Series Legend Toggles */}
       {seriesList.length > 0 && onToggleSeries && (
         <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
-          <span className="text-[11px] text-muted-foreground/70 uppercase font-bold mr-1">Series:</span>
+          <span className="text-[11px] text-muted uppercase font-semibold mr-1">Series:</span>
           {seriesList.map((s) => {
             const isVisible = activeSeries[s.key] !== false;
             return (
@@ -200,15 +200,15 @@ export const EnterpriseChartContainer: React.FC<EnterpriseChartContainerProps> =
                 key={s.key}
                 type="button"
                 onClick={() => onToggleSeries(s.key)}
-                className={`px-3 py-1 rounded-xl border flex items-center space-x-2 transition-all ${
+                className={`px-2.5 py-1 rounded-md border flex items-center space-x-2 transition-colors ${
                   isVisible
-                    ? 'bg-white/5 border-white/15 text-foreground shadow-sm'
-                    : 'bg-white/[0.02] border-white/5 text-muted-foreground opacity-50 line-through'
+                    ? 'bg-elevated border-border text-text'
+                    : 'bg-surface border-border text-muted opacity-40 line-through'
                 }`}
               >
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                 <span>{s.name}</span>
-                {isVisible ? <Eye className="w-3 h-3 text-blue-400" /> : <EyeOff className="w-3 h-3" />}
+                {isVisible ? <Eye className="w-3 h-3 text-accent" /> : <EyeOff className="w-3 h-3" />}
               </button>
             );
           })}

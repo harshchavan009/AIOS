@@ -23,7 +23,7 @@ export const AppLayout: React.FC = () => {
   useEffect(() => {
     // Check if onboarding was completed
     const completed = localStorage.getItem('aios_onboarding_completed');
-    if (!completed) {
+    if (completed === 'pending') {
       setIsOnboardingOpen(true);
     }
 

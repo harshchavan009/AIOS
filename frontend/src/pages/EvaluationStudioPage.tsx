@@ -6,9 +6,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { Badge } from '../components/ui/Badge';
+import { Card } from '../components/ui/Card';
+import { PageLayout } from '../components/layouts/PageLayout';
 
 interface ModelEvalItem {
   model: string;
@@ -19,11 +22,11 @@ interface ModelEvalItem {
 }
 
 export const EvaluationStudioPage: React.FC = () => {
-  const [benchmarks, setBenchmarks] = useState<ModelEvalItem[]>([
-    { model: 'GPT-4o', faithfulness: 98, groundedness: 97, relevance: 99, hallucination: 1.2 },
+  const [benchmarks] = useState<ModelEvalItem[]>([
     { model: 'Claude 3.5 Sonnet', faithfulness: 99, groundedness: 99, relevance: 98, hallucination: 0.5 },
+    { model: 'GPT-4o', faithfulness: 98, groundedness: 97, relevance: 99, hallucination: 1.2 },
     { model: 'Gemini 1.5 Pro', faithfulness: 96, groundedness: 96, relevance: 96, hallucination: 1.5 },
-    { model: 'Llama 3 70B', faithfulness: 92, groundedness: 93, relevance: 94, hallucination: 3.4 }
+    { model: 'Llama 3.3 70B', faithfulness: 94, groundedness: 93, relevance: 94, hallucination: 2.1 }
   ]);
   const [evalSummary, setEvalSummary] = useState({
     avgFaithfulness: 98.2,
@@ -46,7 +49,7 @@ export const EvaluationStudioPage: React.FC = () => {
           body: JSON.stringify({
             prompt: 'Evaluate system performance and multi-agent DAG consistency',
             output: 'Multi-agent system output verified across LangGraph nodes and Neo4j graph context',
-            retrieved_context: ['Multi-agent graph RAG pipeline verified', 'SOC-2 audit pass']
+            retrieved_context: ['Multi-agent graph RAG pipeline verified', 'Evaluation benchmark pass']
           })
         });
         if (res.ok) {
@@ -67,73 +70,92 @@ export const EvaluationStudioPage: React.FC = () => {
     runLiveEval();
   }, []);
 
+  const headerActions = (
+    <div className="flex items-center space-x-2">
+      <Badge variant="neutral">RAGAS Benchmark</Badge>
+      <Badge variant="success" dot>DeepEval Synced</Badge>
+    </div>
+  );
+
   return (
-    <div className="space-y-8 animate-fade-in font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Evaluation & Benchmarking Studio</h1>
-          <p className="text-muted-foreground text-sm">
-            Automated LLM quality, hallucination, faithfulness, and groundedness evaluation using RAGAS, DeepEval, and Promptfoo.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <Badge variant="success">DeepEval 2.0 Synced</Badge>
-          <Badge variant="info">Promptfoo Benchmarks</Badge>
-        </div>
-      </div>
-
+    <PageLayout
+      title="Evaluation"
+      description="Automated LLM quality, hallucination, faithfulness, and groundedness evaluation benchmarks."
+      actions={headerActions}
+    >
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="glass-card p-5 rounded-2xl">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Avg Faithfulness</div>
-          <div className="text-3xl font-extrabold text-emerald-400">{evalSummary.avgFaithfulness}%</div>
-          <div className="mt-1 text-xs text-muted-foreground font-mono">DeepEval Metric</div>
-        </div>
+        <Card variant="default" className="p-5 space-y-1">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Avg Faithfulness</div>
+          <div className="text-2xl font-semibold text-accent font-mono">{evalSummary.avgFaithfulness}%</div>
+          <div className="text-xs text-muted-foreground font-mono">DeepEval Metric</div>
+        </Card>
 
-        <div className="glass-card p-5 rounded-2xl">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Groundedness Score</div>
-          <div className="text-3xl font-extrabold text-blue-400">{evalSummary.groundednessScore}%</div>
-          <div className="mt-1 text-xs text-muted-foreground font-mono">RAGAS Framework</div>
-        </div>
+        <Card variant="default" className="p-5 space-y-1">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Groundedness Score</div>
+          <div className="text-2xl font-semibold text-foreground font-mono">{evalSummary.groundednessScore}%</div>
+          <div className="text-xs text-muted-foreground font-mono">RAGAS Framework</div>
+        </Card>
 
-        <div className="glass-card p-5 rounded-2xl">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Hallucination Rate</div>
-          <div className="text-3xl font-extrabold text-rose-400">{evalSummary.hallucinationRate}%</div>
-          <div className="mt-1 text-xs text-emerald-400 font-mono">Dynamic Evaluator Metric</div>
-        </div>
+        <Card variant="default" className="p-5 space-y-1">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Hallucination Rate</div>
+          <div className="text-2xl font-semibold text-status-success font-mono">{evalSummary.hallucinationRate}%</div>
+          <div className="text-xs text-muted-foreground font-mono">Below 2.0% Threshold</div>
+        </Card>
 
-        <div className="glass-card p-5 rounded-2xl">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Evaluated Tests</div>
-          <div className="text-3xl font-extrabold text-purple-400">{evalSummary.passedCount} / {evalSummary.totalCount}</div>
-          <div className="mt-1 text-xs text-muted-foreground font-mono">100% Verified</div>
-        </div>
+        <Card variant="default" className="p-5 space-y-1">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Evaluated Tests</div>
+          <div className="text-2xl font-semibold text-foreground font-mono">{evalSummary.passedCount} / {evalSummary.totalCount}</div>
+          <div className="text-xs text-muted-foreground font-mono">97.9% Pass Rate</div>
+        </Card>
       </div>
 
       {/* Benchmark Chart */}
-      <div className="glass-card p-6 rounded-2xl">
+      <Card variant="default" className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-base font-bold">Multi-Model Evaluation Benchmark Scores</h3>
-            <p className="text-xs text-muted-foreground">Comparative scoring across Faithfulness, Groundedness, and Relevance metrics</p>
+            <h3 className="text-sm font-semibold text-foreground">Multi-Model Evaluation Benchmark Scores</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Comparative scoring across Faithfulness, Groundedness, and Relevance with target threshold</p>
           </div>
-          <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono">RAGAS Matrix</span>
+          <div className="flex items-center space-x-3 text-xs font-mono text-muted-foreground">
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-accent inline-block" />
+              <span>Faithfulness</span>
+            </span>
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-muted-foreground/60 inline-block" />
+              <span>Groundedness</span>
+            </span>
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#52525B] inline-block" />
+              <span>Relevance</span>
+            </span>
+          </div>
         </div>
 
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={benchmarks}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="model" stroke="#9ca3af" fontSize={11} />
-              <YAxis stroke="#9ca3af" fontSize={11} domain={[80, 100]} />
-              <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px', fontSize: '12px' }} />
-              <Bar dataKey="faithfulness" fill="#3b82f6" name="Faithfulness (%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="groundedness" fill="#10b981" name="Groundedness (%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="relevance" fill="#8b5cf6" name="Relevance (%)" radius={[4, 4, 0, 0]} />
+            <BarChart data={benchmarks} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="model" stroke="var(--muted)" fontSize={11} fontStyle="mono" />
+              <YAxis stroke="var(--muted)" fontSize={11} domain={[85, 100]} fontStyle="mono" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  color: 'var(--text)'
+                }}
+              />
+              <ReferenceLine y={95} stroke="var(--muted)" strokeDasharray="4 4" label={{ value: 'Target: 95%', position: 'top', fill: 'var(--muted)', fontSize: 10 }} />
+              <Bar dataKey="faithfulness" fill="var(--accent)" name="Faithfulness (%)" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="groundedness" fill="var(--muted)" name="Groundedness (%)" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="relevance" fill="#52525B" name="Relevance (%)" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
-    </div>
+      </Card>
+    </PageLayout>
   );
 };

@@ -18,22 +18,22 @@ export const Badge: React.FC<BadgeProps> = ({
     'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border leading-none select-none';
 
   const variants = {
-    neutral: 'bg-secondary text-foreground/80 border-border',
-    default: 'bg-primary/10 text-primary border-primary/20',
-    success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-    warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-    destructive: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-    info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+    neutral: 'bg-elevated text-foreground/85 border-border',
+    default: 'bg-accent/15 text-accent border-accent/30',
+    success: 'bg-status-success/15 text-status-success border-status-success/30',
+    warning: 'bg-status-warning/15 text-status-warning border-status-warning/30',
+    destructive: 'bg-status-danger/15 text-status-danger border-status-danger/30',
+    info: 'bg-status-info/15 text-status-info border-status-info/30',
     outline: 'bg-transparent text-muted-foreground border-border',
   };
 
   const dotColors = {
     neutral: 'bg-muted-foreground',
-    default: 'bg-primary',
-    success: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    destructive: 'bg-rose-500',
-    info: 'bg-blue-500',
+    default: 'bg-accent',
+    success: 'bg-status-success',
+    warning: 'bg-status-warning',
+    destructive: 'bg-status-danger',
+    info: 'bg-status-info',
     outline: 'bg-muted-foreground',
   };
 
