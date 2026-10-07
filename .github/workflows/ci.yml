@@ -59,7 +59,12 @@ jobs:
           PYTHONPATH: .
         run: |
           cd backend
-          python -m pytest tests/ -v
+          python -m pip list
+          python -m pytest -v 2>&1 | tee /tmp/pytest.log || {
+            ERR=$(head -n 25 /tmp/pytest.log | tr '\n' ' ')
+            echo "::error title=Pytest Error::$ERR"
+            exit 1
+          }
 
   test-frontend:
     runs-on: ubuntu-latest
