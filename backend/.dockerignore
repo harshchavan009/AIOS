@@ -1,9 +1,20 @@
 # Git & IDE
 .git
+.github
 .gitignore
 .DS_Store
 .vscode
 .idea
+
+# Secrets & Environment variables
+.env
+.env.*
+*.pem
+*.key
+*.bak
+*.sql
+*.zip
+service-account*.json
 
 # Python artifacts
 __pycache__
@@ -21,5 +32,6 @@ ENV/
 *.sqlite
 *.sqlite3
 
-# Local runtime data
+# Local runtime data & uploads
 data/
+uploads/

@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root system user and group
+RUN groupadd -r -g 10001 aios && \
+    useradd -r -u 10001 -g aios -s /sbin/nologin -d /app aios
+
 # Copy backend requirements and install dependencies
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -18,6 +22,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy backend source code into working directory
 COPY backend/ ./
+
+# Ensure ownership and permissions for non-root user
+RUN mkdir -p /app/data/uploads && \
+    chown -R aios:aios /app
+
+USER aios
 
 EXPOSE 8000
 
