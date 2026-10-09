@@ -115,10 +115,13 @@ async def natural_language_to_sql(
     """
     Data Analyst NL-to-SQL converter and execution metrics.
     """
-    sql_query = f"SELECT month, SUM(expenditure) FROM ai_token_usage WHERE database = '{request.database_name}' GROUP BY month;"
+    import re
+    clean_db = re.sub(r'[^a-zA-Z0-9_]', '', request.database_name) or "production_db"
+    sql_query = "SELECT month, SUM(expenditure) FROM ai_token_usage WHERE database = :db_name GROUP BY month;"
     return {
         "question": request.question,
         "generated_sql": sql_query,
+        "parameters": {"db_name": clean_db},
         "execution_time_ms": 12.4,
         "chart_data": [
             {"label": "May", "value": 420.50},

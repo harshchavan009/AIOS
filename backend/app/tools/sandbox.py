@@ -1,7 +1,9 @@
 import sys
 import io
+import ast
 import time
 from typing import Dict, Any
+from app.core.config import settings
 from app.tools.base import BaseTool, ToolPermission, ToolResult
 
 
@@ -18,6 +20,16 @@ class PythonSandboxTool(BaseTool):
 
     async def execute(self, params: Dict[str, Any], user_role: str = "engineer") -> ToolResult:
         start_time = time.time()
+        
+        # 1. Feature Flag Isolation Check
+        if not settings.PYTHON_SANDBOX_ENABLED:
+            return ToolResult(
+                success=False,
+                output="",
+                error="In-process Python execution is disabled by default for security. Production code execution requires an isolated container (e.g. gVisor, Firecracker, or non-networked Docker container).",
+                execution_time_ms=0.0
+            )
+
         code = params.get("code", "")
         if not code.strip():
             return ToolResult(
@@ -27,7 +39,51 @@ class PythonSandboxTool(BaseTool):
                 execution_time_ms=0.0
             )
 
-        # Security validation against arbitrary OS execution
+        if len(code) > 10000:
+            return ToolResult(
+                success=False,
+                output="",
+                error="Security Violation: Code payload exceeds maximum size limit (10KB).",
+                execution_time_ms=0.0
+            )
+
+        # 2. Strict AST Syntax & Escape Analysis
+        try:
+            tree = ast.parse(code)
+            for node in ast.walk(tree):
+                # Reject imports completely
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    return ToolResult(
+                        success=False,
+                        output="",
+                        error="Security Violation: Import statements are forbidden in the sandbox.",
+                        execution_time_ms=0.0
+                    )
+                # Reject magic dunder attribute traversal (e.g. __class__, __base__, __subclasses__, __globals__)
+                if isinstance(node, ast.Attribute) and (node.attr.startswith("__") or node.attr.endswith("__")):
+                    return ToolResult(
+                        success=False,
+                        output="",
+                        error=f"Security Violation: Access to dunder attribute '{node.attr}' is forbidden.",
+                        execution_time_ms=0.0
+                    )
+                # Reject forbidden function calls
+                if isinstance(node, ast.Name) and node.id in ("eval", "exec", "compile", "open", "__import__", "globals", "locals", "getattr", "setattr", "delattr"):
+                    return ToolResult(
+                        success=False,
+                        output="",
+                        error=f"Security Violation: Calling '{node.id}' is forbidden in the sandbox.",
+                        execution_time_ms=0.0
+                    )
+        except SyntaxError as se:
+            return ToolResult(
+                success=False,
+                output="",
+                error=f"Python Syntax Error: {se.msg}",
+                execution_time_ms=0.0
+            )
+
+        # 3. Security string patterns check
         dangerous_patterns = ["import os", "import subprocess", "import sys", "import shutil", "__import__", "open(", "eval(", "exec("]
         for pattern in dangerous_patterns:
             if pattern in code:

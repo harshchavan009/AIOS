@@ -69,8 +69,13 @@ class Settings(BaseSettings):
     STORAGE_LOCAL_DIR: str = Field(default="data/uploads", description="Directory for local storage")
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "aios_minio_admin"
-    MINIO_SECRET_KEY: str = "aios_minio_secure_secret"
     MINIO_BUCKET_DOCUMENTS: str = "aios-documents"
+
+    # Python Execution Sandbox
+    PYTHON_SANDBOX_ENABLED: bool = Field(
+        default=True,
+        description="Enable python sandbox execution. Set to False in production environments where isolated container execution is not configured."
+    )
 
     # AI Model Provider API Keys
     OPENAI_API_KEY: str = ""
