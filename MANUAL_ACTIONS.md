@@ -167,3 +167,40 @@ To permanently remove prior commits that contained sensitive default values or p
 | Cloud Dashboard Settings & 2FA | **REQUIRES MANUAL ACTION** | Must be configured in Vercel/Render/OAuth/Stripe dashboards |
 | Cloud Key Rotation | **REQUIRES MANUAL ACTION** | Must be rotated in provider dashboards as detailed in Section 1 |
 | Git History Rewrite | **AWAITING USER APPROVAL** | Prepared in Section 4, not executed without explicit authorization |
+
+---
+
+## 6. Public Launch Configuration Checklist (Gates A to D)
+
+The following items must be configured in external provider dashboards before opening public traffic:
+
+### A. Custom Domain & DNS Settings (Gate A)
+1. **DNS Provider (Cloudflare / Route53 / Namecheap / GoDaddy)**:
+   - Configure **Apex domain** (`example.com`): `A` record pointing to `76.76.21.21` (Vercel Anycast IP).
+   - Configure **Subdomain** (`www.example.com`): `CNAME` record pointing to `cname.vercel-dns.com`.
+   - Set single canonical host preference (recommend redirecting `example.com` -> `www.example.com` or vice-versa).
+2. **Vercel Project Domains**:
+   - In Vercel Project Settings > Domains, add the custom domain and verify SSL certificate issuance.
+   - Set up automatic 308 redirect from `aios-opal.vercel.app` to your production domain.
+3. **Backend Host (Render / AWS / Fly.io)**:
+   - Update `BACKEND_CORS_ORIGINS` environment variable to include the custom production domain: `["https://your-custom-domain.com"]`.
+
+### B. OAuth Provider Redirect URIs
+Update client configurations to reflect the custom domain:
+- **Google Cloud Console** (APIs & Services > Credentials > OAuth 2.0 Client IDs):
+  - Add Authorized Redirect URI: `https://your-custom-domain.com/api/v1/auth/oauth/callback/google`
+- **GitHub Developer Settings** (OAuth Apps):
+  - Authorization callback URL: `https://your-custom-domain.com/api/v1/auth/oauth/callback/github`
+- **Microsoft Entra ID** (App Registrations > Authentication):
+  - Add Redirect URI (Web): `https://your-custom-domain.com/api/v1/auth/oauth/callback/microsoft`
+
+### C. Legal Pages & Placeholders Review (Gate D)
+> **LEGAL NOTICE**: The drafted `/privacy` and `/terms` pages are comprehensive technical drafts reflecting the actual data architecture of AIOS (incorporating Indian Digital Personal Data Protection Act 2023, EU GDPR, LLM processing by OpenAI/Anthropic/Google, and vector embeddings in Qdrant/Neo4j). However, **these documents are drafts and should be reviewed by a qualified lawyer before official launch**.
+
+The following `[[FILL_ME]]` placeholders must be provided and replaced in production:
+- [ ] `[[LEGAL_ENTITY_NAME]]`: Full registered legal name of entity or individual operator.
+- [ ] `[[CONTACT_EMAIL]]`: Monitored support and privacy inquiry email (e.g., `support@yourdomain.com`).
+- [ ] `[[POSTAL_ADDRESS]]`: Registered business address or headquarters.
+- [ ] `[[GOVERNING_JURISDICTION]]`: Jurisdiction for dispute resolution and governing law (e.g., "Courts of Mumbai, India" or "State of Delaware, USA").
+
+*(A build-time guard in `npm run launch:check` verifies that no `[[FILL_ME]]` placeholders exist when running in production mode).*
