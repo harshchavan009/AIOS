@@ -103,3 +103,73 @@ async def test_invalid_login_credentials(client: AsyncClient):
         "password": "WrongPassword!"
     })
     assert login_res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_password_strength_and_common_passwords(client: AsyncClient):
+    # Short password (< 12 chars)
+    short_res = await client.post("/api/v1/auth/signup", json={
+        "email": "shortpass@aios.enterprise",
+        "password": "Short1!",
+        "full_name": "Short Password Tester",
+        "role": "Developer"
+    })
+    assert short_res.status_code == 422
+
+    # Common password rejected
+    common_res = await client.post("/api/v1/auth/signup", json={
+        "email": "commonpass@aios.enterprise",
+        "password": "password1234",
+        "full_name": "Common Password Tester",
+        "role": "Developer"
+    })
+    assert common_res.status_code in [400, 422]
+
+
+@pytest.mark.asyncio
+async def test_password_reset_flow_single_use(client: AsyncClient):
+    email = "reset_test@aios.enterprise"
+    signup_res = await client.post("/api/v1/auth/signup", json={
+        "email": email,
+        "password": "ValidSuperPassword123!",
+        "full_name": "Reset Tester",
+        "role": "Developer"
+    })
+    assert signup_res.status_code == 201
+
+    # Request reset token
+    forgot_res = await client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert forgot_res.status_code == 200
+    token = forgot_res.json()["reset_token"]
+    assert token
+
+    # Reset password with single-use token
+    reset_res = await client.post("/api/v1/auth/reset-password", json={
+        "token": token,
+        "new_password": "NewSuperPassword123!"
+    })
+    assert reset_res.status_code == 200
+
+    # Replay token: must fail immediately!
+    replay_res = await client.post("/api/v1/auth/reset-password", json={
+        "token": token,
+        "new_password": "AnotherPassword123!"
+    })
+    assert replay_res.status_code == 401
+
+    # Login with new password works
+    login_res = await client.post("/api/v1/auth/login", json={
+        "email": email,
+        "password": "NewSuperPassword123!"
+    })
+    assert login_res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oauth_unsupported_provider(client: AsyncClient):
+    res = await client.post("/api/v1/auth/oauth/google", json={
+        "provider": "untrusted_idp",
+        "email": "hacker@evil.com"
+    })
+    assert res.status_code == 400
+

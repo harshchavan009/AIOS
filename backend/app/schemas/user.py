@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, description="Minimum 8 characters password")
+    password: str = Field(..., min_length=12, description="Minimum 12 characters password")
 
 
 class UserLogin(BaseModel):
@@ -68,7 +68,7 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=12, description="Minimum 12 characters password")
 
 
 class OAuthLoginRequest(BaseModel):
