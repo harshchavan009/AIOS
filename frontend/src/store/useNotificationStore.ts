@@ -37,84 +37,17 @@ interface NotificationState {
   triggerSequence: () => void;
 }
 
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n-1',
-    type: 'prompt_approved',
-    title: 'Prompt approved',
-    description: 'System prompt "SOC-2 Audit Guardrail" passed RAGAS review and was approved by Lead Architect',
-    timestamp: 'Just now',
-    isRead: false
-  },
-  {
-    id: 'n-2',
-    type: 'document_indexed',
-    title: 'Document indexed',
-    description: 'File "acme_soc2_audit.pdf" (1,250 words, 8 chunks) successfully indexed into Qdrant & Neo4j',
-    timestamp: '2 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-3',
-    type: 'workflow_completed',
-    title: 'Workflow completed',
-    description: 'LangGraph multi-agent DAG workflow executed cleanly across all 6 node steps in 0.65s',
-    timestamp: '5 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-4',
-    type: 'model_unavailable',
-    title: 'Model unavailable',
-    description: 'LLM endpoint "claude-3-5-sonnet" timed out; failover routed to "gpt-4o" fallback node',
-    timestamp: '8 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-5',
-    type: 'token_limit',
-    title: 'Token limit reached',
-    description: 'Monthly token usage reached 85% threshold (8,420,000 / 10,000,000 tokens for Pro Tier)',
-    timestamp: '12 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-6',
-    type: 'agent_failed',
-    title: 'Agent failed',
-    description: 'Python Tool Agent encountered sandbox timeout exception; automatic retry initiated',
-    timestamp: '15 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-7',
-    type: 'billing_reminder',
-    title: 'Billing reminder',
-    description: 'Pro Subscription renewal scheduled for August 1, 2026 ($299/mo via Stripe)',
-    timestamp: '20 mins ago',
-    isRead: false
-  },
-  {
-    id: 'n-8',
-    type: 'deployment_completed',
-    title: 'Deployment completed',
-    description: 'Swarm Agent "Custom LangGraph Swarm Agent" successfully deployed to production Celery cluster',
-    timestamp: '25 mins ago',
-    isRead: false
-  }
-];
-
 const loadInitialNotifications = (): NotificationItem[] => {
   try {
     const saved = localStorage.getItem('aios_notifications');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     console.error('Error reading notifications from localStorage:', e);
   }
-  return DEFAULT_NOTIFICATIONS;
+  return [];
 };
 
 const saveNotifications = (list: NotificationItem[]) => {
@@ -167,7 +100,26 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   triggerSequence: () => {
-    saveNotifications(DEFAULT_NOTIFICATIONS);
-    set({ notifications: DEFAULT_NOTIFICATIONS, unreadCount: calcUnread(DEFAULT_NOTIFICATIONS) });
+    const demoItems: NotificationItem[] = [
+      {
+        id: `demo-${Date.now()}-1`,
+        type: 'agent',
+        title: 'Agent Swarm Deployed',
+        description: 'AutoDev and RAG Orchestrator swarm synchronized across cluster nodes.',
+        timestamp: 'Just now',
+        isRead: false,
+      },
+      {
+        id: `demo-${Date.now()}-2`,
+        type: 'workflow_completed',
+        title: 'Graph RAG Index Built',
+        description: 'Knowledge Graph embedding generated for 1,420 entities.',
+        timestamp: '1m ago',
+        isRead: false,
+      },
+    ];
+    const updated = [...demoItems, ...get().notifications];
+    saveNotifications(updated);
+    set({ notifications: updated, unreadCount: calcUnread(updated) });
   }
 }));

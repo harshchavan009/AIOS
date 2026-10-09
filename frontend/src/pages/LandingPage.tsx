@@ -20,6 +20,7 @@ import {
   Terminal,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { BackgroundMedia } from '../components/common/BackgroundMedia';
 import { useThemeStore } from '../store/useThemeStore';
 
 export const LandingPage: React.FC = () => {
@@ -29,7 +30,10 @@ export const LandingPage: React.FC = () => {
   const [activeCapability, setActiveCapability] = useState<'orchestration' | 'graph_rag' | 'gateway'>('orchestration');
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-transparent text-foreground font-sans selection:bg-primary/20 selection:text-primary relative overflow-x-hidden">
+      {/* Full-bleed Hero Animated Background */}
+      <BackgroundMedia variant="hero" />
+
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. Sticky Minimal Navigation */}
       {/* ───────────────────────────────────────────────────────────── */}

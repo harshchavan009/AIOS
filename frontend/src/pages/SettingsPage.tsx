@@ -70,7 +70,7 @@ export const SettingsPage: React.FC = () => {
   }, [tabParam]);
   const { currentOrganization, currentWorkspace } = useWorkspaceStore();
   const { user, loginHistory, fetchLoginHistory, sessions, fetchSessions, revokeSession, updatePreferences, uploadAvatar, deleteAccount } = useAuthStore();
-  const { theme, toggleTheme, setTheme } = useThemeStore();
+  const { theme, toggleTheme, setTheme, backgroundAnimation, toggleBackgroundAnimation } = useThemeStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const isLight = theme === 'light';
@@ -607,6 +607,40 @@ export const SettingsPage: React.FC = () => {
               </div>
               <h4 className="text-sm font-extrabold text-gray-900">Enterprise Clean Light</h4>
               <p className="text-xs text-gray-500 mt-1">Sleek slate white background, crisp enterprise cards, and high readability.</p>
+            </div>
+          </div>
+
+          {/* Background Animation Toggle */}
+          <div className="pt-6 border-t border-border/60">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-border/80">
+              <div className="space-y-1 pr-4">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  <h4 className="text-sm font-semibold text-foreground">Background animation</h4>
+                  <Badge variant={backgroundAnimation ? 'success' : 'neutral'} dot>
+                    {backgroundAnimation ? 'On' : 'Off'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Render ambient animated constellation background. Silently respects low-power mode, reduced-motion preferences, and pauses when tab is inactive.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={backgroundAnimation}
+                aria-label="Toggle background animation"
+                onClick={toggleBackgroundAnimation}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
+                  backgroundAnimation ? 'bg-accent' : 'bg-muted'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-md transition duration-200 ease-in-out ${
+                    backgroundAnimation ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>

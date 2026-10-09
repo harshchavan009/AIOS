@@ -43,8 +43,13 @@
     --radius-lg: 12px;
   }
 
-html, body, #root {
+html {
   background-color: var(--bg);
+  min-height: 100%;
+}
+
+body, #root {
+  background-color: transparent;
   color: var(--text);
   min-height: 100%;
 }

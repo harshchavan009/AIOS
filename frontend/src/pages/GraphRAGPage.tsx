@@ -101,46 +101,8 @@ const PIPELINE_STEPS: { id: PipelineStepId; label: string; icon: React.ReactNode
   { id: 'CITATION',  label: '9. Grounded Citations',icon:<CheckCircle2 className="w-4 h-4 text-teal-400" />,desc:'Precision snippet citation extraction',color: '#2dd4bf', progressTarget: 100 },
 ];
 
-const DEFAULT_ENTITIES: ExtractedEntities = {
-  people: [
-    { name: 'Sarah Chen', role: 'Lead Compliance Auditor' },
-    { name: 'Dr. Aris Thorne', role: 'Chief AI Architect' },
-    { name: 'Alex Mercer', role: 'DevOps Security Lead' },
-  ],
-  companies: [
-    { name: 'Acme Corp', industry: 'Enterprise Healthcare' },
-    { name: 'Neo4j Inc', industry: 'Graph Database Engine' },
-    { name: 'Qdrant AB', industry: 'Vector Search Infrastructure' },
-    { name: 'OpenAI', industry: 'Frontier AI Provider' },
-  ],
-  dates: [
-    { date: '2026-07-26', event: 'SOC-2 Type II Audit Certification' },
-    { date: 'Q3 2026', event: 'Graph RAG Infrastructure Sync' },
-    { date: '2025-11-15', event: 'AICPA Security Control Review' },
-  ],
-  relationships: [
-    { source: 'Acme Corp', relation: 'COMPLIES_WITH', target: 'SOC-2 Type II' },
-    { source: 'Sarah Chen', relation: 'AUDITED', target: 'Acme Corp' },
-    { source: 'Neo4j Inc', relation: 'HYBRID_JOIN', target: 'Qdrant AB' },
-    { source: 'Dr. Aris Thorne', relation: 'DESIGNED', target: 'LangGraph DAG' },
-  ]
-};
-
-const INITIAL_NODES: GraphNode[] = [
-  { id: 'n1', label: 'Acme Corp', type: 'company', connections: 14, x: 220, y: 80 },
-  { id: 'n2', label: 'Sarah Chen', type: 'people', connections: 9, x: 100, y: 180 },
-  { id: 'n3', label: 'SOC-2 Type II', type: 'concept', connections: 22, x: 380, y: 160 },
-  { id: 'n4', label: 'Neo4j Inc', type: 'company', connections: 18, x: 120, y: 310 },
-  { id: 'n5', label: '2026-07-26', type: 'date', connections: 11, x: 340, y: 300 },
-  { id: 'n6', label: 'Qdrant AB', type: 'company', connections: 25, x: 240, y: 220 },
-];
-
-const INITIAL_EDGES: GraphEdge[] = [
-  { source: 'Acme Corp', relation: 'COMPLIES_WITH', target: 'SOC-2 Type II' },
-  { source: 'Sarah Chen', relation: 'AUDITED', target: 'Acme Corp' },
-  { source: 'Neo4j Inc', relation: 'HYBRID_JOIN', target: 'Qdrant AB' },
-  { source: 'Qdrant AB', relation: 'INDEXED_ON', target: '2026-07-26' },
-];
+const INITIAL_NODES: GraphNode[] = [];
+const INITIAL_EDGES: GraphEdge[] = [];
 
 export const GraphRAGPage: React.FC = () => {
   // Upload & Pipeline State
@@ -165,139 +127,159 @@ export const GraphRAGPage: React.FC = () => {
   const [selectedEntityFilter, setSelectedEntityFilter] = useState<'all' | 'people' | 'company' | 'date'>('all');
 
   // Search & Query State
-  const [queryInput, setQueryInput] = useState('What are the SOC-2 audit controls for Acme Corp?');
+  const [queryInput, setQueryInput] = useState('Summarize the indexed knowledge base');
   const [isSearching, setIsSearching] = useState(false);
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [streamingAnswer, setStreamingAnswer] = useState('');
   const [answerDone, setAnswerDone] = useState(false);
-  const [activeTab, setActiveTab] = useState<'answer' | 'entities' | 'sources'>('answer');
+  const [, setActiveTab] = useState<'answer' | 'entities' | 'sources'>('answer');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => {
+  const fetchGraphAndDocs = useCallback(async () => {
     const token = localStorage.getItem('aios_access_token');
     const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
 
-    fetch('/api/v1/rag/graph', { headers })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data && data.nodes && data.nodes.length > 0) {
+    try {
+      const gRes = await fetch('/api/v1/rag/graph', { headers });
+      if (gRes.ok) {
+        const data = await gRes.json();
+        if (data && data.nodes) {
           const apiNodes: GraphNode[] = data.nodes.map((n: any, idx: number) => ({
             id: n.id || `node-${idx}`,
             label: n.label || n.id,
-            type: n.type === 'document_chunk' ? 'document' : 'concept',
+            type: (n.type === 'document_chunk' ? 'concept' : n.type) || 'concept',
             connections: (data.edges || []).filter((e: any) => e.source === n.id || e.target === n.id).length || 1,
-            color: n.type === 'document_chunk' ? 'emerald' : 'cyan',
             x: 80 + (idx % 4) * 160 + (idx * 20) % 50,
             y: 70 + Math.floor(idx / 4) * 140 + (idx * 15) % 40,
           }));
           const apiEdges: GraphEdge[] = (data.edges || []).map((e: any) => ({
             source: e.source,
             target: e.target,
-            label: e.relation || 'MENTIONS',
+            relation: e.relation || 'MENTIONS',
           }));
           setGraphNodes(apiNodes);
           setGraphEdges(apiEdges);
         }
-      })
-      .catch(() => {});
+      }
+    } catch {}
 
-    fetch('/api/v1/rag/documents', { headers })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data && data.documents && data.documents.length > 0) {
-          const docs: IndexedDoc[] = data.documents.map((d: any, idx: number) => ({
-            id: d.id || `doc-${idx}`,
+    try {
+      const dRes = await fetch('/api/v1/rag/documents', { headers });
+      if (dRes.ok) {
+        const data = await dRes.json();
+        if (data && data.documents) {
+          const docs: IndexedDoc[] = data.documents.map((d: any) => ({
             filename: d.filename || d.name,
-            fileSizeKb: d.file_size_kb || 42.5,
-            wordCount: d.word_count || 1200,
-            chunkCount: d.chunk_count || 8,
-            indexedAt: d.indexed_at || new Date().toISOString(),
-            neo4jNodes: d.entities_extracted || 12,
-            qdrantVectors: d.chunk_count || 8,
+            file_size_kb: d.file_size_kb || 0,
+            word_count: d.word_count || 0,
+            chunk_count: d.chunk_count || 0,
+            neo4j_entities: d.entities_extracted || 0,
+            neo4j_relations: d.relations_extracted || 0,
+            entities: { people: [], companies: [], dates: [], relationships: [] },
           }));
           setIndexedDocs(docs);
         }
-      })
-      .catch(() => {});
+      }
+    } catch {}
   }, []);
 
-  const handleResetPipeline = () => {
-    timersRef.current.forEach(t => clearTimeout(t));
-    timersRef.current = [];
-    setStepStates(Object.fromEntries(PIPELINE_STEPS.map(s => [s.id, { status: 'pending', detail: '' }])) as Record<PipelineStepId, PipelineStepState>);
-    setUploadingFile(null);
-    setIsUploading(false);
-    setProgressPercent(0);
-  };
-
-  // 9-Stage Processing Pipeline (Upload PDF/Repo → OCR → Chunk → Embedding → Neo4j → Qdrant → Search → Answer → Citation)
-  const processFilePipeline = useCallback((fileOrRepoName: string, fileSize: number = 24000) => {
-    handleResetPipeline();
-    setIsUploading(true);
-
-    const steps: PipelineStepId[] = ['UPLOAD', 'OCR', 'CHUNK', 'EMBEDDING', 'NEO4J', 'QDRANT', 'SEARCH', 'ANSWER', 'CITATION'];
-
-    steps.forEach((stepId, idx) => {
-      const stepMeta = PIPELINE_STEPS.find(s => s.id === stepId)!;
-      const startTimer = setTimeout(() => {
-        setActiveStepId(stepId);
-        setProgressPercent(stepMeta.progressTarget);
-
-        setStepStates(prev => ({
-          ...prev,
-          [stepId]: { status: 'running', detail: `${stepMeta.label}: Processing payload...` }
-        }));
-      }, idx * 450);
-
-      timersRef.current.push(startTimer);
-
-      const doneTimer = setTimeout(() => {
-        setStepStates(prev => ({
-          ...prev,
-          [stepId]: { status: 'done', detail: `${stepMeta.label}: Complete` }
-        }));
-
-        if (stepId === 'CITATION') {
-          setIsUploading(false);
-          setProgressPercent(100);
-
-          const doc: IndexedDoc = {
-            filename: fileOrRepoName,
-            chunk_count: Math.max(8, Math.floor(fileSize / 1024)),
-            neo4j_entities: 18,
-            neo4j_relations: 24,
-            file_size_kb: Math.round((fileSize / 1024) * 10) / 10,
-            word_count: Math.floor(fileSize / 6) || 1250,
-            entities: DEFAULT_ENTITIES,
-          };
-
-          setLastIndexed(doc);
-          setEntities(DEFAULT_ENTITIES);
-          setIndexedDocs(prev => [doc, ...prev.filter(d => d.filename !== doc.filename)]);
-        }
-      }, idx * 450 + 400);
-
-      timersRef.current.push(doneTimer);
-    });
-  }, []);
+  useEffect(() => {
+    fetchGraphAndDocs();
+  }, [fetchGraphAndDocs]);
 
   const [githubUrl, setGithubUrl] = useState('https://github.com/langchain-ai/langgraph');
 
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     setUploadingFile(file);
-    processFilePipeline(file.name, file.size);
+    setIsUploading(true);
+    setProgressPercent(20);
+    setActiveStepId('UPLOAD');
+    setStepStates(prev => ({
+      ...prev,
+      UPLOAD: { status: 'running', detail: `Uploading ${file.name}...` }
+    }));
+
+    const token = localStorage.getItem('aios_access_token');
+    const headers: Record<string, string> = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setProgressPercent(50);
+      setActiveStepId('CHUNK');
+      const res = await fetch('/api/v1/rag/upload', {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      setProgressPercent(100);
+      setActiveStepId('CITATION');
+      setStepStates(Object.fromEntries(PIPELINE_STEPS.map(s => [s.id, { status: 'done', detail: `${s.label}: Complete` }])) as Record<PipelineStepId, PipelineStepState>);
+
+      const doc: IndexedDoc = {
+        filename: data.filename || file.name,
+        chunk_count: data.chunk_count || 1,
+        neo4j_entities: data.neo4j_entities || 0,
+        neo4j_relations: data.neo4j_relations || 0,
+        file_size_kb: data.file_size_kb || Math.round((file.size / 1024) * 10) / 10,
+        word_count: data.word_count || 0,
+        entities: { people: [], companies: [], dates: [], relationships: [] },
+      };
+      setLastIndexed(doc);
+      await fetchGraphAndDocs();
+    } catch (err: any) {
+      setStepStates(prev => ({
+        ...prev,
+        UPLOAD: { status: 'error', detail: err.message || 'Upload failed' }
+      }));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleGitHubIngest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!githubUrl.trim()) return;
-    const repoName = githubUrl.replace(/\/+$/, '');
-    const cleanName = repoName.split('/').slice(-2).join('/');
-    processFilePipeline(`github/${cleanName}`, 148000);
+    setIsUploading(true);
+    setProgressPercent(30);
+    setActiveStepId('UPLOAD');
+
+    const token = localStorage.getItem('aios_access_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+
+    try {
+      const res = await fetch('/api/v1/rag/github', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ repo_url: githubUrl, branch: 'main' })
+      });
+      if (!res.ok) throw new Error('GitHub ingest failed');
+      const data = await res.json();
+      setProgressPercent(100);
+      setActiveStepId('CITATION');
+      setStepStates(Object.fromEntries(PIPELINE_STEPS.map(s => [s.id, { status: 'done', detail: `${s.label}: Complete` }])) as Record<PipelineStepId, PipelineStepState>);
+      await fetchGraphAndDocs();
+    } catch (err: any) {
+      setStepStates(prev => ({
+        ...prev,
+        UPLOAD: { status: 'error', detail: err.message || 'Ingestion failed' }
+      }));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragActive(true); };
@@ -317,32 +299,52 @@ export const GraphRAGPage: React.FC = () => {
     setAnswerDone(false);
     setActiveTab('answer');
 
-    const fallback = `Based on hybrid graph retrieval across ${indexedDocs.length || 3} indexed documents:\n\n**Acme Corp** maintains SOC-2 Type II audit compliance verified by **Sarah Chen** on **2026-07-26**.\n\n- **Neo4j Entities**: 18 Knowledge Graph Nodes (Acme Corp, Neo4j Inc, Qdrant AB, Sarah Chen)\n- **Vector Similarity**: 8 Qdrant HNSW chunks retrieved (Cosine Similarity > 0.94)\n- **Graph Traversal**: 3-hop relationship traversal complete with 0 hallucinations.`;
+    const token = localStorage.getItem('aios_access_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
 
-    let i = 0;
-    const streamTimer = setInterval(() => {
-      if (i < fallback.length) {
-        setStreamingAnswer(prev => prev + fallback.slice(i, i + 6));
-        i += 6;
-      } else {
-        clearInterval(streamTimer);
-        setAnswerDone(true);
-        setIsSearching(false);
-        setQueryResult({
-          answer: fallback,
-          citations: [
-            { citation_id: '[1]', source: uploadingFile?.name || 'acme_soc2_audit.pdf', chunk_id: 'ch_001', score: 0.97, snippet: 'Acme Corp SOC-2 Type II compliance audit passed across all AICPA trust criteria...' },
-            { citation_id: '[2]', source: 'graph_rag_architecture.md', chunk_id: 'ch_004', score: 0.94, snippet: 'Neo4j entity graph joins seamlessly with Qdrant vector embeddings...' }
-          ],
-          top_nodes: graphNodes,
-          top_relations: graphEdges,
-          vector_matches: 8,
-          graph_entities: ['Acme Corp', 'Sarah Chen', 'SOC-2 Type II', 'Neo4j Inc'],
-          latency_ms: 135,
-        });
+    try {
+      const res = await fetch('/api/v1/rag/query', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query: queryInput, top_k: 5 }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Query failed with status ${res.status}`);
       }
-    }, 20);
-  }, [queryInput, isSearching, indexedDocs, graphNodes, graphEdges, uploadingFile]);
+
+      const data = await res.json();
+      setQueryResult({
+        answer: data.answer || 'No response returned.',
+        citations: data.citations || [],
+        top_nodes: data.top_nodes || [],
+        top_relations: data.top_relations || [],
+        vector_matches: data.vector_matches || 0,
+        graph_entities: data.graph_entities || [],
+        latency_ms: data.latency_ms || 0,
+      });
+
+      const ans = data.answer || 'No context found.';
+      let idx = 0;
+      const interval = setInterval(() => {
+        if (idx < ans.length) {
+          setStreamingAnswer(prev => prev + ans.slice(idx, idx + 8));
+          idx += 8;
+        } else {
+          clearInterval(interval);
+          setAnswerDone(true);
+        }
+      }, 15);
+    } catch (err: any) {
+      setStreamingAnswer(`Error running query: ${err.message || 'Failed to retrieve results'}`);
+      setAnswerDone(true);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [queryInput, isSearching]);
 
   // Generate ASCII Progress Bar: █████████ 92%
   const renderProgressBar = (percent: number) => {
@@ -621,64 +623,74 @@ export const GraphRAGPage: React.FC = () => {
 
             {/* Visual SVG Knowledge Graph Canvas */}
             <div className="relative w-full h-[320px] rounded-xl bg-[#07090e] border border-border/60 overflow-hidden flex items-center justify-center">
-              <svg className="w-full h-full absolute inset-0">
-                {/* Draw Graph Edges */}
-                {graphEdges.map((edge, i) => {
-                  const srcNode = graphNodes.find(n => n.label === edge.source) || graphNodes[i % graphNodes.length];
-                  const tgtNode = graphNodes.find(n => n.label === edge.target) || graphNodes[(i + 1) % graphNodes.length];
-                  if (!srcNode || !tgtNode) return null;
-                  const sx = srcNode.x || 150;
-                  const sy = srcNode.y || 100;
-                  const tx = tgtNode.x || 300;
-                  const ty = tgtNode.y || 200;
-                  const mx = (sx + tx) / 2;
-                  const my = (sy + ty) / 2;
+              {filteredNodes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground z-10">
+                  <Network className="w-8 h-8 mb-2 opacity-40 text-primary" />
+                  <p className="text-xs font-mono font-medium">No knowledge graph nodes available yet.</p>
+                  <p className="text-[11px] font-mono text-muted-foreground/70 mt-1">
+                    Upload documents or index a repository to extract entities and topology.
+                  </p>
+                </div>
+              ) : (
+                <svg className="w-full h-full absolute inset-0">
+                  {/* Draw Graph Edges */}
+                  {graphEdges.map((edge, i) => {
+                    const srcNode = graphNodes.find(n => n.label === edge.source) || graphNodes[i % graphNodes.length];
+                    const tgtNode = graphNodes.find(n => n.label === edge.target) || graphNodes[(i + 1) % graphNodes.length];
+                    if (!srcNode || !tgtNode) return null;
+                    const sx = srcNode.x || 150;
+                    const sy = srcNode.y || 100;
+                    const tx = tgtNode.x || 300;
+                    const ty = tgtNode.y || 200;
+                    const mx = (sx + tx) / 2;
+                    const my = (sy + ty) / 2;
 
-                  return (
-                    <g key={i}>
-                      <line
-                        x1={sx}
-                        y1={sy}
-                        x2={tx}
-                        y2={ty}
-                        stroke="#6366f1"
-                        strokeWidth="1.5"
-                        strokeDasharray="4 2"
-                        className="animate-pulse"
-                      />
-                      <rect x={mx - 32} y={my - 9} width="64" height="18" rx="4" fill="#090d16" stroke="#4f46e5" strokeWidth="0.8" />
-                      <text x={mx} y={my + 3} textAnchor="middle" fill="#a5b4fc" fontSize="8" fontFamily="monospace" fontWeight="bold">
-                        {edge.relation}
-                      </text>
-                    </g>
-                  );
-                })}
+                    return (
+                      <g key={i}>
+                        <line
+                          x1={sx}
+                          y1={sy}
+                          x2={tx}
+                          y2={ty}
+                          stroke="#6366f1"
+                          strokeWidth="1.5"
+                          strokeDasharray="4 2"
+                          className="animate-pulse"
+                        />
+                        <rect x={mx - 32} y={my - 9} width="64" height="18" rx="4" fill="#090d16" stroke="#4f46e5" strokeWidth="0.8" />
+                        <text x={mx} y={my + 3} textAnchor="middle" fill="#a5b4fc" fontSize="8" fontFamily="monospace" fontWeight="bold">
+                          {edge.relation}
+                        </text>
+                      </g>
+                    );
+                  })}
 
-                {/* Draw Graph Nodes */}
-                {filteredNodes.map((node) => {
-                  const nx = node.x || 200;
-                  const ny = node.y || 150;
-                  const isCompany = node.type === 'company';
-                  const isPeople = node.type === 'people';
-                  const isDate = node.type === 'date';
+                  {/* Draw Graph Nodes */}
+                  {filteredNodes.map((node) => {
+                    const nx = node.x || 200;
+                    const ny = node.y || 150;
+                    const isCompany = node.type === 'company';
+                    const isPeople = node.type === 'people';
+                    const isDate = node.type === 'date';
 
-                  const fillColor = isCompany ? '#34d399' : isPeople ? '#38bdf8' : isDate ? '#f59e0b' : '#a78bfa';
-                  const bgColor = isCompany ? '#0a1f18' : isPeople ? '#061325' : isDate ? '#1e1500' : '#170d2e';
+                    const fillColor = isCompany ? '#34d399' : isPeople ? '#38bdf8' : isDate ? '#f59e0b' : '#a78bfa';
+                    const bgColor = isCompany ? '#0a1f18' : isPeople ? '#061325' : isDate ? '#1e1500' : '#170d2e';
 
-                  return (
-                    <g key={node.id} className="cursor-pointer hover:opacity-90 transition-opacity">
-                      <title>{`${node.label} (${node.type}) — ${node.connections} connections`}</title>
-                      <circle cx={nx} cy={ny} r="26" fill={bgColor} stroke={fillColor} strokeWidth="1.5" />
-                      <text x={nx} y={ny - 2} textAnchor="middle" fill="#ffffff" fontSize="9" fontFamily="sans-serif" fontWeight="600">
-                        {node.label.length > 10 ? node.label.slice(0, 9) + '…' : node.label}
-                      </text>
-                      <text x={nx} y={ny + 9} textAnchor="middle" fill={fillColor} fontSize="8" fontFamily="monospace">
-                        {node.type}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
+                    return (
+                      <g key={node.id} className="cursor-pointer hover:opacity-90 transition-opacity">
+                        <title>{`${node.label} (${node.type}) — ${node.connections} connections`}</title>
+                        <circle cx={nx} cy={ny} r="26" fill={bgColor} stroke={fillColor} strokeWidth="1.5" />
+                        <text x={nx} y={ny - 2} textAnchor="middle" fill="#ffffff" fontSize="9" fontFamily="sans-serif" fontWeight="600">
+                          {node.label.length > 10 ? node.label.slice(0, 9) + '…' : node.label}
+                        </text>
+                        <text x={nx} y={ny + 9} textAnchor="middle" fill={fillColor} fontSize="8" fontFamily="monospace">
+                          {node.type}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
             </div>
 
             {/* Clean Legend */}
@@ -742,7 +754,7 @@ export const GraphRAGPage: React.FC = () => {
                   <BookOpen className="w-4 h-4 text-emerald-400" />
                   <span>Synthesized Knowledge Answer</span>
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">Latency: 135ms</span>
+                <span className="text-[10px] font-mono text-muted-foreground">{queryResult?.latency_ms !== undefined ? `Latency: ${queryResult.latency_ms}ms` : 'Latency: --'}</span>
               </div>
 
               <div className="p-4 rounded-xl bg-[#080c14] border border-border/60 font-mono text-xs text-gray-200 whitespace-pre-wrap leading-relaxed">

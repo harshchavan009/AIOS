@@ -1,27 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Database,
   Plus,
   CheckCircle2,
-  Loader2,
-  RefreshCw,
   FileText,
   Layers,
   Network,
   GitBranch,
-  MessageSquare,
-  Folder,
-  BookOpen,
   Search,
-  Sparkles,
-  Clock,
-  ShieldCheck,
-  Check,
-  X,
   ExternalLink,
-  Zap,
+  X,
 } from 'lucide-react';
+import { PageLayout } from '../components/layouts/PageLayout';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 export interface ConnectorItem {
@@ -29,470 +20,285 @@ export interface ConnectorItem {
   name: string;
   category: string;
   icon: string;
-  status: 'Connected ✓' | 'Syncing...' | 'Indexed' | 'Ready' | 'Disconnected';
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
+  status: 'Connected' | 'Available';
   lastSync: string;
-  itemsCount: string;
 }
 
 export interface KnowledgeDocumentItem {
-  id: string;
+  id?: string;
   filename: string;
-  source: 'GitHub' | 'Slack' | 'Google Drive' | 'Notion' | 'Confluence' | 'PDF File';
-  category: string;
+  source?: string;
   chunk_count: number;
-  embeddings_count: number;
-  graph_nodes: number;
-  lastSync: string;
-  status: 'INDEXED' | 'SYNCING' | 'READY';
+  status: string;
 }
 
-const INITIAL_CONNECTORS: ConnectorItem[] = [
-  {
-    id: 'github',
-    name: 'GitHub',
-    category: 'Code Repositories',
-    icon: '🐱',
-    status: 'Connected ✓',
-    color: '#34d399',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/40',
-    textColor: 'text-emerald-400',
-    lastSync: '5 mins ago',
-    itemsCount: '48 Repositories',
-  },
-  {
-    id: 'slack',
-    name: 'Slack',
-    category: 'Team Messaging & Logs',
-    icon: '💬',
-    status: 'Connected ✓',
-    color: '#34d399',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/40',
-    textColor: 'text-emerald-400',
-    lastSync: '12 mins ago',
-    itemsCount: '34 Channels',
-  },
-  {
-    id: 'gdrive',
-    name: 'Google Drive',
-    category: 'Document Storage',
-    icon: '📁',
-    status: 'Syncing...',
-    color: '#f59e0b',
-    bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/40',
-    textColor: 'text-amber-400',
-    lastSync: 'Syncing live…',
-    itemsCount: '42 Files',
-  },
-  {
-    id: 'notion',
-    name: 'Notion',
-    category: 'Knowledge Workspaces',
-    icon: '📝',
-    status: 'Indexed',
-    color: '#60a5fa',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/40',
-    textColor: 'text-blue-400',
-    lastSync: '1 hour ago',
-    itemsCount: '18 Workspaces',
-  },
-  {
-    id: 'confluence',
-    name: 'Confluence',
-    category: 'Enterprise Wiki',
-    icon: '📘',
-    status: 'Ready',
-    color: '#2dd4bf',
-    bgColor: 'bg-teal-500/10',
-    borderColor: 'border-teal-500/40',
-    textColor: 'text-teal-400',
-    lastSync: '2 hours ago',
-    itemsCount: '10 Spaces',
-  },
-];
-
-const INITIAL_DOCUMENTS: KnowledgeDocumentItem[] = [
-  {
-    id: 'doc-1',
-    filename: 'aios-core/agent-orchestrator.py',
-    source: 'GitHub',
-    category: 'Source Code',
-    chunk_count: 32,
-    embeddings_count: 1024,
-    graph_nodes: 240,
-    lastSync: '10 mins ago',
-    status: 'INDEXED',
-  },
-  {
-    id: 'doc-2',
-    filename: '#compliance-audit-stream',
-    source: 'Slack',
-    category: 'Channel Logs',
-    chunk_count: 64,
-    embeddings_count: 2048,
-    graph_nodes: 512,
-    lastSync: '15 mins ago',
-    status: 'INDEXED',
-  },
-  {
-    id: 'doc-3',
-    filename: 'Q3_Financial_Compliance_Report.pdf',
-    source: 'Google Drive',
-    category: 'Financial Filings',
-    chunk_count: 128,
-    embeddings_count: 4096,
-    graph_nodes: 1280,
-    lastSync: 'Syncing…',
-    status: 'SYNCING',
-  },
-  {
-    id: 'doc-4',
-    filename: 'Multi-Agent LangGraph Architecture Specs',
-    source: 'Notion',
-    category: 'System Architecture',
-    chunk_count: 42,
-    embeddings_count: 1344,
-    graph_nodes: 380,
-    lastSync: '1 hour ago',
-    status: 'INDEXED',
-  },
-  {
-    id: 'doc-5',
-    filename: 'SOC-2 Type II Control Verification Matrix',
-    source: 'Confluence',
-    category: 'Security Standard',
-    chunk_count: 85,
-    embeddings_count: 2720,
-    graph_nodes: 940,
-    lastSync: '2 hours ago',
-    status: 'READY',
-  },
+const AVAILABLE_CONNECTORS: ConnectorItem[] = [
+  { id: 'github', name: 'GitHub', category: 'Code Repositories', icon: '🐱', status: 'Available', lastSync: 'Manual trigger' },
+  { id: 'slack', name: 'Slack', category: 'Team Channels', icon: '💬', status: 'Available', lastSync: 'Manual trigger' },
+  { id: 'gdrive', name: 'Google Drive', category: 'Document Storage', icon: '📁', status: 'Available', lastSync: 'Manual trigger' },
+  { id: 'notion', name: 'Notion', category: 'Workspaces', icon: '📝', status: 'Available', lastSync: 'Manual trigger' },
+  { id: 'confluence', name: 'Confluence', category: 'Enterprise Wikis', icon: '📘', status: 'Available', lastSync: 'Manual trigger' },
 ];
 
 export const KnowledgeManagementPage: React.FC = () => {
-  const [connectors, setConnectors] = useState<ConnectorItem[]>(INITIAL_CONNECTORS);
-  const [documents, setDocuments] = useState<KnowledgeDocumentItem[]>(INITIAL_DOCUMENTS);
+  const [connectors] = useState<ConnectorItem[]>(AVAILABLE_CONNECTORS);
+  const [documents, setDocuments] = useState<KnowledgeDocumentItem[]>([]);
+  const [graphNodeCount, setGraphNodeCount] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [syncingId, setSyncingId] = useState<string | null>(null);
   const [connectModalOpen, setConnectModalOpen] = useState<boolean>(false);
   const [newConnectorName, setNewConnectorName] = useState<string>('');
   const [newConnectorType, setNewConnectorType] = useState<string>('Jira Enterprise');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  // Trigger manual connector re-sync
-  const handleSyncConnector = (id: string, name: string) => {
-    setSyncingId(id);
-    addNotification({
-      type: 'knowledge',
-      title: 'Connector Sync Dispatched',
-      description: `Synchronizing delta changes for ${name}...`,
-    });
+  const fetchKnowledgeData = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('aios_access_token');
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-    setTimeout(() => {
-      setConnectors(prev => prev.map(c => {
-        if (c.id === id) {
-          return {
-            ...c,
-            status: 'Connected ✓',
-            lastSync: 'Just now',
-          };
-        }
-        return c;
-      }));
-      setSyncingId(null);
-      addNotification({
-        type: 'knowledge',
-        title: 'Connector Synced',
-        description: `Successfully indexed latest updates for ${name}.`,
-      });
-    }, 1500);
+      const [docsRes, graphRes] = await Promise.all([
+        fetch('/api/v1/rag/documents', { headers }),
+        fetch('/api/v1/rag/graph', { headers }),
+      ]);
+
+      if (docsRes.ok) {
+        const docsData = await docsRes.json();
+        setDocuments(docsData.documents || []);
+      }
+
+      if (graphRes.ok) {
+        const graphData = await graphRes.json();
+        setGraphNodeCount(graphData.nodes?.length || 0);
+      }
+    } catch {
+      // keep fallback empty
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Connect new enterprise connector
+  useEffect(() => {
+    fetchKnowledgeData();
+  }, []);
+
+  const totalDocuments = documents.length;
+  const totalChunks = documents.reduce((acc, d) => acc + (d.chunk_count || 1), 0);
+
+  const filteredDocs = documents.filter((d) =>
+    d.filename.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleConnectNewSource = () => {
     if (!newConnectorName.trim()) return;
-    const newId = `conn-${Date.now()}`;
-    const newConn: ConnectorItem = {
-      id: newId,
-      name: newConnectorName,
-      category: 'Enterprise Integration',
-      icon: '🔌',
-      status: 'Connected ✓',
-      color: '#34d399',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/40',
-      textColor: 'text-emerald-400',
-      lastSync: 'Just now',
-      itemsCount: '12 Resources',
-    };
-    setConnectors(prev => [...prev, newConn]);
-    setConnectModalOpen(false);
-    setNewConnectorName('');
     addNotification({
       type: 'knowledge',
-      title: 'New Data Source Connected',
-      description: `Connected ${newConnectorName} to Knowledge Base index.`,
+      title: 'Connector Request Logged',
+      description: `${newConnectorName} (${newConnectorType}) configured for future sync.`,
     });
+    setConnectModalOpen(false);
+    setNewConnectorName('');
   };
 
-  const filteredDocs = documents.filter(d => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
-    return d.filename.toLowerCase().includes(q) || d.source.toLowerCase().includes(q) || d.category.toLowerCase().includes(q);
-  });
-
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center space-x-3">
-            <Database className="w-8 h-8 text-primary animate-pulse" />
-            <span>Enterprise Knowledge Base & Data Connectors</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Unified multi-source ingestion across GitHub, Slack, Google Drive, Notion, and Confluence into Qdrant vector index and Neo4j knowledge graph.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <button
+    <PageLayout
+      title="Knowledge Management"
+      description="Enterprise data pipelines, document vector embeddings, and Neo4j graph indices."
+      actions={
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setConnectModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 flex items-center space-x-2 transition-all"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
-            <Plus className="w-4 h-4" />
-            <span>Connect Data Source</span>
-          </button>
+            Connect Source
+          </Button>
         </div>
-      </div>
-
-      {/* ── 3 Core Stat Cards (Documents: 152 | Embeddings: 41,920 | Graph Nodes: 12,442) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        
-        {/* Documents: 152 */}
-        <div className="glass-card p-6 rounded-2xl border border-border/60 flex items-center justify-between shadow-xl relative overflow-hidden group">
-          <div className="space-y-1 z-10">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">Total Documents</div>
-            <div className="text-3xl md:text-4xl font-extrabold text-foreground font-mono tracking-tight">152</div>
-            <div className="text-[11px] text-emerald-400 font-mono flex items-center space-x-1 pt-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Across 5 Connected Sources</span>
+      }
+    >
+      <div className="space-y-6">
+        {/* ── 3 Real Stat Cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="surface-card p-5 space-y-2">
+            <div className="text-xs font-mono uppercase tracking-wider text-muted">Total Documents</div>
+            <div className="text-2xl sm:text-3xl font-semibold text-text font-mono">{totalDocuments}</div>
+            <div className="text-[11px] text-muted font-mono flex items-center space-x-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+              <span>{totalDocuments === 0 ? 'No documents ingested yet' : `${totalDocuments} indexed in vault`}</span>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/30 group-hover:scale-110 transition-transform">
-            <FileText className="w-8 h-8" />
-          </div>
-        </div>
 
-        {/* Embeddings: 41,920 */}
-        <div className="glass-card p-6 rounded-2xl border border-border/60 flex items-center justify-between shadow-xl relative overflow-hidden group">
-          <div className="space-y-1 z-10">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">Qdrant Vector Embeddings</div>
-            <div className="text-3xl md:text-4xl font-extrabold text-primary font-mono tracking-tight">41,920</div>
-            <div className="text-[11px] text-primary font-mono flex items-center space-x-1 pt-1">
-              <Layers className="w-3.5 h-3.5" />
-              <span>1536-dim HNSW Vector Store</span>
+          <div className="surface-card p-5 space-y-2">
+            <div className="text-xs font-mono uppercase tracking-wider text-muted">Vector Embeddings</div>
+            <div className="text-2xl sm:text-3xl font-semibold text-text font-mono">{totalChunks}</div>
+            <div className="text-[11px] text-muted font-mono flex items-center space-x-1">
+              <Layers className="w-3.5 h-3.5 text-accent" />
+              <span>{totalChunks === 0 ? 'Empty vector collection' : `${totalChunks} chunks in vector index`}</span>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-primary/10 text-primary border border-primary/30 group-hover:scale-110 transition-transform">
-            <Layers className="w-8 h-8" />
-          </div>
-        </div>
 
-        {/* Graph Nodes: 12,442 */}
-        <div className="glass-card p-6 rounded-2xl border border-border/60 flex items-center justify-between shadow-xl relative overflow-hidden group">
-          <div className="space-y-1 z-10">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">Neo4j Graph Nodes</div>
-            <div className="text-3xl md:text-4xl font-extrabold text-purple-400 font-mono tracking-tight">12,442</div>
-            <div className="text-[11px] text-purple-400 font-mono flex items-center space-x-1 pt-1">
-              <Network className="w-3.5 h-3.5" />
-              <span>3-Hop Entity Traversal Graph</span>
+          <div className="surface-card p-5 space-y-2">
+            <div className="text-xs font-mono uppercase tracking-wider text-muted">Knowledge Graph Nodes</div>
+            <div className="text-2xl sm:text-3xl font-semibold text-text font-mono">{graphNodeCount}</div>
+            <div className="text-[11px] text-muted font-mono flex items-center space-x-1">
+              <Network className="w-3.5 h-3.5 text-accent" />
+              <span>{graphNodeCount === 0 ? 'Graph unpopulated' : `${graphNodeCount} entity nodes extracted`}</span>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/30 group-hover:scale-110 transition-transform">
-            <Network className="w-8 h-8" />
+        </div>
+
+        {/* ── Connectors Grid ── */}
+        <div className="surface-card p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted flex items-center space-x-2">
+              <GitBranch className="w-4 h-4 text-accent" />
+              <span>Enterprise Data Integrations ({connectors.length})</span>
+            </span>
+            <span className="text-[11px] font-mono text-muted">Available Connectors</span>
           </div>
-        </div>
-      </div>
 
-      {/* ── Enterprise Data Connectors Grid (GitHub, Slack, Google Drive, Notion, Confluence) ── */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-border/60 pb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center space-x-2">
-            <GitBranch className="w-4 h-4 text-primary" />
-            <span>Active Enterprise Integrations & Connectors ({connectors.length})</span>
-          </span>
-          <span className="text-[10px] font-mono text-emerald-400 font-bold">100% Real-Time Ingestion Active</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {connectors.map((c) => {
-            const isSyncing = c.id === syncingId || c.status === 'Syncing...';
-            return (
-              <div
-                key={c.id}
-                className={`glass-card p-5 rounded-2xl border transition-all space-y-4 flex flex-col justify-between hover:scale-[1.02] ${c.borderColor}`}
-              >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {connectors.map((c) => (
+              <div key={c.id} className="p-3.5 rounded bg-elevated border border-border flex flex-col justify-between space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl">{c.icon}</div>
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-mono border ${c.bgColor} ${c.textColor} ${c.borderColor} flex items-center space-x-1`}>
-                    {isSyncing && <Loader2 className="w-3 h-3 animate-spin" />}
-                    <span>{c.status}</span>
-                  </span>
+                  <span className="text-xl">{c.icon}</span>
+                  <Badge variant="neutral">{c.status}</Badge>
                 </div>
-
                 <div>
-                  <div className="text-base font-bold text-foreground">{c.name}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{c.category}</div>
+                  <h4 className="font-semibold text-xs text-text">{c.name}</h4>
+                  <p className="text-[11px] text-muted">{c.category}</p>
                 </div>
-
-                <div className="space-y-2 pt-2 border-t border-border/40 text-[10px] font-mono">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Indexed Resources:</span>
-                    <span className="text-foreground font-bold">{c.itemsCount}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Last Sync:</span>
-                    <span className={isSyncing ? 'text-amber-400 font-bold' : 'text-gray-300'}>{c.lastSync}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => handleSyncConnector(c.id, c.name)}
-                  disabled={isSyncing}
-                  className="w-full py-2 rounded-xl bg-muted/40 hover:bg-muted border border-border/60 text-xs font-semibold text-gray-200 hover:text-white flex items-center justify-center space-x-1.5 transition-all disabled:opacity-50"
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    addNotification({
+                      type: 'knowledge',
+                      title: 'Integration Setup',
+                      description: `To connect ${c.name}, provide API credentials in Workspace Settings.`,
+                    });
+                  }}
+                  className="w-full text-[10px]"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-amber-400' : 'text-primary'}`} />
-                  <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                  Configure
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Document Table ── */}
+        <div className="surface-card p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-text">Ingested Document Ledger</h3>
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted" />
+              <input
+                type="text"
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 rounded bg-elevated border border-border text-xs text-text focus:outline-none focus:border-accent"
+              />
+            </div>
+          </div>
+
+          {filteredDocs.length === 0 ? (
+            <div className="p-8 text-center border border-dashed border-border rounded-lg space-y-2">
+              <FileText className="w-8 h-8 text-muted mx-auto opacity-50" />
+              <p className="text-xs font-medium text-text">No documents in knowledge index</p>
+              <p className="text-[11px] text-muted">Upload PDF, Markdown, or text files in Second Brain or via API to populate your semantic index.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-border text-muted text-[10px] uppercase">
+                    <th className="pb-2.5">Document Name</th>
+                    <th className="pb-2.5">Chunks</th>
+                    <th className="pb-2.5 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredDocs.map((doc, idx) => (
+                    <tr key={idx} className="hover:bg-elevated/50 transition-colors">
+                      <td className="py-2.5 font-medium text-text">{doc.filename}</td>
+                      <td className="py-2.5 text-muted">{doc.chunk_count}</td>
+                      <td className="py-2.5 text-right">
+                        <Badge variant="success">
+                          {doc.status || 'INDEXED'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* ── Connect Modal ── */}
+        {connectModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4">
+            <div className="surface-card p-5 rounded-lg w-full max-w-md space-y-4 border border-border">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-semibold text-text">Connect Data Source</h3>
+                <button
+                  type="button"
+                  onClick={() => setConnectModalOpen(false)}
+                  className="p-1 rounded text-muted hover:text-text"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* ── Knowledge Document Repositories Table ── */}
-      <div className="glass-card p-6 rounded-2xl border border-border/60 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <span className="text-sm font-bold text-foreground">Indexed Knowledge Repositories</span>
-          </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">Integration Name</label>
+                  <input
+                    type="text"
+                    value={newConnectorName}
+                    onChange={(e) => setNewConnectorName(e.target.value)}
+                    placeholder="e.g. Engineering Jira Backlog"
+                    className="w-full px-3 py-1.5 rounded bg-elevated border border-border text-xs text-text focus:outline-none focus:border-accent"
+                  />
+                </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search indexed repositories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-muted/40 border border-border/50 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs">
-            <thead>
-              <tr className="border-b border-border/60 text-muted-foreground text-[10px] uppercase">
-                <th className="pb-3">Repository / Document</th>
-                <th className="pb-3">Source Connector</th>
-                <th className="pb-3">Category</th>
-                <th className="pb-3">Chunks</th>
-                <th className="pb-3">Vector Embeddings</th>
-                <th className="pb-3">Graph Nodes</th>
-                <th className="pb-3">Last Synced</th>
-                <th className="pb-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {filteredDocs.map((doc) => (
-                <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="py-3 font-bold text-foreground">{doc.filename}</td>
-                  <td className="py-3 text-primary">{doc.source}</td>
-                  <td className="py-3 text-muted-foreground">{doc.category}</td>
-                  <td className="py-3 text-gray-200">{doc.chunk_count}</td>
-                  <td className="py-3 text-blue-400 font-bold">{doc.embeddings_count.toLocaleString()}</td>
-                  <td className="py-3 text-purple-400 font-bold">{doc.graph_nodes.toLocaleString()}</td>
-                  <td className="py-3 text-muted-foreground">{doc.lastSync}</td>
-                  <td className="py-3 text-right">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${
-                      doc.status === 'INDEXED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                      doc.status === 'SYNCING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 animate-pulse' :
-                      'bg-teal-500/10 text-teal-400 border-teal-500/30'
-                    }`}>
-                      {doc.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ── Connect New Data Source Modal ── */}
-      {connectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-border/60 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-base font-bold flex items-center space-x-2">
-                <Plus className="w-5 h-5 text-primary" />
-                <span>Connect New Enterprise Data Source</span>
-              </h3>
-              <X className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-white" onClick={() => setConnectModalOpen(false)} />
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Integration Name</label>
-                <input
-                  type="text"
-                  autoFocus
-                  value={newConnectorName}
-                  onChange={(e) => setNewConnectorName(e.target.value)}
-                  placeholder="e.g. Jira Security Board"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none focus:border-primary text-foreground"
-                />
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">Connector Type</label>
+                  <select
+                    value={newConnectorType}
+                    onChange={(e) => setNewConnectorType(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded bg-elevated border border-border text-xs text-text focus:outline-none focus:border-accent"
+                  >
+                    <option value="Jira Enterprise">Jira Enterprise</option>
+                    <option value="Zendesk Support">Zendesk Support</option>
+                    <option value="Salesforce CRM">Salesforce CRM</option>
+                    <option value="Box Storage">Box Storage</option>
+                    <option value="PostgreSQL DB">PostgreSQL DB</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Connector Type</label>
-                <select
-                  value={newConnectorType}
-                  onChange={(e) => setNewConnectorType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono focus:outline-none text-foreground"
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-border">
+                <Button variant="ghost" size="sm" onClick={() => setConnectModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!newConnectorName.trim()}
+                  onClick={handleConnectNewSource}
                 >
-                  <option value="Jira Enterprise">Jira Enterprise</option>
-                  <option value="Zendesk Support">Zendesk Support</option>
-                  <option value="Salesforce CRM">Salesforce CRM</option>
-                  <option value="Box Storage">Box Storage</option>
-                  <option value="PostgreSQL DB">PostgreSQL DB</option>
-                </select>
+                  Save Integration
+                </Button>
               </div>
             </div>
-
-            <div className="flex items-center space-x-3 pt-2">
-              <button onClick={() => setConnectModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted">Cancel</button>
-              <button
-                onClick={handleConnectNewSource}
-                disabled={!newConnectorName.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs disabled:opacity-40"
-              >
-                Connect Source
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </PageLayout>
   );
 };

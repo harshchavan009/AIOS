@@ -7,6 +7,7 @@ import { ToastContainer } from '../common/ToastContainer';
 import { OnboardingModal } from '../common/OnboardingModal';
 import { AICopilotWidget } from '../common/AICopilotWidget';
 import { PageTransition } from '../common/PageTransition';
+import { BackgroundMedia } from '../common/BackgroundMedia';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useLiveTelemetryStore } from '../../store/useLiveTelemetryStore';
 import { getApiUrl } from '../../config/api';
@@ -52,7 +53,9 @@ export const AppLayout: React.FC = () => {
   }, [startTicker, stopTicker, updateFromApi]);
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground font-sans relative overflow-x-hidden">
+    <div className="min-h-screen flex bg-transparent text-foreground font-sans relative overflow-x-hidden">
+      {/* Persistent App Ambient Background (mounted once across all studio pages) */}
+      <BackgroundMedia variant="app" />
 
       {/* Responsive Collapsible & Mobile Drawer Sidebar */}
       <Sidebar

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { useNotificationStore } from './useNotificationStore';
 
 export interface HardwareDataPoint {
   time: string;
@@ -63,77 +62,38 @@ export interface TelemetryStoreState {
   registerDeployedAgent: (agentName: string, detail: string) => void;
 }
 
-const AGENT_SEQUENCE = [3, 4, 5, 4, 3, 4, 5, 6];
-
-const INITIAL_HARDWARE_HISTORY: HardwareDataPoint[] = [
-  { time: '10:00:00', cpu: 18.2, ram: 44.5, gpu: 12.0 },
-  { time: '10:00:02', cpu: 22.4, ram: 45.1, gpu: 14.2 },
-  { time: '10:00:04', cpu: 28.1, ram: 46.0, gpu: 18.5 },
-  { time: '10:00:06', cpu: 24.5, ram: 45.8, gpu: 15.0 },
-  { time: '10:00:08', cpu: 31.0, ram: 47.2, gpu: 21.4 },
-  { time: '10:00:10', cpu: 26.8, ram: 46.5, gpu: 16.8 },
-  { time: '10:00:12', cpu: 34.2, ram: 48.0, gpu: 24.1 },
-];
-
-const INITIAL_DAILY_TRENDS: DailyTrendPoint[] = [
-  { day: 'Mon', cost: 12.4, tokens: 420000 },
-  { day: 'Tue', cost: 18.2, tokens: 680000 },
-  { day: 'Wed', cost: 15.6, tokens: 540000 },
-  { day: 'Thu', cost: 24.8, tokens: 920000 },
-  { day: 'Fri', cost: 29.5, tokens: 1150000 },
-  { day: 'Sat', cost: 21.0, tokens: 780000 },
-  { day: 'Sun', cost: 26.4, tokens: 990000 },
-];
-
-const SAMPLE_EVENTS = [
-  { type: 'agent' as const, title: 'Active Agents Updated', description: 'LangGraph cluster scaled active workers (4/6)' },
-  { type: 'workflow' as const, title: 'Token Throughput Spike', description: 'SSE stream velocity reached 124 tokens/sec' },
-  { type: 'knowledge' as const, title: 'Graph RAG Sync', description: 'Neo4j knowledge graph indexed 18 new entity nodes' },
-  { type: 'eval' as const, title: 'Model Latency Check', description: 'OpenAI GPT-4o latency measured at 134ms' },
-  { type: 'document' as const, title: 'Vector Store Synced', description: 'Qdrant collection updated with 32 document embeddings' },
-];
-
-const INITIAL_RUNNING_AGENTS: RunningAgent[] = [
-  { name: 'Planner', agent_id: 'PlannerAgent', status: 'Running', detail: 'Decomposing multi-step workflow DAG', color: 'emerald' },
-  { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Searching Neo4j', detail: 'Traversing graph & Qdrant vector store', color: 'cyan' },
-  { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Isolated MCP sandbox active', color: 'blue' },
-  { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Waiting', detail: 'Synthesizing logical chain of thought', color: 'amber' },
-  { name: 'Critic', agent_id: 'CriticAgent', status: 'Running', detail: 'Evaluating RAGAS groundedness score', color: 'purple' },
-  { name: 'Response', agent_id: 'ResponseAgent', status: 'Completed', detail: 'IEEE citation formatting complete', color: 'teal' },
-];
-
 let timerId: ReturnType<typeof setInterval> | null = null;
 
 export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => ({
   summary: {
-    active_agents: 3,
-    running_jobs: 2,
-    queued_tasks: 11,
-    worker_status: '3 Workers Active',
-    database_health: 'Database Engine Healthy',
-    redis_health: 'Redis Status Check',
-    neo4j_status: 'Graph RAG Active',
-    qdrant_status: 'Vector Store Active',
-    api_usage_total: 1420,
-    token_usage_total: 1845200,
-    cost_today_usd: 33.21,
-    monthly_cost_usd: 996.30,
-    average_latency_ms: 138,
-    gpu_usage_percent: 18.4,
-    gpu_memory: '4.2 GB / 16 GB',
-    cpu_usage_percent: 24.5,
-    memory_usage_percent: 46.8,
-    container_status: '7 / 7 Containers Active'
+    active_agents: 0,
+    running_jobs: 0,
+    queued_tasks: 0,
+    worker_status: '1 Worker Active (Local)',
+    database_health: 'Database Engine Ready',
+    redis_health: 'Cache Ready',
+    neo4j_status: 'Knowledge Graph Ready',
+    qdrant_status: 'Vector Store Ready',
+    api_usage_total: 0,
+    token_usage_total: 0,
+    cost_today_usd: 0.0,
+    monthly_cost_usd: 0.0,
+    average_latency_ms: 0,
+    gpu_usage_percent: 0.0,
+    gpu_memory: '0 GB / 0 GB',
+    cpu_usage_percent: 0.0,
+    memory_usage_percent: 0.0,
+    container_status: 'Active'
   },
-  runningAgents: INITIAL_RUNNING_AGENTS,
-  hardwareHistory: INITIAL_HARDWARE_HISTORY,
-  dailyTrends: INITIAL_DAILY_TRENDS,
+  runningAgents: [],
+  hardwareHistory: [],
+  dailyTrends: [],
   llmLatencies: {
-    openai_gpt4o_ms: 138,
-    anthropic_claude_ms: 154,
-    google_gemini_ms: 118,
+    openai_gpt4o_ms: 0,
+    anthropic_claude_ms: 0,
+    google_gemini_ms: 0,
   },
-  streamRateTokensSec: 88.5,
+  streamRateTokensSec: 0,
   isLive: true,
   hasLiveApi: false,
   tickCounter: 0,
@@ -149,9 +109,9 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
     const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
     const newHwPoint: HardwareDataPoint = {
       time: timeStr,
-      cpu: hw.cpu_percent ?? sm.cpu_usage_percent ?? 25,
-      ram: hw.ram_percent ?? sm.memory_usage_percent ?? 47,
-      gpu: hw.gpu_percent ?? sm.gpu_usage_percent ?? 18,
+      cpu: hw.cpu_percent ?? sm.cpu_usage_percent ?? 0,
+      ram: hw.ram_percent ?? sm.memory_usage_percent ?? 0,
+      gpu: hw.gpu_percent ?? sm.gpu_usage_percent ?? 0,
     };
 
     set((state) => {
@@ -159,14 +119,14 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
       return {
         hasLiveApi: true,
         summary: { ...state.summary, ...sm },
-        runningAgents: agents.length > 0 ? agents : state.runningAgents,
+        runningAgents: agents,
         hardwareHistory: updatedHw,
         llmLatencies: {
-          openai_gpt4o_ms: lat.openai_gpt4o_ms || state.llmLatencies.openai_gpt4o_ms,
-          anthropic_claude_ms: lat.anthropic_claude_ms || state.llmLatencies.anthropic_claude_ms,
-          google_gemini_ms: lat.google_gemini_ms || state.llmLatencies.google_gemini_ms,
+          openai_gpt4o_ms: lat.openai_gpt4o_ms || 0,
+          anthropic_claude_ms: lat.anthropic_claude_ms || 0,
+          google_gemini_ms: lat.google_gemini_ms || 0,
         },
-        streamRateTokensSec: pipe.stream_rate_tokens_sec || state.streamRateTokensSec,
+        streamRateTokensSec: pipe.stream_rate_tokens_sec || 0,
       };
     });
   },
@@ -176,7 +136,7 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
       name: agentName,
       agent_id: `${agentName.replace(/\s+/g, '')}Agent`,
       status: 'Running',
-      detail: detail || 'Deployed LangGraph Swarm Worker',
+      detail: detail || 'Deployed LangGraph Worker',
       color: 'emerald'
     };
     set((state) => ({
@@ -191,109 +151,23 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
   startTicker: () => {
     if (timerId) return;
 
-    timerId = setInterval(() => {
-      const state = get();
-      if (state.hasLiveApi) return;
-      const nextTick = state.tickCounter + 1;
-      const agentCount = AGENT_SEQUENCE[nextTick % AGENT_SEQUENCE.length];
-      const tokenIncrement = Math.floor(65 + Math.random() * 95);
-      const newTokens = state.summary.token_usage_total + tokenIncrement;
-      const newCost = Number((newTokens * 0.000018).toFixed(2));
-
-      const jitterCpu = Math.min(95, Math.max(12, Number((24.5 + Math.sin(nextTick * 0.5) * 12 + Math.random() * 8).toFixed(1))));
-      const jitterRam = Math.min(95, Math.max(30, Number((46.0 + Math.cos(nextTick * 0.4) * 4 + Math.random() * 3).toFixed(1))));
-      const jitterGpu = Math.min(95, Math.max(8, Number((18.0 + Math.sin(nextTick * 0.7) * 9 + Math.random() * 5).toFixed(1))));
-
-      const jitterLatency = Math.floor(125 + Math.sin(nextTick * 0.6) * 28 + Math.random() * 15);
-      const streamRate = Number((82.5 + Math.sin(nextTick * 0.8) * 35 + Math.random() * 20).toFixed(1));
-
-      const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
-      const newHwPoint: HardwareDataPoint = {
-        time: timeStr,
-        cpu: jitterCpu,
-        ram: jitterRam,
-        gpu: jitterGpu,
-      };
-
-      const updatedHistory = [...state.hardwareHistory.slice(-14), newHwPoint];
-
-      // Dynamic agent rotation for fallback animation
-      const agentRotations = [
-        [
-          { name: 'Planner', agent_id: 'PlannerAgent', status: 'Running', detail: 'Decomposing multi-step workflow DAG', color: 'emerald' },
-          { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Searching Neo4j', detail: 'Traversing graph & Qdrant vector store', color: 'cyan' },
-          { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Isolated MCP sandbox active', color: 'blue' },
-          { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Waiting', detail: 'Synthesizing logical chain of thought', color: 'amber' },
-          { name: 'Critic', agent_id: 'CriticAgent', status: 'Running', detail: 'Evaluating RAGAS groundedness score', color: 'purple' },
-          { name: 'Response', agent_id: 'ResponseAgent', status: 'Completed', detail: 'IEEE citation formatting complete', color: 'teal' },
-        ],
-        [
-          { name: 'Planner', agent_id: 'PlannerAgent', status: 'Completed', detail: 'DAG topological order compiled', color: 'teal' },
-          { name: 'Retriever', agent_id: 'RetrieverAgent', status: 'Running', detail: 'Retrieving 8 semantic citations', color: 'emerald' },
-          { name: 'Python Tool', agent_id: 'ToolAgent', status: 'Executing code', detail: 'Running numerical analysis script', color: 'blue' },
-          { name: 'Reasoning', agent_id: 'ReasoningAgent', status: 'Searching Neo4j', detail: 'Cross-referencing entity relations', color: 'cyan' },
-          { name: 'Critic', agent_id: 'CriticAgent', status: 'Waiting', detail: 'Awaiting final inference payload', color: 'amber' },
-          { name: 'Response', agent_id: 'ResponseAgent', status: 'Running', detail: 'Streaming SSE token output', color: 'purple' },
-        ]
-      ];
-      const updatedAgents = agentRotations[nextTick % agentRotations.length];
-
-      // Update daily trends for graph animations
-      const updatedTrends = state.dailyTrends.map((dt, idx) => {
-        if (idx === state.dailyTrends.length - 1) {
-          return {
-            ...dt,
-            tokens: dt.tokens + tokenIncrement,
-            cost: Number((dt.cost + tokenIncrement * 0.000018).toFixed(2)),
-          };
-        }
-        return dt;
-      });
-
-      set({
-        tickCounter: nextTick,
-        runningAgents: updatedAgents,
-        hardwareHistory: updatedHistory,
-        dailyTrends: updatedTrends,
-        streamRateTokensSec: streamRate,
-        summary: {
-          ...state.summary,
-          active_agents: agentCount,
-          running_jobs: agentCount > 3 ? 4 : 2,
-          queued_tasks: 8 + agentCount,
-          worker_status: `${agentCount} Workers Active`,
-          token_usage_total: newTokens,
-          cost_today_usd: newCost,
-          monthly_cost_usd: Number((newCost * 30).toFixed(2)),
-          average_latency_ms: jitterLatency,
-          cpu_usage_percent: jitterCpu,
-          memory_usage_percent: jitterRam,
-          gpu_usage_percent: jitterGpu,
-          api_usage_total: state.summary.api_usage_total + 1,
-        },
-        llmLatencies: {
-          openai_gpt4o_ms: Math.floor(135 + Math.random() * 24),
-          anthropic_claude_ms: Math.floor(148 + Math.random() * 32),
-          google_gemini_ms: Math.floor(115 + Math.random() * 18),
-        },
-      });
-
-      // Spawn periodic toast notifications every ~5 ticks (10s)
-      if (nextTick % 5 === 0) {
-        const ev = SAMPLE_EVENTS[Math.floor(Math.random() * SAMPLE_EVENTS.length)];
-        let desc = ev.description;
-        if (ev.type === 'agent') {
-          desc = `LangGraph cluster active workers updated (${agentCount}/6)`;
-        } else if (ev.type === 'workflow') {
-          desc = `SSE token stream rate peaked at ${streamRate} tokens/sec`;
-        }
-        useNotificationStore.getState().addNotification({
-          type: ev.type,
-          title: ev.title,
-          description: desc,
+    const pollBackend = async () => {
+      try {
+        const token = localStorage.getItem('aios_access_token');
+        const res = await fetch('/api/v1/observability/system-telemetry', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
+        if (res.ok) {
+          const data = await res.json();
+          get().updateFromApi(data);
+        }
+      } catch {
+        // Keep idle state without simulating fake numbers
       }
-    }, 2000);
+    };
+
+    pollBackend();
+    timerId = setInterval(pollBackend, 5000);
   },
 
   stopTicker: () => {
@@ -301,5 +175,5 @@ export const useLiveTelemetryStore = create<TelemetryStoreState>((set, get) => (
       clearInterval(timerId);
       timerId = null;
     }
-  },
+  }
 }));

@@ -59,102 +59,75 @@ interface ExecutionRun {
   }[];
 }
 
-const INITIAL_RUNS: ExecutionRun[] = [
-  {
-    id: 'run_8492',
-    workflow: 'Financial Research Swarm',
-    agent: 'Planner + Retriever + Critic',
-    status: 'completed',
-    trigger: 'REST API',
-    duration: '340ms',
-    tokens: 1420,
-    costUsd: 0.0031,
-    timestamp: 'Just now',
-    steps: [
-      { name: 'dag:planner.decompose_goal', duration: '112ms', status: 'completed', model: 'Claude 3.5 Sonnet', tokens: 420 },
-      { name: 'rag:retriever.hybrid_search', duration: '44ms', status: 'completed', model: 'Qdrant + Neo4j', tokens: 0 },
-      { name: 'sandbox:python.ebitda_modeling', duration: '68ms', status: 'completed', model: 'Isolated Sandbox', tokens: 140 },
-      { name: 'model:gpt-4o.citation_synthesis', duration: '116ms', status: 'completed', model: 'GPT-4o', tokens: 860 },
-    ],
-  },
-  {
-    id: 'run_8491',
-    workflow: 'Graph RAG 10-K Knowledge Index',
-    agent: 'GraphRAG Ingestion Agent',
-    status: 'completed',
-    trigger: 'Webhook',
-    duration: '1.2s',
-    tokens: 3810,
-    costUsd: 0.0084,
-    timestamp: '2m ago',
-    steps: [
-      { name: 'rag:document.chunk_and_embed', duration: '340ms', status: 'completed', model: 'Text-Embedding-3-Large', tokens: 1200 },
-      { name: 'rag:neo4j.entity_relationship_sync', duration: '280ms', status: 'completed', model: 'Neo4j Cypher Engine', tokens: 610 },
-      { name: 'eval:ragas.groundedness_check', duration: '580ms', status: 'completed', model: 'GPT-4o Mini', tokens: 2000 },
-    ],
-  },
-  {
-    id: 'run_8490',
-    workflow: 'Autonomous Code Review Swarm',
-    agent: 'Code Architect Agent',
-    status: 'running',
-    trigger: 'Webhook',
-    duration: '890ms',
-    tokens: 2150,
-    costUsd: 0.0047,
-    timestamp: '4m ago',
-    steps: [
-      { name: 'git:repo.diff_extraction', duration: '120ms', status: 'completed', model: 'GitHub Integration', tokens: 350 },
-      { name: 'dag:critic.static_ast_analysis', duration: '410ms', status: 'completed', model: 'Claude 3.5 Sonnet', tokens: 1100 },
-      { name: 'model:claude.security_audit', duration: '360ms', status: 'running', model: 'Claude 3.5 Sonnet', tokens: 700 },
-    ],
-  },
-  {
-    id: 'run_8489',
-    workflow: 'Customer Ticket Semantic Classifier',
-    agent: 'Router Agent',
-    status: 'completed',
-    trigger: 'Schedule',
-    duration: '210ms',
-    tokens: 640,
-    costUsd: 0.0014,
-    timestamp: '14m ago',
-    steps: [
-      { name: 'model:gemini.intent_classification', duration: '140ms', status: 'completed', model: 'Gemini 1.5 Pro', tokens: 480 },
-      { name: 'db:postgres.record_intent', duration: '70ms', status: 'completed', model: 'Asyncpg Storage', tokens: 160 },
-    ],
-  },
-  {
-    id: 'run_8488',
-    workflow: 'Enterprise Policy Compliance Audit',
-    agent: 'Compliance Agent',
-    status: 'failed',
-    trigger: 'Manual',
-    duration: '4.8s',
-    tokens: 4200,
-    costUsd: 0.0092,
-    timestamp: '32m ago',
-    steps: [
-      { name: 'rag:policy.hierarchical_search', duration: '620ms', status: 'completed', model: 'Qdrant Store', tokens: 1400 },
-      { name: 'model:claude.compliance_check', duration: '4.18s', status: 'failed', model: 'Claude 3.5 Sonnet', tokens: 2800 },
-    ],
-  },
-];
+const INITIAL_RUNS: ExecutionRun[] = [];
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { summary, hardwareHistory, streamRateTokensSec } = useLiveTelemetryStore();
   const { currentWorkspace } = useWorkspaceStore();
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'completed' | 'failed'>('all');
-  const [selectedRunId, setSelectedRunId] = useState<string>('run_8492');
+  const [runs, setRuns] = useState<ExecutionRun[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string>('');
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 300);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+    const fetchTraces = async () => {
+      try {
+        const token = localStorage.getItem('aios_access_token');
+        const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const res = await fetch('/api/v1/observability/traces', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.traces) && isMounted) {
+            const mappedRuns: ExecutionRun[] = data.traces.map((t: any, idx: number) => {
+              const durMs = t.duration_ms || (t.end_time && t.start_time ? Math.round((t.end_time - t.start_time) * 1000) : 0);
+              const duration = durMs > 0 ? (durMs < 1000 ? `${durMs}ms` : `${(durMs / 1000).toFixed(1)}s`) : 'running';
+              const tokens = t.attributes?.tokens || 0;
+              const costUsd = Number(((tokens / 1000) * 0.002).toFixed(4));
+              return {
+                id: t.span_id || `span_${idx}`,
+                workflow: t.name || 'Workflow Execution',
+                agent: t.attributes?.agent || 'LangGraph Worker',
+                status: t.status === 'completed' ? 'completed' : (t.status === 'error' ? 'failed' : 'running'),
+                trigger: (t.attributes?.trigger || 'REST API') as any,
+                duration,
+                tokens,
+                costUsd,
+                timestamp: t.start_time ? new Date(t.start_time * 1000).toLocaleTimeString() : 'Just now',
+                steps: [
+                  {
+                    name: t.name || 'Step Execution',
+                    duration,
+                    status: t.status === 'completed' ? 'completed' : 'running',
+                    model: t.attributes?.model || 'Claude / GPT-4o',
+                    tokens,
+                  }
+                ]
+              };
+            });
+            setRuns(mappedRuns);
+            if (mappedRuns.length > 0) {
+              setSelectedRunId(mappedRuns[0].id);
+            }
+          }
+        }
+      } catch {
+        // Fallback or network error
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchTraces();
+    const interval = setInterval(fetchTraces, 8000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   if (isLoading) {
@@ -178,7 +151,7 @@ export const DashboardPage: React.FC = () => {
   }
 
   // Filter runs by search query and status filter
-  const filteredRuns = INITIAL_RUNS.filter((run) => {
+  const filteredRuns = runs.filter((run) => {
     const matchesSearch =
       run.workflow.toLowerCase().includes(searchQuery.toLowerCase()) ||
       run.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -187,7 +160,7 @@ export const DashboardPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const selectedRun = INITIAL_RUNS.find((r) => r.id === selectedRunId) || INITIAL_RUNS[0];
+  const selectedRun = runs.find((r) => r.id === selectedRunId) || runs[0];
 
   return (
     <PageLayout
@@ -238,10 +211,10 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="flex items-baseline space-x-2 pt-1">
               <span className="text-2xl font-semibold tracking-tight text-foreground font-mono">
-                {summary.active_agents}/6
+                {summary.active_agents}
               </span>
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                4 nodes online
+              <span className="text-xs text-muted-foreground font-medium">
+                Active tasks
               </span>
             </div>
           </CardHeader>
@@ -361,12 +334,21 @@ export const DashboardPage: React.FC = () => {
 
           {filteredRuns.length === 0 ? (
             <EmptyState
-              title="No execution runs found"
-              description={`No runs matched the query "${searchQuery}".`}
-              actionLabel="Clear Filter"
+              icon={Layers}
+              title={runs.length === 0 ? "No execution runs recorded" : "No execution runs found"}
+              description={
+                runs.length === 0
+                  ? "No workflow DAGs or agent swarms have been executed yet. Invocations from the Playground, Agent Studio, or API will appear here."
+                  : `No runs matched the query "${searchQuery}".`
+              }
+              actionLabel={runs.length === 0 ? "Open Playground" : "Clear Filter"}
               onAction={() => {
-                setSearchQuery('');
-                setStatusFilter('all');
+                if (runs.length === 0) {
+                  navigate('/playground');
+                } else {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                }
               }}
             />
           ) : (
@@ -441,86 +423,96 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Selected Run Trace Detail Inspector (4 cols) */}
-        <div className="lg:col-span-4 rounded-lg border border-border bg-card p-4 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <div>
-              <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <span>Run Trace Detail</span>
-                <span className="font-mono text-muted-foreground">({selectedRun.id})</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Step-by-step DAG telemetry and latency breakdown.
-              </p>
-            </div>
-            <Badge
-              variant={
-                selectedRun.status === 'completed'
-                  ? 'success'
-                  : selectedRun.status === 'running'
-                  ? 'info'
-                  : 'destructive'
-              }
-              dot
-            >
-              {selectedRun.status}
-            </Badge>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-2 p-2.5 rounded bg-secondary/50 text-center text-xs font-mono">
-            <div>
-              <span className="text-[10px] text-muted-foreground block font-sans">Latency</span>
-              <span className="font-semibold text-foreground">{selectedRun.duration}</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-muted-foreground block font-sans">Tokens</span>
-              <span className="font-semibold text-foreground">{selectedRun.tokens.toLocaleString()}</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-muted-foreground block font-sans">Cost</span>
-              <span className="font-semibold text-foreground">${selectedRun.costUsd.toFixed(4)}</span>
-            </div>
-          </div>
-
-          {/* Step Timeline */}
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-foreground block">
-              Execution Timeline ({selectedRun.steps.length} steps)
-            </span>
-
-            <div className="space-y-1.5">
-              {selectedRun.steps.map((st, idx) => (
-                <div
-                  key={idx}
-                  className="p-2.5 rounded border border-border/80 bg-background space-y-1 text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-medium text-foreground truncate max-w-[180px]">
-                      {st.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-muted-foreground">{st.duration}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
-                    <span>{st.model}</span>
-                    {st.tokens > 0 && <span className="font-mono">{st.tokens} tok</span>}
-                  </div>
+        {selectedRun ? (
+          <div className="lg:col-span-4 rounded-lg border border-border bg-card p-4 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Run Trace Detail</span>
+                  <span className="font-mono text-muted-foreground">({selectedRun.id})</span>
                 </div>
-              ))}
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Step-by-step DAG telemetry and latency breakdown.
+                </p>
+              </div>
+              <Badge
+                variant={
+                  selectedRun.status === 'completed'
+                    ? 'success'
+                    : selectedRun.status === 'running'
+                    ? 'info'
+                    : 'destructive'
+                }
+                dot
+              >
+                {selectedRun.status}
+              </Badge>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-3 gap-2 p-2.5 rounded bg-secondary/50 text-center text-xs font-mono">
+              <div>
+                <span className="text-[10px] text-muted-foreground block font-sans">Latency</span>
+                <span className="font-semibold text-foreground">{selectedRun.duration}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block font-sans">Tokens</span>
+                <span className="font-semibold text-foreground">{selectedRun.tokens.toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block font-sans">Cost</span>
+                <span className="font-semibold text-foreground">${selectedRun.costUsd.toFixed(4)}</span>
+              </div>
+            </div>
+
+            {/* Step Timeline */}
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-foreground block">
+                Execution Timeline ({selectedRun.steps.length} steps)
+              </span>
+
+              <div className="space-y-1.5">
+                {selectedRun.steps.map((st, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2.5 rounded border border-border/80 bg-background space-y-1 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-medium text-foreground truncate max-w-[180px]">
+                        {st.name}
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground">{st.duration}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                      <span>{st.model}</span>
+                      {st.tokens > 0 && <span className="font-mono">{st.tokens} tok</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border flex justify-between">
+              <Button
+                variant="secondary"
+                size="xs"
+                className="w-full text-xs"
+                onClick={() => navigate('/agents')}
+                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+              >
+                Inspect in Agent Studio
+              </Button>
             </div>
           </div>
-
-          <div className="pt-2 border-t border-border flex justify-between">
-            <Button
-              variant="secondary"
-              size="xs"
-              className="w-full text-xs"
-              onClick={() => navigate('/agents')}
-              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-            >
-              Inspect in Agent Studio
-            </Button>
+        ) : (
+          <div className="lg:col-span-4 rounded-lg border border-border border-dashed bg-card/40 p-8 flex flex-col items-center justify-center text-center space-y-2 min-h-[280px]">
+            <Terminal className="w-8 h-8 text-muted-foreground opacity-30" />
+            <div className="text-xs font-medium text-foreground">No Run Selected</div>
+            <p className="text-[11px] text-muted-foreground max-w-xs leading-normal">
+              Execute a workflow in the Playground or Agent Studio to inspect step-by-step trace spans.
+            </p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}

@@ -4,10 +4,19 @@ export type ThemeMode = 'graphite' | 'light';
 
 interface ThemeState {
   theme: ThemeMode;
+  backgroundAnimation: boolean;
   toggleTheme: () => void;
   setTheme: (theme: ThemeMode) => void;
+  toggleBackgroundAnimation: () => void;
+  setBackgroundAnimation: (enabled: boolean) => void;
   initTheme: () => void;
 }
+
+const getInitialBgAnimation = (): boolean => {
+  const saved = localStorage.getItem('aios_bg_animation');
+  if (saved === null) return true;
+  return saved === 'true';
+};
 
 const getInitialTheme = (): ThemeMode => {
   const saved = localStorage.getItem('aios_theme') as ThemeMode;
@@ -30,6 +39,7 @@ const applyThemeToDOM = (theme: ThemeMode) => {
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: getInitialTheme(),
+  backgroundAnimation: getInitialBgAnimation(),
   
   toggleTheme: () => {
     const current = get().theme;
@@ -43,6 +53,18 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     localStorage.setItem('aios_theme', theme);
     applyThemeToDOM(theme);
     set({ theme });
+  },
+
+  toggleBackgroundAnimation: () => {
+    const current = get().backgroundAnimation;
+    const next = !current;
+    localStorage.setItem('aios_bg_animation', String(next));
+    set({ backgroundAnimation: next });
+  },
+
+  setBackgroundAnimation: (enabled: boolean) => {
+    localStorage.setItem('aios_bg_animation', String(enabled));
+    set({ backgroundAnimation: enabled });
   },
 
   initTheme: () => {

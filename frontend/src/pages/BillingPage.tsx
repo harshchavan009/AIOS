@@ -244,13 +244,13 @@ export const BillingPage: React.FC = () => {
                   <DollarSign className="w-4 h-4 text-accent" />
                 </div>
                 <div className="text-2xl font-semibold text-text font-mono">
-                  ${usage?.monthly_spend_usd.toFixed(2) || '442.80'}
+                  ${usage?.monthly_spend_usd != null ? usage.monthly_spend_usd.toFixed(2) : '0.00'}
                 </div>
                 <div className="text-xs text-muted font-mono">
-                  Budget Cap: ${usage?.monthly_budget_limit_usd.toFixed(2) || '1,000.00'} / mo
+                  Budget Cap: ${usage?.monthly_budget_limit_usd != null ? usage.monthly_budget_limit_usd.toFixed(2) : '1,000.00'} / mo
                 </div>
                 <div className="w-full bg-elevated rounded-full h-1.5 mt-2 overflow-hidden border border-border">
-                  <div className="bg-accent h-full rounded-full" style={{ width: '44.2%' }} />
+                  <div className="bg-accent h-full rounded-full" style={{ width: `${Math.min(100, ((usage?.monthly_spend_usd || 0) / (usage?.monthly_budget_limit_usd || 1000)) * 100)}%` }} />
                 </div>
               </div>
 
@@ -260,13 +260,13 @@ export const BillingPage: React.FC = () => {
                   <Activity className="w-4 h-4 text-muted" />
                 </div>
                 <div className="text-2xl font-semibold text-text font-mono">
-                  {((usage?.token_consumption_today || 148200) / 1000).toFixed(1)}k tokens
+                  {((usage?.token_consumption_today || 0) / 1000).toFixed(1)}k tokens
                 </div>
                 <div className="text-xs text-muted font-mono">
-                  Est. Daily Spend: ${((usage?.token_consumption_today || 148200) * 0.00024).toFixed(2)}
+                  Est. Daily Spend: ${((usage?.token_consumption_today || 0) * 0.000018).toFixed(2)}
                 </div>
                 <div className="w-full bg-elevated rounded-full h-1.5 mt-2 overflow-hidden border border-border">
-                  <div className="bg-muted h-full rounded-full" style={{ width: '65%' }} />
+                  <div className="bg-muted h-full rounded-full" style={{ width: `${Math.min(100, ((usage?.token_consumption_today || 0) / 100000) * 100)}%` }} />
                 </div>
               </div>
             </div>
@@ -274,20 +274,26 @@ export const BillingPage: React.FC = () => {
             {/* Model Token Breakdown */}
             <div className="surface-card p-5 space-y-3">
               <h3 className="text-sm font-semibold text-text">Token Consumption Breakdown by Model</h3>
-              <div className="space-y-2 font-mono text-xs">
-                {usage?.model_breakdown.map((mb) => (
-                  <div key={mb.model} className="p-3 rounded bg-elevated border border-border flex items-center justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <span className="w-2 h-2 rounded-full bg-accent" />
-                      <span className="font-medium text-text">{mb.model}</span>
+              {(!usage?.model_breakdown || usage.model_breakdown.length === 0) ? (
+                <div className="p-4 text-center border border-dashed border-border rounded text-xs text-muted">
+                  No token consumption recorded yet. Run a prompt or agent workflow to view per-model expenditure.
+                </div>
+              ) : (
+                <div className="space-y-2 font-mono text-xs">
+                  {usage.model_breakdown.map((mb) => (
+                    <div key={mb.model} className="p-3 rounded bg-elevated border border-border flex items-center justify-between">
+                      <div className="flex items-center space-x-2.5">
+                        <span className="w-2 h-2 rounded-full bg-accent" />
+                        <span className="font-medium text-text">{mb.model}</span>
+                      </div>
+                      <div className="flex items-center space-x-6">
+                        <span className="text-muted">{(mb.tokens / 1000000).toFixed(2)}M Tokens</span>
+                        <span className="font-semibold text-text">${mb.cost_usd.toFixed(2)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-6">
-                      <span className="text-muted">{(mb.tokens / 1000000).toFixed(2)}M Tokens</span>
-                      <span className="font-semibold text-text">${mb.cost_usd.toFixed(2)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -298,46 +304,53 @@ export const BillingPage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h3 className="text-sm font-semibold text-text">Invoice Receipts & Payment History</h3>
-                <p className="text-xs text-muted">Historical invoices, Stripe receipts, and automated tax statements</p>
+                <p className="text-xs text-muted">Historical invoices, Stripe receipts, and automated statements</p>
               </div>
-              <Badge variant="success">Stripe Billing Active</Badge>
+              <Badge variant="neutral">Billing Ready</Badge>
             </div>
 
-            <div className="space-y-2 font-mono text-xs">
-              {invoices.map((inv) => (
-                <div key={inv.id} className="p-3 rounded bg-elevated border border-border flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-semibold text-xs">
-                      INV
+            {invoices.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-border rounded-lg space-y-2">
+                <p className="text-xs font-medium text-text">No invoices generated yet</p>
+                <p className="text-[11px] text-muted">Statements and downloadable receipts will appear here once subscription cycles are processed.</p>
+              </div>
+            ) : (
+              <div className="space-y-2 font-mono text-xs">
+                {invoices.map((inv) => (
+                  <div key={inv.id} className="p-3 rounded bg-elevated border border-border flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-semibold text-xs">
+                        INV
+                      </div>
+                      <div>
+                        <div className="font-semibold text-text text-xs">{inv.invoice_number}</div>
+                        <div className="text-[11px] text-muted">{inv.date} • {inv.tier} Subscription</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-text text-xs">{inv.invoice_number}</div>
-                      <div className="text-[11px] text-muted">{inv.date} • {inv.tier} Subscription</div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-semibold text-text font-mono">${inv.amount_usd.toFixed(2)}</span>
-                    <Badge variant="success">
-                      {inv.status}
-                    </Badge>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addNotification({
-                          type: 'document',
-                          title: 'Invoice Downloaded',
-                          description: `Downloaded PDF receipt for ${inv.invoice_number}.`,
-                        });
-                      }}
-                      className="p-1.5 rounded hover:bg-surface border border-border text-muted hover:text-text transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-semibold text-text font-mono">${inv.amount_usd.toFixed(2)}</span>
+                      <Badge variant="success">
+                        {inv.status}
+                      </Badge>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addNotification({
+                            type: 'document',
+                            title: 'Invoice Downloaded',
+                            description: `Downloaded PDF receipt for ${inv.invoice_number}.`,
+                          });
+                        }}
+                        className="p-1.5 rounded hover:bg-surface border border-border text-muted hover:text-text transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
