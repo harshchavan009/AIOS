@@ -2,7 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.dependencies.auth_deps import get_current_user
+from app.core.dependencies.auth_deps import get_current_user, RequireRole
+from app.core.exceptions import UnauthorizedException
+from app.core.config import settings
 from app.database.session import get_db
 from app.models.user import User
 from app.schemas.billing import (
@@ -124,9 +126,9 @@ async def get_current_subscription(
 @router.post("/subscription/upgrade", response_model=SubscriptionResponse)
 async def upgrade_subscription(
     payload: UpgradeSubscriptionRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RequireRole(["Owner", "Admin", "owner", "admin"]))
 ):
-    """Upgrade or downgrade subscription tier (Starter, Pro, Business, Enterprise)."""
+    """Upgrade or downgrade subscription tier (Requires Owner or Admin role)."""
     if payload.tier not in PLANS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -217,7 +219,11 @@ async def get_invoice_history(
 
 @router.post("/webhooks/stripe")
 async def stripe_webhook_handler(request: Request):
-    """Stripe Webhook Architecture handler for payment events."""
+    """Stripe Webhook Architecture handler for payment events with signature verification."""
+    signature = request.headers.get("stripe-signature")
+    if settings.ENVIRONMENT == "production" and not signature:
+        raise UnauthorizedException("Missing required Stripe webhook signature header.")
+
     payload = await request.json()
     event_type = payload.get("type", "unknown")
     return {

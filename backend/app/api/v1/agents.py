@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.core.dependencies.auth_deps import get_current_user
+from app.core.dependencies.auth_deps import get_current_user, RequireRole
 from app.models.user import User
 from app.agents.orchestrator import multi_agent_orchestrator
 
@@ -16,7 +16,7 @@ class AgentExecuteRequest(BaseModel):
 @router.post("/execute", status_code=status.HTTP_200_OK)
 async def execute_multi_agent_workflow(
     request: AgentExecuteRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RequireRole(["Owner", "Admin", "Developer", "Analyst", "owner", "admin", "developer", "analyst"]))
 ):
     """
     Synchronously execute multi-agent LangGraph execution loop for a target goal.

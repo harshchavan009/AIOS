@@ -432,8 +432,8 @@ async def stream_provider_health(current_user: User = Depends(get_current_user))
 
 
 # ── Legacy endpoints ──────────────────────────────────────────────────────────
-@router.get("/providers")
-async def list_providers():
+@router.get("/providers-summary")
+async def list_providers_summary(current_user: User = Depends(get_current_user)):
     return {"providers": [{"id": p["provider_id"], "name": p["provider_name"], "models": [m["id"] for m in p["models"]]} for p in PROVIDER_REGISTRY]}
 
 

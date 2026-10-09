@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
-from app.core.dependencies.auth_deps import get_current_user
+from app.core.dependencies.auth_deps import get_current_user, RequireRole
 from app.models.user import User
 from app.tools.registry import universal_tool_registry
 from app.tools.mcp import mcp_engine
@@ -25,10 +25,10 @@ async def list_registered_tools(current_user: User = Depends(get_current_user)):
 @router.post("/execute", status_code=status.HTTP_200_OK)
 async def execute_registered_tool(
     request: ToolExecuteRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RequireRole(["Owner", "Admin", "Developer", "Analyst", "owner", "admin", "developer", "analyst"]))
 ):
     """
-    Execute tool with permission validation & audit logging.
+    Execute tool with permission validation & audit logging (Non-Viewer).
     """
     result = await universal_tool_registry.execute_tool(
         request.tool_name,
@@ -46,17 +46,19 @@ async def execute_registered_tool(
 @router.post("/mcp/call", status_code=status.HTTP_200_OK)
 async def execute_mcp_protocol_call(
     json_rpc_payload: Dict[str, Any],
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RequireRole(["Owner", "Admin", "Developer", "Analyst", "owner", "admin", "developer", "analyst"]))
 ):
     """
-    Invoke Model Context Protocol (MCP) tool via JSON-RPC 2.0.
+    Invoke Model Context Protocol (MCP) tool via JSON-RPC 2.0 (Non-Viewer).
     """
     return mcp_engine.parse_mcp_request(json_rpc_payload)
 
 
 @router.get("/logs", status_code=status.HTTP_200_OK)
-async def get_tool_execution_logs(current_user: User = Depends(get_current_user)):
+async def get_tool_execution_logs(
+    current_user: User = Depends(RequireRole(["Owner", "Admin", "Developer", "Analyst", "owner", "admin", "developer", "analyst"]))
+):
     """
-    Get audit execution logs and telemetry for tool invocations.
+    Get audit execution logs and telemetry for tool invocations (Non-Viewer).
     """
     return universal_tool_registry.execution_logs
