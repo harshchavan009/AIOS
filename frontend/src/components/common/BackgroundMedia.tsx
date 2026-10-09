@@ -392,24 +392,103 @@ export const BackgroundMedia: React.FC<BackgroundMediaProps> = ({ variant }) => 
     setVideoCanPlay(true);
   }, []);
 
+  const isHero = variant === 'hero';
+
   // ── LIGHT THEME: Subtle static texture (WCAG AA compliant) ──
   if (isLight) {
     return (
       <div
         ref={containerRef}
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none overflow-hidden z-0"
-        style={{
-          backgroundColor: '#FAFAF9',
-          backgroundImage: 'radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
+        className="fixed inset-0 pointer-events-none select-none overflow-hidden z-0 bg-[#FAFAF9]"
+      >
+        {/* 1. Subtle top ambient brand halo */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: isHero
+              ? 'radial-gradient(ellipse 90% 60% at 50% -12%, rgba(15, 118, 110, 0.09) 0%, rgba(94, 234, 212, 0.04) 45%, transparent 75%)'
+              : 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(15, 118, 110, 0.05) 0%, transparent 65%)',
+          }}
+        />
+
+        {/* 2. Crisp engineering grid texture */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-70"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(148, 163, 184, 0.18) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+            maskImage: 'radial-gradient(ellipse at 50% 45%, black 45%, transparent 95%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at 50% 45%, black 45%, transparent 95%)',
+          }}
+        />
+
+        {/* 3. Static Constellation Network SVG in Ice Teal + Slate tokens */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-50"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="lightNetLine" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#0F766E" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#64748B" stopOpacity="0.20" />
+            </linearGradient>
+          </defs>
+
+          {/* Static geometric connecting lines */}
+          <line x1="10%" y1="18%" x2="24%" y2="28%" stroke="url(#lightNetLine)" strokeWidth="1" strokeDasharray="4 3" />
+          <line x1="24%" y1="28%" x2="38%" y2="14%" stroke="url(#lightNetLine)" strokeWidth="1.2" />
+          <line x1="38%" y1="14%" x2="52%" y2="24%" stroke="url(#lightNetLine)" strokeWidth="1.2" />
+          <line x1="52%" y1="24%" x2="68%" y2="15%" stroke="url(#lightNetLine)" strokeWidth="1.2" strokeDasharray="5 3" />
+          <line x1="68%" y1="15%" x2="84%" y2="26%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="84%" y1="26%" x2="94%" y2="18%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="24%" y1="28%" x2="18%" y2="52%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="18%" y1="52%" x2="32%" y2="62%" stroke="url(#lightNetLine)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="68%" y1="15%" x2="76%" y2="48%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="76%" y1="48%" x2="64%" y2="65%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="84%" y1="26%" x2="88%" y2="55%" stroke="url(#lightNetLine)" strokeWidth="1" />
+          <line x1="52%" y1="24%" x2="48%" y2="58%" stroke="url(#lightNetLine)" strokeWidth="0.8" strokeDasharray="2 4" />
+
+          {/* Static nodes */}
+          <circle cx="10%" cy="18%" r="2.5" fill="#0F766E" opacity="0.4" />
+          <circle cx="24%" cy="28%" r="3.5" fill="#0F766E" opacity="0.6" />
+          <circle cx="38%" cy="14%" r="2" fill="#64748B" opacity="0.5" />
+          <circle cx="52%" cy="24%" r="4.5" fill="#0F766E" opacity="0.65" />
+          <circle cx="68%" cy="15%" r="3" fill="#0F766E" opacity="0.55" />
+          <circle cx="84%" cy="26%" r="3.5" fill="#0F766E" opacity="0.6" />
+          <circle cx="94%" cy="18%" r="2" fill="#64748B" opacity="0.45" />
+          <circle cx="18%" cy="52%" r="3" fill="#64748B" opacity="0.5" />
+          <circle cx="32%" cy="62%" r="2.5" fill="#0F766E" opacity="0.45" />
+          <circle cx="76%" cy="48%" r="3" fill="#0F766E" opacity="0.55" />
+          <circle cx="64%" cy="65%" r="2.5" fill="#64748B" opacity="0.45" />
+          <circle cx="88%" cy="55%" r="2.5" fill="#0F766E" opacity="0.45" />
+          <circle cx="48%" cy="58%" r="2" fill="#0F766E" opacity="0.4" />
+        </svg>
+
+        {/* 4. Fine slate dot matrix */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-50"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(100, 116, 139, 0.28) 1.2px, transparent 1.2px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* 5. Clean page edge blend */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 65%, #FAFAF9 100%)',
+          }}
+        />
+      </div>
     );
   }
 
   // ── GRAPHITE DARK THEME ──
-  const isHero = variant === 'hero';
 
   // Opacity & filter settings
   // hero: opacity 0.55
