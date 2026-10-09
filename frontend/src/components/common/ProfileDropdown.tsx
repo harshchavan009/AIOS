@@ -96,13 +96,13 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           <div className="p-3 border-b border-border bg-secondary/30 space-y-0.5">
             <div className="flex items-center space-x-1.5">
               <span className="text-xs font-semibold truncate text-foreground">
-                {user?.full_name || 'AIOS Administrator'}
+                {user?.full_name || 'AIOS User'}
               </span>
               <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-secondary text-muted-foreground border border-border">
-                {user?.role || 'Admin'}
+                {user?.role || 'Member'}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@aios.dev'}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email || ''}</p>
           </div>
 
           {/* User Avatar Menu Items */}

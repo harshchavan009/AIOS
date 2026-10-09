@@ -1,7 +1,9 @@
+import base64
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict
 import bcrypt
+from cryptography.fernet import Fernet
 import jwt
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedException
@@ -56,3 +58,41 @@ def decode_token(token: str) -> Dict[str, Any]:
         return payload
     except jwt.PyJWTError:
         raise UnauthorizedException("Invalid authentication token or token expired.")
+
+
+def _get_fernet_cipher() -> Fernet:
+    """Derive a URL-safe 32-byte base64 key for Fernet from API_KEY_ENCRYPTION_KEY or SECRET_KEY."""
+    raw_key = settings.API_KEY_ENCRYPTION_KEY or settings.SECRET_KEY
+    key_32 = hashlib.sha256(raw_key.encode("utf-8")).digest()
+    fernet_key = base64.urlsafe_b64encode(key_32)
+    return Fernet(fernet_key)
+
+
+def encrypt_secret(plaintext: str) -> str:
+    """Encrypt a secret string at rest using AES/Fernet encryption."""
+    if not plaintext:
+        return ""
+    cipher = _get_fernet_cipher()
+    return cipher.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_secret(ciphertext: str) -> str:
+    """Decrypt a secret string using AES/Fernet encryption."""
+    if not ciphertext:
+        return ""
+    cipher = _get_fernet_cipher()
+    try:
+        return cipher.decrypt(ciphertext.encode("utf-8")).decode("utf-8")
+    except Exception:
+        # Fallback if plaintext was already stored unencrypted
+        return ciphertext
+
+
+def mask_secret(secret: str, visible_suffix_len: int = 4) -> str:
+    """Mask all but the last 4 characters of a secret for safe non-leaking display/logging."""
+    if not secret:
+        return ""
+    if len(secret) <= visible_suffix_len:
+        return "*" * len(secret)
+    return f"{'*' * (len(secret) - visible_suffix_len)}{secret[-visible_suffix_len:]}"
+

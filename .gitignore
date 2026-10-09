@@ -38,11 +38,26 @@ frontend/build/
 
 # Environment Variables
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 
-# Docker / Volumes
+# Sensitive Keys & Credentials
+*.pem
+*.key
+*.cert
+*.crt
+service-account*.json
+credentials*.json
+
+# Backups & Database Dumps
+*.bak
+*.backup
+*.sql
+*.dump
+
+# Docker / Volumes / Uploads
 data/
+data/uploads/
 pgdata/
 redisdata/
 qdrantdata/
