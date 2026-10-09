@@ -12,12 +12,17 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
     Sliding-window rate limiter protecting public endpoints against abuse and brute-force attacks.
     Uses in-memory sliding window with Redis readiness.
     """
+    requests: Dict[str, List[float]] = defaultdict(list)
+    clean_interval: float = 60.0
+    last_clean: float = time.time()
+
     def __init__(self, app):
         super().__init__(app)
-        # In-memory storage: key -> list of timestamps
-        self.requests: Dict[str, List[float]] = defaultdict(list)
-        self.clean_interval = 60.0
-        self.last_clean = time.time()
+
+    @classmethod
+    def reset(cls):
+        cls.requests.clear()
+        cls.last_clean = time.time()
 
     def _cleanup_old_records(self, now: float):
         if now - self.last_clean > self.clean_interval:
@@ -33,23 +38,33 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
     def _get_rate_limit(self, path: str) -> tuple[int, int]:
         """Returns (max_requests, window_seconds) based on endpoint sensitivity."""
-        if path.startswith("/api/v1/auth/login") or path.startswith("/api/v1/auth/register"):
-            return (15, 60)  # 15 attempts / min for auth to prevent brute force
-        elif any(path.startswith(prefix) for prefix in [
+        # Sensitive Auth endpoints: strict 10 requests/min to prevent brute-force attacks
+        if any(path.startswith(p) for p in [
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            "/api/v1/auth/oauth"
+        ]):
+            return (10, 60)
+        # Heavy AI / LLM / RAG endpoints: moderate 30 requests/min to protect billing and compute
+        elif any(path.startswith(p) for p in [
             "/api/v1/agents/execute",
             "/api/v1/llm/generate",
             "/api/v1/rag/upload",
-            "/api/v1/rag/query"
+            "/api/v1/rag/query",
+            "/api/v1/tools/execute"
         ]):
-            return (40, 60)  # 40 requests / min for heavy AI generation
+            return (30, 60)
+        # General API routes: 120 requests/min
         elif path.startswith("/api/v1/"):
-            return (180, 60)  # 180 requests / min for general API
-        return (1000, 60)  # Generous for static / documentation
+            return (120, 60)
+        return (600, 60)  # Documentation / static
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
-        # Bypass rate limiting for health, readiness, docs, and assets
+        # Bypass rate limiting for health, readiness, docs, static assets, and OPTIONS preflight
         if (
             path in ("/healthz", "/readyz", "/docs", "/redoc", "/openapi.json")
             or path.startswith("/api/v1/health")
@@ -58,14 +73,21 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         ):
             return await call_next(request)
 
-        # Client key: forwarded IP or client host
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            client_ip = forwarded_for.split(",")[0].strip()
+        # Determine identifier: Bearer token hash (per-user) or Client IP (per-IP)
+        import hashlib
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token_val = auth_header[7:].strip()
+            client_id = f"usr_{hashlib.sha256(token_val.encode()).hexdigest()[:16]}"
         else:
-            client_ip = request.client.host if request.client else "unknown_client"
+            forwarded_for = request.headers.get("X-Forwarded-For")
+            if forwarded_for:
+                client_ip = forwarded_for.split(",")[0].strip()
+            else:
+                client_ip = request.client.host if request.client else "unknown_client"
+            client_id = f"ip_{client_ip}"
 
-        key = f"{client_ip}:{path}"
+        key = f"{client_id}:{path}"
         max_reqs, window = self._get_rate_limit(path)
         now = time.time()
         self._cleanup_old_records(now)
@@ -76,7 +98,9 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         if len(active_timestamps) >= max_reqs:
             retry_after = int(window - (now - active_timestamps[0])) + 1
-            logger.warning(f"Rate limit exceeded for IP {client_ip} on {path}. Retry after {retry_after}s.")
+            if retry_after <= 0:
+                retry_after = 1
+            logger.warning(f"Rate limit exceeded for {client_id} on {path}. Retry after {retry_after}s.")
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
