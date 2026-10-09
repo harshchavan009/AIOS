@@ -34,8 +34,10 @@ export const LandingPage: React.FC = () => {
       {/* Full-bleed Hero Animated Background */}
       <BackgroundMedia variant="hero" />
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 1. Sticky Minimal Navigation */}
+      {/* Main Content with z-10 to stay safely above background */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* 1. Sticky Minimal Navigation */}
       {/* ───────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-13 flex items-center justify-between">
@@ -807,6 +809,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
