@@ -227,21 +227,6 @@ export const LoginPage: React.FC = () => {
             Create an account
           </Link>
         </p>
-
-        {/* Discreet Dev Environment Credentials Helper */}
-        {import.meta.env.DEV && (
-          <div className="mt-4 text-center">
-            <details className="text-[11px] text-muted-foreground">
-              <summary className="cursor-pointer hover:text-foreground">
-                Development test credentials
-              </summary>
-              <div className="mt-2 p-2 rounded border border-border bg-secondary/40 text-left space-y-1 font-mono text-[10px]">
-                <div>Admin: <span className="text-foreground">admin@aios.dev</span> / <span className="text-foreground">Admin@12345</span></div>
-                <div>Engineer: <span className="text-foreground">engineer@aios.enterprise</span> / <span className="text-foreground">Engineer@12345</span></div>
-              </div>
-            </details>
-          </div>
-        )}
       </div>
     </div>
   );

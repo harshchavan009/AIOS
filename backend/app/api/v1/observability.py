@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.dependencies.auth_deps import get_current_user
+from app.core.security import decode_token
 from app.database.session import get_db, AsyncSessionLocal
 from app.models.user import User
 from app.models.auth_models import UserSession
@@ -70,7 +71,7 @@ async def get_live_system_telemetry(
 
 
 @router.get("/stream")
-async def stream_live_telemetry():
+async def stream_live_telemetry(current_user: User = Depends(get_current_user)):
     """
     Server-Sent Events (SSE) live telemetry stream updating every 2 seconds.
     """
@@ -96,7 +97,27 @@ async def stream_live_telemetry():
 async def websocket_live_telemetry(websocket: WebSocket):
     """
     WebSocket endpoint broadcasting real-time system metrics, hardware load, and running agents telemetry.
+    Authenticated via '?token=' query parameter or 'Authorization' header.
     """
+    token = websocket.query_params.get("token")
+    if not token and "authorization" in websocket.headers:
+        auth_header = websocket.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    try:
+        payload = decode_token(token)
+        if not payload.get("sub"):
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+    except Exception:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await websocket.accept()
     try:
         while True:

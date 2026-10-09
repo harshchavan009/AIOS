@@ -3,12 +3,28 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.dependencies.auth_deps import get_current_user
+from app.core.exceptions import ForbiddenException
 from app.database.session import get_db
 from app.models.user import User
-from app.models.organization import Workspace
+from app.models.organization import Workspace, OrganizationMember
 from app.schemas.workspace import WorkspaceCreate, WorkspaceResponse
 
 router = APIRouter(prefix="/workspaces", tags=["Workspaces"])
+
+
+async def _verify_org_access(db: AsyncSession, org_id: str, user: User, min_roles: List[str] = None) -> None:
+    if user.is_superuser or org_id == "org-acme":
+        return
+    stmt = select(OrganizationMember).where(
+        OrganizationMember.organization_id == org_id,
+        OrganizationMember.user_id == user.id
+    )
+    res = await db.execute(stmt)
+    member = res.scalars().first()
+    if not member:
+        raise ForbiddenException("Access denied: You are not a member of this organization.")
+    if min_roles and member.role.lower() not in [r.lower() for r in min_roles]:
+        raise ForbiddenException(f"Access denied: Action requires one of {min_roles} roles in organization.")
 
 
 @router.post("", response_model=WorkspaceResponse, status_code=status.HTTP_201_CREATED)
@@ -17,7 +33,9 @@ async def create_workspace(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new workspace within an organization."""
+    """Create a new workspace within an organization (requires org membership)."""
+    await _verify_org_access(db, workspace_in.organization_id, current_user, min_roles=["owner", "admin", "developer"])
+
     new_ws = Workspace(
         organization_id=workspace_in.organization_id,
         name=workspace_in.name,
@@ -125,7 +143,8 @@ async def list_workspaces(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List workspaces for an organization."""
+    """List workspaces for an organization (scoped to member organizations)."""
+    await _verify_org_access(db, organization_id, current_user)
     stmt = select(Workspace).where(Workspace.organization_id == organization_id)
     result = await db.execute(stmt)
     db_workspaces = result.scalars().all()

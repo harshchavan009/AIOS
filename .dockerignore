@@ -6,10 +6,21 @@
 .vscode
 .idea
 
-# Frontend (deployed separately to Vercel)
+# Secrets & Environment variables
+.env
+.env.*
+*.pem
+*.key
+*.bak
+*.sql
+*.zip
+service-account*.json
+
+# Frontend & Dependencies
 frontend/node_modules
 frontend/dist
 frontend/build
+node_modules/
 
 # Python artifacts & local databases
 __pycache__
@@ -27,7 +38,7 @@ ENV/
 *.sqlite
 *.sqlite3
 
-# Local runtime data
+# Local runtime data & uploads
 data/
 pgdata/
 redisdata/

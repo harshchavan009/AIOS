@@ -46,17 +46,22 @@ async def ensure_db_schema_migrated():
 
 async def seed_default_admin_accounts(db: AsyncSession):
     """
-    Seed default development admin account (admin@aios.dev / Admin@12345)
-    and enterprise developer account (engineer@aios.enterprise / Engineer@12345)
-    if they do not already exist.
+    Seed default development admin account and enterprise developer account
+    ONLY in development environment and ONLY if they do not already exist.
+    Never run in staging or production.
+    Never overwrite passwords of existing accounts.
     """
+    if settings.ENVIRONMENT != "development":
+        logger.info(f"Production/staging environment detected ({settings.ENVIRONMENT}). Skipping seed account creation.")
+        return
+
     # 1. Admin Account (admin@aios.dev)
     admin_email = "admin@aios.dev"
     res_admin = await db.execute(select(User).where(User.email == admin_email))
     admin_user = res_admin.scalars().first()
 
     if not admin_user:
-        logger.info(f"Seeding default development admin account: {admin_email}...")
+        logger.info(f"Seeding development admin account: {admin_email}...")
         admin_user = User(
             email=admin_email,
             hashed_password=get_password_hash("Admin@12345"),
@@ -67,12 +72,7 @@ async def seed_default_admin_accounts(db: AsyncSession):
             verification_token=secrets.token_urlsafe(32)
         )
         db.add(admin_user)
-    else:
-        # Ensure password hash is valid Admin@12345
-        admin_user.hashed_password = get_password_hash("Admin@12345")
-        admin_user.is_active = True
-        admin_user.is_verified = True
-        admin_user.role = "Admin"
+        await db.commit()
 
     # 2. Engineer Account (engineer@aios.enterprise)
     engineer_email = "engineer@aios.enterprise"
@@ -80,7 +80,7 @@ async def seed_default_admin_accounts(db: AsyncSession):
     eng_user = res_eng.scalars().first()
 
     if not eng_user:
-        logger.info(f"Seeding default enterprise developer account: {engineer_email}...")
+        logger.info(f"Seeding development engineer account: {engineer_email}...")
         eng_user = User(
             email=engineer_email,
             hashed_password=get_password_hash("Engineer@12345"),
@@ -91,13 +91,9 @@ async def seed_default_admin_accounts(db: AsyncSession):
             verification_token=secrets.token_urlsafe(32)
         )
         db.add(eng_user)
-    else:
-        eng_user.hashed_password = get_password_hash("Engineer@12345")
-        eng_user.is_active = True
-        eng_user.is_verified = True
+        await db.commit()
 
-    await db.commit()
-    logger.info("Default development user accounts successfully verified and seeded.")
+    logger.info("Development user accounts verification check complete.")
 
 
 async def init_db_and_seed():

@@ -16,6 +16,7 @@ import {
 import { PageLayout } from '../components/layouts/PageLayout';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { sanitizeUrl } from '../utils/sanitize';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ModelEntry {
@@ -301,7 +302,7 @@ function ProviderCard({
                     {health!.latency_ms} ms
                   </span>
                   <a
-                    href={provider.docs_url}
+                    href={sanitizeUrl(provider.docs_url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}

@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List, Optional, Union
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +22,12 @@ class Settings(BaseSettings):
         description="JWT Secret key"
     )
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Short-lived (15 min) for security
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7    # 7 days rotating refresh tokens
+    API_KEY_ENCRYPTION_KEY: Optional[str] = Field(
+        default=None,
+        description="Key for symmetric encryption of third-party API keys at rest"
+    )
 
     # Database (PostgreSQL or SQLite fallback for dev)
     DATABASE_URL: str = Field(
@@ -64,8 +69,13 @@ class Settings(BaseSettings):
     STORAGE_LOCAL_DIR: str = Field(default="data/uploads", description="Directory for local storage")
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "aios_minio_admin"
-    MINIO_SECRET_KEY: str = "aios_minio_secure_secret"
     MINIO_BUCKET_DOCUMENTS: str = "aios-documents"
+
+    # Python Execution Sandbox
+    PYTHON_SANDBOX_ENABLED: bool = Field(
+        default=True,
+        description="Enable python sandbox execution. Set to False in production environments where isolated container execution is not configured."
+    )
 
     # AI Model Provider API Keys
     OPENAI_API_KEY: str = ""
@@ -102,6 +112,30 @@ class Settings(BaseSettings):
         elif isinstance(v, list):
             return [i.strip().rstrip("/") for i in v if isinstance(i, str) and i.strip()]
         return v
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        """Fail fast on startup if production environment has weak or default secrets."""
+        if self.ENVIRONMENT.lower() == "production":
+            forbidden_keys = {
+                "aios_super_secret_enterprise_production_key_change_in_prod",
+                "changeme",
+                "secret",
+                "admin123",
+                "password",
+                "12345678",
+                "replace_with_a_secure_random_production_secret_key",
+            }
+            if self.SECRET_KEY in forbidden_keys or len(self.SECRET_KEY) < 32:
+                raise ValueError("CRITICAL SECURITY CONFIGURATION ERROR: In production, SECRET_KEY must be a secure random secret of at least 32 characters!")
+
+            if "aios_secure_pass_2026" in self.DATABASE_URL:
+                raise ValueError("CRITICAL SECURITY CONFIGURATION ERROR: In production, DATABASE_URL must not use default passwords!")
+
+            if self.NEO4J_PASSWORD in {"aios_neo4j_password_2026", "replace_with_neo4j_password", "neo4j"}:
+                raise ValueError("CRITICAL SECURITY CONFIGURATION ERROR: In production, NEO4J_PASSWORD must not use default or placeholder credentials!")
+
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

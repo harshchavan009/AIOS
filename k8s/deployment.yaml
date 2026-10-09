@@ -25,6 +25,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: aios-config
+            - secretRef:
+                name: aios-secrets
           resources:
             requests:
               memory: "512Mi"

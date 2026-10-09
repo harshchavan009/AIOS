@@ -3,7 +3,7 @@ import re
 import uuid
 import time
 from typing import List, Optional, AsyncGenerator
-from fastapi import APIRouter, Depends, UploadFile, File, Form, status, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Form, status, Query, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.core.dependencies.auth_deps import get_current_user
@@ -84,6 +84,29 @@ depth: 3 hops. Token throughput: 4.58M tokens/month.
 """
 
 
+# Maximum allowed upload size: 15MB
+MAX_UPLOAD_SIZE_BYTES = 15 * 1024 * 1024
+
+
+def validate_file_magic_bytes(ext: str, raw_bytes: bytes) -> bool:
+    """Verify magic bytes signature for uploaded documents to prevent file type spoofing."""
+    if ext == ".pdf":
+        return raw_bytes.startswith(b"%PDF")
+    elif ext in (".docx", ".doc"):
+        return raw_bytes.startswith(b"PK\x03\x04") or raw_bytes.startswith(b"\xd0\xcf\x11\xe0")
+    elif ext in (".md", ".txt", ".csv"):
+        # Reject binary executables or null byte payloads masquerading as text
+        return b"\x00" not in raw_bytes[:1024]
+    return False
+
+
+def sanitize_extracted_text(text: str) -> str:
+    """Sanitize extracted document text before indexing into vector/graph stores."""
+    # Strip null characters and terminal control escape sequences
+    cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    return cleaned[:100000]  # Cap total processed document length
+
+
 # ── Upload & Index ────────────────────────────────────────────────────────────
 @router.post("/upload", status_code=status.HTTP_200_OK)
 async def upload_and_index_document(
@@ -91,8 +114,7 @@ async def upload_and_index_document(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Upload PDF / Word / Markdown / CSV / TXT and index into Qdrant + Neo4j.
-    Returns chunking, embedding, and graph stats.
+    Upload PDF / Word / Markdown / CSV / TXT and index into Qdrant + Neo4j with magic byte validation.
     """
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ".txt"
     if ext not in SUPPORTED_EXTENSIONS:
@@ -102,13 +124,28 @@ async def upload_and_index_document(
         }
 
     raw_bytes = await file.read()
+    
+    # 1. Enforce Max Upload Size
+    if len(raw_bytes) > MAX_UPLOAD_SIZE_BYTES:
+        return {
+            "error": f"File size exceeds maximum allowed limit (15MB). Received: {round(len(raw_bytes) / (1024*1024), 2)}MB",
+            "status": "rejected"
+        }
+
+    # 2. Verify Magic Bytes
+    if not validate_file_magic_bytes(ext, raw_bytes):
+        return {
+            "error": f"File content does not match expected signature for '{ext}'. Upload rejected.",
+            "status": "rejected"
+        }
+
     file_size_kb = round(len(raw_bytes) / 1024, 1)
 
     # Persist uploaded file to storage (local disk or S3/MinIO)
     await storage_service.save_file(file.filename, raw_bytes)
 
-    # Parse text from file
-    text = parse_file_content(file.filename, raw_bytes)
+    # Parse & sanitize text from file
+    text = sanitize_extracted_text(parse_file_content(file.filename, raw_bytes))
     word_count = len(text.split())
 
     # Ingest into pipeline
@@ -188,12 +225,31 @@ async def upload_stream_pipeline(
     """
     raw_bytes = await file.read()
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ".txt"
+    if ext not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported format '{ext}'. Supported: PDF, DOCX, MD, TXT, CSV"
+        )
+
+    if len(raw_bytes) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds maximum allowed limit (15MB). Received: {round(len(raw_bytes) / (1024*1024), 2)}MB"
+        )
+
+    if not validate_file_magic_bytes(ext, raw_bytes):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File content does not match expected signature for '{ext}'. Upload rejected."
+        )
+
     file_size_kb = round(len(raw_bytes) / 1024, 1)
 
     # Persist uploaded file to storage (local disk or S3/MinIO)
     await storage_service.save_file(file.filename, raw_bytes)
 
-    text = parse_file_content(file.filename, raw_bytes)
+    # Parse and sanitize text from file
+    text = sanitize_extracted_text(parse_file_content(file.filename, raw_bytes))
     word_count = len(text.split())
 
     async def event_generator() -> AsyncGenerator[str, None]:

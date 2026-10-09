@@ -29,6 +29,8 @@ def event_loop():
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
+    from app.core.middleware.rate_limiter import RateLimiterMiddleware
+    RateLimiterMiddleware.reset()
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield

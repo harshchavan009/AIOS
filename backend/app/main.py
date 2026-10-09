@@ -10,6 +10,7 @@ from app.core.exceptions import AIOSException, aios_exception_handler, global_ex
 from app.core.logging import logger
 from app.core.middleware.request_tracing import RequestTracingMiddleware
 from app.core.middleware.rate_limiter import RateLimiterMiddleware
+from app.core.middleware.security_headers import SecurityHeadersMiddleware
 from app.database.init_db import init_db_and_seed
 from app.database.session import engine
 
@@ -27,20 +28,23 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+is_production = settings.ENVIRONMENT.lower() == "production"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    openapi_url=None if is_production else f"{settings.API_V1_STR}/openapi.json",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
     lifespan=lifespan
 )
 
-# Tracing & Rate Limiting Middleware
+# Security Headers, Tracing & Rate Limiting Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestTracingMiddleware)
 app.add_middleware(RateLimiterMiddleware)
 
-# CORS Setup - Compute allowed origins
+# CORS Setup - Compute allowed origins strictly (no wildcard with credentials)
 cors_origins = list(settings.BACKEND_CORS_ORIGINS) if isinstance(settings.BACKEND_CORS_ORIGINS, list) else [str(settings.BACKEND_CORS_ORIGINS)]
 if settings.CORS_ORIGINS:
     extra = [o.strip().rstrip("/") for o in settings.CORS_ORIGINS.split(",") if o.strip()]
@@ -52,12 +56,17 @@ if settings.FRONTEND_URL:
     if clean_fe not in cors_origins:
         cors_origins.append(clean_fe)
 
+# Filter out any wildcard entries to comply with strict credentials CORS policy
+clean_cors_origins = [o for o in cors_origins if o != "*"]
+if not clean_cors_origins:
+    clean_cors_origins = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=clean_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Workspace-ID", "X-Correlation-ID"],
 )
 
 # Custom Exception Handlers

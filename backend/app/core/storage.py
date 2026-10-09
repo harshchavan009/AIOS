@@ -33,27 +33,32 @@ class FileStorageService:
                 self.storage_type = "local"
 
     def _sanitize_filename(self, filename: str) -> str:
-        """Strip directory traversal elements and unsafe characters."""
+        """Strip directory traversal elements, unsafe characters, and enforce safe basename."""
         base = os.path.basename(filename)
         cleaned = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', base)
-        return cleaned or "unnamed_document"
+        return cleaned[:80] or "unnamed_document"
 
     async def save_file(self, filename: str, content: bytes) -> str:
+        import uuid
         safe_name = self._sanitize_filename(filename)
+        # Randomize filename with UUID prefix to prevent collisions and overwrite attacks
+        stored_filename = f"{uuid.uuid4().hex[:12]}_{safe_name}"
 
         if self.storage_type in ("s3", "minio") and self.minio_client:
             import io
             data_stream = io.BytesIO(content)
             self.minio_client.put_object(
                 settings.MINIO_BUCKET_DOCUMENTS,
-                safe_name,
+                stored_filename,
                 data_stream,
                 length=len(content)
             )
-            return f"s3://{settings.MINIO_BUCKET_DOCUMENTS}/{safe_name}"
+            return f"s3://{settings.MINIO_BUCKET_DOCUMENTS}/{stored_filename}"
 
-        # Local filesystem storage
-        target_path = os.path.join(self.local_dir, safe_name)
+        # Local filesystem storage with strict path containment check
+        target_path = os.path.abspath(os.path.join(self.local_dir, stored_filename))
+        if not target_path.startswith(self.local_dir):
+            raise ValueError("Path traversal violation detected.")
         with open(target_path, "wb") as f:
             f.write(content)
         return target_path

@@ -52,8 +52,8 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
         result = await db.execute(text("SELECT 1"))
         if result.scalar() == 1:
             db_status = "healthy"
-    except Exception as e:
-        db_status = f"error: {str(e)}"
+    except Exception:
+        db_status = "error: connection_failed"
 
     # 2. Redis
     redis_status = "healthy" if check_tcp(settings.REDIS_URL, 6379) else "unavailable_or_in_memory"

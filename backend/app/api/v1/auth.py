@@ -10,7 +10,15 @@ from sqlalchemy import select, update, delete, desc, text
 from app.core.config import settings
 from app.core.exceptions import DuplicateEntityException, UnauthorizedException, BadRequestException
 from app.core.logging import logger
-from app.core.security import create_access_token, decode_token, get_password_hash, verify_password
+from app.core.security import (
+    create_access_token,
+    decode_token,
+    get_password_hash,
+    verify_password,
+    verify_password_and_needs_rehash,
+    validate_password_strength,
+    DUMMY_TIMING_HASH,
+)
 from app.core.rbac import normalize_role
 from app.database.session import get_db
 from app.models.user import User
@@ -199,17 +207,51 @@ async def login(credentials: UserLogin, request: Request, db: AsyncSession = Dep
     logger.info(f"Login request received for email='{credentials.email}'")
     
     try:
-        repo = UserRepository(db)
-        user = await repo.get_by_email(credentials.email.lower().strip())
+        norm_email = credentials.email.lower().strip()
         
-        if not user or not verify_password(credentials.password, user.hashed_password):
-            await _record_login_history(
-                db, email=credentials.email, status_str="failed_password", request=request, failure_reason="Invalid credentials"
+        # 1. Account Lockout Protection (5 consecutive failed attempts within 15 minutes)
+        lockout_threshold = datetime.now(timezone.utc) - timedelta(minutes=15)
+        recent_fails = await db.execute(
+            select(LoginHistory)
+            .where(
+                LoginHistory.email == norm_email,
+                LoginHistory.status == "failed_password",
+                LoginHistory.created_at >= lockout_threshold
             )
-            raise UnauthorizedException("Incorrect email or password.")
+            .order_by(desc(LoginHistory.created_at))
+            .limit(5)
+        )
+        if len(recent_fails.scalars().all()) >= 5:
+            logger.warning(f"Login rejected: account temporarily locked for email='{norm_email}'")
+            raise UnauthorizedException("Account is temporarily locked due to multiple failed login attempts. Please try again in 15 minutes.")
+
+        repo = UserRepository(db)
+        user = await repo.get_by_email(norm_email)
+        
+        # 2. Timing attack mitigation: run constant-time check even if user does not exist
+        if not user:
+            verify_password(credentials.password, DUMMY_TIMING_HASH)
+            await _record_login_history(
+                db, email=norm_email, status_str="failed_password", request=request, failure_reason="Invalid credentials"
+            )
+            raise UnauthorizedException("Invalid email or password.")
+
+        # 3. Constant-time verification & work factor audit
+        is_valid, needs_rehash = verify_password_and_needs_rehash(credentials.password, user.hashed_password)
+        if not is_valid:
+            await _record_login_history(
+                db, email=norm_email, status_str="failed_password", request=request, failure_reason="Invalid credentials"
+            )
+            raise UnauthorizedException("Invalid email or password.")
 
         if not user.is_active:
             raise UnauthorizedException("Account has been deactivated. Contact workspace administrator.")
+
+        # 4. Rehash-on-login if stored hash has work factor < 12
+        if needs_rehash:
+            logger.info(f"Upgrading password hash to work factor 12 for {user.email}...")
+            user.hashed_password = get_password_hash(credentials.password)
+            await db.commit()
 
         # Determine Token TTL based on remember_me
         refresh_days = 30 if credentials.remember_me else 7
@@ -265,6 +307,7 @@ async def login_form(request: Request, form_data: OAuth2PasswordRequestForm = De
     return await login(UserLogin(email=form_data.username, password=form_data.password), request, db)
 
 
+# ── Refresh Token with Rotation & Reuse Detection ───────────────────────────
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
     """Exchange a valid refresh token for a new access token and rotate refresh token."""
@@ -274,12 +317,25 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
         if not user_id:
             raise UnauthorizedException("Invalid refresh token payload.")
         
-        # Verify session active
+        # Verify session is active
         token_hash = _hash_token(request_data.refresh_token)
         sess_res = await db.execute(select(UserSession).where(UserSession.refresh_token_hash == token_hash))
         user_session = sess_res.scalars().first()
-        if user_session and user_session.is_revoked:
-            raise UnauthorizedException("Session has been revoked.")
+        
+        if not user_session:
+            # Token not found: could be an already-rotated or forged token
+            raise UnauthorizedException("Invalid or unrecognized refresh token.")
+
+        if user_session.is_revoked:
+            # Refresh token reuse detection! Revoke ALL active sessions for this compromised user
+            logger.warning(f"Replay attack detected for user {user_id}. Revoking all sessions.")
+            await db.execute(
+                update(UserSession)
+                .where(UserSession.user_id == user_id)
+                .values(is_revoked=True)
+            )
+            await db.commit()
+            raise UnauthorizedException("Session revoked due to token reuse detection.")
 
         repo = UserRepository(db)
         user = await repo.get_by_id(user_id)
@@ -300,11 +356,11 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
             expires_delta=timedelta(days=refresh_days)
         )
 
-        if user_session:
-            user_session.refresh_token_hash = _hash_token(new_refresh_token)
-            user_session.last_active_at = datetime.now(timezone.utc)
-            user_session.expires_at = datetime.now(timezone.utc) + timedelta(days=refresh_days)
-            await db.commit()
+        # Rotate refresh token hash: invalidate old token and set new hash
+        user_session.refresh_token_hash = _hash_token(new_refresh_token)
+        user_session.last_active_at = datetime.now(timezone.utc)
+        user_session.expires_at = datetime.now(timezone.utc) + timedelta(days=refresh_days)
+        await db.commit()
 
         return TokenResponse(
             access_token=new_access_token,
@@ -320,36 +376,67 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
 
 
 # ── OAuth 2.0 (Google, GitHub, Microsoft) ──────────────────────────────────
+ALLOWED_OAUTH_PROVIDERS = {"google", "github", "microsoft"}
+
 @router.post("/oauth/google", response_model=TokenResponse)
 @router.post("/oauth/github", response_model=TokenResponse)
 @router.post("/oauth/microsoft", response_model=TokenResponse)
 async def oauth_login(payload: OAuthLoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    """Authenticate via Google, GitHub, or Microsoft OAuth."""
-    provider_name = payload.provider.lower()
-    email = payload.email or f"{provider_name}.architect@aios.enterprise"
+    """Authenticate via whitelisted Google, GitHub, or Microsoft OAuth."""
+    provider_name = payload.provider.lower().strip()
+    if provider_name not in ALLOWED_OAUTH_PROVIDERS:
+        raise BadRequestException(f"Unsupported OAuth provider: '{payload.provider}'.")
+
+    email = (payload.email or f"{provider_name}.architect@aios.enterprise").lower().strip()
     full_name = payload.name or f"{provider_name.capitalize()} AI Specialist"
     
     repo = UserRepository(db)
     user = await repo.get_by_email(email)
     if not user:
+        # Default role is strictly Developer; never trust client to specify admin roles
         new_user = User(
             email=email,
-            hashed_password=get_password_hash(secrets.token_hex(16)),
+            hashed_password=get_password_hash(secrets.token_urlsafe(24)),
             full_name=full_name,
             role="Developer",
             is_active=True,
             is_verified=True,
             oauth_provider=provider_name,
-            oauth_id=payload.token or secrets.token_hex(12)
+            oauth_id=payload.token or secrets.token_hex(16)
         )
         user = await repo.create(new_user)
     else:
         user.oauth_provider = provider_name
+        # Never elevate existing user roles from OAuth payload!
 
     refresh_days = 30 if payload.remember_me else 7
-    access_token = create_access_token(subject=user.id, claims={"email": user.email, "role": user.role})
-    refresh_token = create_access_token(subject=user.id, claims={"type": "refresh"}, expires_delta=timedelta(days=refresh_days))
+    access_token = create_access_token(
+        subject=user.id,
+        claims={"email": user.email, "role": user.role},
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    refresh_token = create_access_token(
+        subject=user.id,
+        claims={"type": "refresh", "remember_me": payload.remember_me},
+        expires_delta=timedelta(days=refresh_days)
+    )
     
+    # Track OAuth session
+    user_agent = request.headers.get("user-agent", "Unknown Device")
+    ip_addr = request.client.host if request.client else "127.0.0.1"
+    session_entry = UserSession(
+        user_id=user.id,
+        refresh_token_hash=_hash_token(refresh_token),
+        device_name=f"{provider_name.capitalize()} Session",
+        ip_address=ip_addr,
+        user_agent=user_agent[:250],
+        last_active_at=datetime.now(timezone.utc),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=refresh_days),
+        is_revoked=False
+    )
+    db.add(session_entry)
+    await db.commit()
+
     await _record_login_history(db, email=user.email, status_str=f"oauth_{provider_name}", user_id=user.id, request=request)
 
     return TokenResponse(
@@ -360,41 +447,65 @@ async def oauth_login(payload: OAuthLoginRequest, request: Request, db: AsyncSes
     )
 
 
-# ── Password Recovery ───────────────────────────────────────────────────────
+# ── Password Recovery (Single-Use, Expiring Hashed Tokens) ──────────────────
 @router.post("/forgot-password")
 async def forgot_password(request_data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
-    """Initiate password reset flow."""
+    """Initiate password reset flow: single-use expiring token stored hashed."""
+    norm_email = request_data.email.lower().strip()
     repo = UserRepository(db)
-    user = await repo.get_by_email(request_data.email)
-    if not user:
-        return {"message": "Password reset link sent to enterprise email if account exists."}
+    user = await repo.get_by_email(norm_email)
     
-    reset_token = create_access_token(
-        subject=user.id,
-        claims={"type": "password_reset"},
-        expires_delta=timedelta(hours=1)
-    )
+    # Generic message prevents user enumeration
+    generic_msg = "If an account exists for this email, password reset instructions have been generated."
+    if not user:
+        return {"message": generic_msg}
+    
+    # Generate secure random single-use token and store ONLY its SHA-256 hash
+    raw_token = secrets.token_urlsafe(32)
+    user.verification_token = _hash_token(raw_token)
+    user.verification_sent_at = datetime.now(timezone.utc)
+    await db.commit()
+
     return {
-        "message": "Password reset token generated successfully.",
-        "reset_token": reset_token
+        "message": generic_msg,
+        "reset_token": raw_token
     }
 
 
 @router.post("/reset-password")
 async def reset_password(request_data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
-    """Reset user password using reset token."""
-    payload = decode_token(request_data.token)
-    user_id: str = payload.get("sub")
-    if not user_id or payload.get("type") != "password_reset":
-        raise UnauthorizedException("Invalid or expired password reset token.")
+    """Reset user password using single-use reset token."""
+    # Enforce minimum length >= 12 and blocklist
+    validate_password_strength(request_data.new_password)
+
+    token_hash = _hash_token(request_data.token.strip())
+    res = await db.execute(select(User).where(User.verification_token == token_hash))
+    user = res.scalars().first()
     
-    repo = UserRepository(db)
-    user = await repo.get_by_id(user_id)
-    if not user:
-        raise UnauthorizedException("User not found.")
+    if not user or not user.verification_sent_at:
+        raise UnauthorizedException("Invalid or already-used password reset token.")
     
+    # Check expiration (15 minutes token lifetime)
+    token_sent = user.verification_sent_at.replace(tzinfo=timezone.utc) if user.verification_sent_at.tzinfo is None else user.verification_sent_at
+    if datetime.now(timezone.utc) - token_sent > timedelta(minutes=15):
+        user.verification_token = None
+        user.verification_sent_at = None
+        await db.commit()
+        raise UnauthorizedException("Password reset token has expired. Please request a new one.")
+    
+    # Single-use: immediately invalidate token
     user.hashed_password = get_password_hash(request_data.new_password)
+    user.verification_token = None
+    user.verification_sent_at = None
+    
+    # Revoke all active sessions on password reset
+    await db.execute(
+        update(UserSession)
+        .where(UserSession.user_id == user.id)
+        .values(is_revoked=True)
+    )
     await db.commit()
+    
     return {"message": "Password reset successfully. Please log in with your new credentials."}
 
 
@@ -544,8 +655,17 @@ async def accept_invite(
 
 
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user)):
-    """Logout current user session."""
+async def logout(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Logout current user session and revoke active device tokens."""
+    await db.execute(
+        update(UserSession)
+        .where(UserSession.user_id == current_user.id, UserSession.is_revoked == False)
+        .values(is_revoked=True)
+    )
+    await db.commit()
     return {"message": "Successfully logged out from AIOS platform.", "user_id": current_user.id}
 
 

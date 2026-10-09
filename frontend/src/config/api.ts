@@ -42,21 +42,40 @@ export function getApiUrl(endpoint: string): string {
  */
 export function getWsUrl(endpoint: string = '/api/v1/observability/ws'): string {
   const cleanPath = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let base = '';
 
   if (rawWsUrl) {
-    return `${rawWsUrl}${cleanPath}`;
-  }
-
-  if (typeof window !== 'undefined') {
+    base = `${rawWsUrl}${cleanPath}`;
+  } else if (typeof window !== 'undefined') {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (!isLocalhost) {
-      return `${PRODUCTION_RENDER_WS}${cleanPath}`;
+      base = `${PRODUCTION_RENDER_WS}${cleanPath}`;
+    } else {
+      const isHttps = window.location.protocol === 'https:';
+      const protocol = isHttps ? 'wss:' : 'ws:';
+      base = `${protocol}//${window.location.host}${cleanPath}`;
     }
-    const isHttps = window.location.protocol === 'https:';
-    const protocol = isHttps ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}${cleanPath}`;
+  } else {
+    base = `ws://localhost:8000${cleanPath}`;
   }
 
-  return `ws://localhost:8000${cleanPath}`;
+  // Attach token parameter if available in auth store
+  if (typeof window !== 'undefined') {
+    try {
+      const authData = localStorage.getItem('aios_auth_storage');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        const token = parsed?.state?.accessToken;
+        if (token) {
+          const sep = base.includes('?') ? '&' : '?';
+          return `${base}${sep}token=${encodeURIComponent(token)}`;
+        }
+      }
+    } catch {
+      // Ignore storage read error
+    }
+  }
+
+  return base;
 }
 

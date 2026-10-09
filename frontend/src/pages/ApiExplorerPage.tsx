@@ -65,19 +65,19 @@ const ENDPOINTS: EndpointDoc[] = [
       2
     ),
     curlExample: `curl -X GET "https://api.aios.dev/api/v1/agents" \\
-  -H "Authorization: Bearer aios_live_sec_98a72b1c" \\
+  -H "Authorization: Bearer YOUR_AIOS_API_KEY" \\
   -H "Content-Type: application/json"`,
     pythonExample: `import requests
 
 url = "https://api.aios.dev/api/v1/agents"
-headers = {"Authorization": "Bearer aios_live_sec_98a72b1c"}
+headers = {"Authorization": "Bearer YOUR_AIOS_API_KEY"}
 
 response = requests.get(url, headers=headers)
 print(response.json())`,
     jsExample: `const response = await fetch("https://api.aios.dev/api/v1/agents", {
   method: "GET",
   headers: {
-    "Authorization": "Bearer aios_live_sec_98a72b1c",
+    "Authorization": "Bearer YOUR_AIOS_API_KEY",
     "Content-Type": "application/json"
   }
 });
@@ -111,14 +111,14 @@ console.log(data);`,
       2
     ),
     curlExample: `curl -X POST "https://api.aios.dev/api/v1/workflows" \\
-  -H "Authorization: Bearer aios_live_sec_98a72b1c" \\
+  -H "Authorization: Bearer YOUR_AIOS_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"workflow_name": "Financial Compliance Audit", "nodes": ["PlannerAgent", "RetrieverAgent"]}'`,
     pythonExample: `import requests
 
 url = "https://api.aios.dev/api/v1/workflows"
 headers = {
-    "Authorization": "Bearer aios_live_sec_98a72b1c",
+    "Authorization": "Bearer YOUR_AIOS_API_KEY",
     "Content-Type": "application/json"
 }
 payload = {
@@ -131,7 +131,7 @@ print(response.json())`,
     jsExample: `const response = await fetch("https://api.aios.dev/api/v1/workflows", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer aios_live_sec_98a72b1c",
+    "Authorization": "Bearer YOUR_AIOS_API_KEY",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
@@ -170,13 +170,13 @@ console.log(data);`,
       2
     ),
     curlExample: `curl -X POST "https://api.aios.dev/api/v1/execute" \\
-  -H "Authorization: Bearer aios_live_sec_98a72b1c" \\
+  -H "Authorization: Bearer YOUR_AIOS_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"goal": "Audit compliance policies", "stream": true}'`,
     pythonExample: `import requests
 
 url = "https://api.aios.dev/api/v1/execute"
-headers = {"Authorization": "Bearer aios_live_sec_98a72b1c"}
+headers = {"Authorization": "Bearer YOUR_AIOS_API_KEY"}
 payload = {"goal": "Audit compliance policies", "stream": True}
 
 response = requests.post(url, json=payload, headers=headers)
@@ -184,7 +184,7 @@ print(response.json())`,
     jsExample: `const response = await fetch("https://api.aios.dev/api/v1/execute", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer aios_live_sec_98a72b1c",
+    "Authorization": "Bearer YOUR_AIOS_API_KEY",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({ goal: "Audit compliance policies", stream: true })
@@ -214,17 +214,17 @@ console.log(data);`,
       2
     ),
     curlExample: `curl -X GET "https://api.aios.dev/api/v1/usage" \\
-  -H "Authorization: Bearer aios_live_sec_98a72b1c"`,
+  -H "Authorization: Bearer YOUR_AIOS_API_KEY"`,
     pythonExample: `import requests
 
 url = "https://api.aios.dev/api/v1/usage"
-headers = {"Authorization": "Bearer aios_live_sec_98a72b1c"}
+headers = {"Authorization": "Bearer YOUR_AIOS_API_KEY"}
 
 response = requests.get(url, headers=headers)
 print(response.json())`,
     jsExample: `const response = await fetch("https://api.aios.dev/api/v1/usage", {
   method: "GET",
-  headers: { "Authorization": "Bearer aios_live_sec_98a72b1c" }
+  headers: { "Authorization": "Bearer YOUR_AIOS_API_KEY" }
 });
 const data = await response.json();
 console.log(data);`,
@@ -369,7 +369,7 @@ export const ApiExplorerPage: React.FC = () => {
 {`from aios import AIOSClient
 
 # Initialize AIOS Client with API Key
-client = AIOSClient(api_key="aios_live_sec_98a72b1c")
+client = AIOSClient(api_key="YOUR_AIOS_API_KEY")
 
 # Execute multi-agent goal with streaming thoughts
 response = client.agents.execute(
@@ -402,7 +402,7 @@ print(f"Answer: {response.final_answer}")`}
 
             <div className="p-4 rounded-2xl bg-[#06080E] border border-white/10 font-mono text-xs space-y-2">
               <div className="text-muted-foreground font-bold">HTTP Request Header Format:</div>
-              <div className="text-emerald-400 font-bold">Authorization: Bearer aios_live_sec_98a72b1c...</div>
+              <div className="text-emerald-400 font-bold">Authorization: Bearer YOUR_AIOS_API_KEY...</div>
             </div>
 
             {/* Scopes Table */}
