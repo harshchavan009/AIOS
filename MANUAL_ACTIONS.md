@@ -1,46 +1,125 @@
 # MANUAL ACTIONS & ROTATION CHECKLIST
 
-This document lists critical security actions that **cannot** be executed directly in the repository code and must be manually executed in cloud provider dashboards and infrastructure settings.
+This document lists critical security actions that **cannot** be executed directly in code and must be manually executed in cloud provider dashboards, third-party consoles, and production infrastructure environments.
 
 ---
 
-## 1. Secret Rotation Checklist
+## 1. Secret & Credential Rotation Checklist
 
-The following potential secrets and default credentials were discovered in the repository's working tree and Git history. Even after cleaning history, **these secrets must be rotated immediately in their respective provider consoles**:
+The following secrets and default credentials were discovered in the repository's working tree and Git history. Even after code hardening, **these secrets must be rotated immediately in their respective provider consoles**:
 
 - [ ] **Rotate Neo4j Database Password**
   - **Location**: `docker-compose.yml:51`, `backend/app/core/config.py:60`
   - **Committed Value**: `aios********************` (`aios_neo4j_password_2026`)
-  - **Action**: Rotate Neo4j password in Neo4j Aura or deployment server. Update backend environment variables.
+  - **Action**: Rotate Neo4j password in Neo4j Aura or deployment server. Update backend environment variables (`NEO4J_PASSWORD`).
 - [ ] **Rotate Default PostgreSQL Password**
   - **Location**: `docker-compose.yml:10`, `docker-compose.yml:77`
   - **Committed Value**: `aios*******************` (`aios_secure_pass_2026`)
-  - **Action**: Update `POSTGRES_PASSWORD` in the database cluster and deployment env vars.
+  - **Action**: Update `POSTGRES_PASSWORD` in the database cluster and deployment environment variables.
 - [ ] **Rotate JWT Secret Key (`SECRET_KEY`)**
   - **Location**: `backend/app/core/config.py:21`
   - **Committed Value**: `aios************************************************************` (`aios_super_secret_enterprise_production_key_change_in_prod`)
-  - **Action**: Generate a cryptographically random 64-character hex secret (`openssl rand -hex 32`) and set as `SECRET_KEY` in production (e.g. Render/Vercel/K8s). This will invalidate existing sessions.
-- [ ] **Rotate MinIO Object Storage Keys**
+  - **Action**: Generate a cryptographically random 64-character hex secret (`openssl rand -hex 32`) and set as `SECRET_KEY` in production (e.g. Render/Vercel/K8s). This will invalidate existing test sessions.
+- [ ] **Rotate MinIO / S3 Object Storage Keys**
   - **Location**: `docker-compose.yml:64-65`, `backend/app/core/config.py:66-67`
   - **Committed Values**: `aios_minio_admin`, `aios***********************` (`aios_minio_secure_secret`)
-  - **Action**: Generate strong credentials in MinIO/S3 and configure via environment.
-- [ ] **Rotate Seed Admin Credentials**
-  - **Location**: `backend/app/database/init_db.py:62,86`, `frontend/src/pages/LoginPage.tsx:239-240`
+  - **Action**: Generate strong random credentials in MinIO/AWS S3 and configure via environment (`MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`).
+- [ ] **Rotate Stripe Webhook Secret**
+  - **Location**: `backend/app/api/v1/billing.py`
+  - **Action**: In the Stripe Dashboard under Developers > Webhooks, rotate the endpoint signing secret and set `STRIPE_WEBHOOK_SECRET` in production backend environment variables.
+- [ ] **Rotate Seed / Development User Passwords**
+  - **Location**: `backend/app/database/init_db.py`, `frontend/src/pages/LoginPage.tsx`
   - **Committed Values**: `admin@aios.dev` / `Admi********` (`Admin@12345`), `engineer@aios.enterprise` / `Engi************` (`Engineer@12345`)
-  - **Action**: Change the production password for any live user account with email `admin@aios.dev` or `engineer@aios.enterprise`.
-- [ ] **Rotate Webhook Signer Secrets**
-  - **Location**: `frontend/src/pages/SettingsPage.tsx:180`
-  - **Committed Value**: `whse******************` (`whsec_98a72b1c3d4e5f`)
-  - **Action**: Rotate webhook signing keys on target endpoint services.
+  - **Action**: Change passwords for any pre-existing user accounts in production databases. Dev account seeding is now permanently gated behind `ENVIRONMENT=development`.
+- [ ] **Rotate AI Provider API Keys**
+  - **Action**: In OpenAI and Anthropic developer consoles, rotate any keys that may have been previously tested in development and provision new scoped API keys for `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`.
 
 ---
 
-## 2. Git History Scrubbing Plan (`git-filter-repo`)
+## 2. Cloud Provider & Infrastructure Settings Checklist
 
-> **IMPORTANT**: As per Rules of Engagement, history rewriting is **NOT** performed automatically. The user must review and approve this command sequence before execution, as rewriting git history alters commit SHAs and requires force-pushing to remote branches.
+### A. Vercel Dashboard (`aios-opal.vercel.app`)
+- [ ] Verify that **NO** backend secrets (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `POSTGRES_PASSWORD`, `SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) are configured in Vercel project environment variables.
+- [ ] Ensure only public variables exist (e.g. `VITE_API_URL=https://aios-1-wc28.onrender.com`).
+- [ ] In Vercel Project Settings > Security:
+  - Enable **Vercel Attack Challenge Mode / Web Application Firewall**.
+  - Verify security headers are active (defined in `vercel.json`).
+
+### B. Render / Production Backend Host
+- [ ] Set `ENVIRONMENT=production` (enforces startup validation and disables OpenAPI docs /dev seeding).
+- [ ] Set `SECRET_KEY` to high-entropy 64-character random hex string (`openssl rand -hex 32`).
+- [ ] Set `API_KEY_ENCRYPTION_KEY` to a 32-byte Fernet key:
+  ```bash
+  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+  ```
+- [ ] Set `BACKEND_CORS_ORIGINS` strictly to `["https://aios-opal.vercel.app"]`.
+- [ ] Ensure `DEBUG=False` and `PYTHON_SANDBOX_ENABLED=False` (or provision a separate gVisor/Firecracker isolated container service for code execution).
+
+### C. OAuth Providers (Google, GitHub, Microsoft)
+- [ ] **Google Cloud Console**: Whitelist exact production redirect URI:
+  - `https://aios-opal.vercel.app/api/v1/auth/oauth/callback/google`
+  - Disallow any wildcard or HTTP URIs.
+- [ ] **GitHub Developer Settings**: Configure OAuth app callback URL:
+  - `https://aios-opal.vercel.app/api/v1/auth/oauth/callback/github`
+- [ ] **Microsoft Entra ID**: Register app redirect URI:
+  - `https://aios-opal.vercel.app/api/v1/auth/oauth/callback/microsoft`
+
+### D. Databases & Private Network Peering
+- [ ] Ensure Postgres (`5432`), Redis (`6379`), Qdrant (`6333`), and Neo4j (`7687`) are **NOT** bound to public host ports (`0.0.0.0`). Bind exclusively to internal private networks or `127.0.0.1`.
+- [ ] Neo4j Aura / Qdrant Cloud: In cloud console, configure IP Allowlist to permit connections only from backend server CIDR blocks.
+- [ ] Enable TLS/SSL on all remote managed database connection strings (`sslmode=require`).
+- [ ] Configure Redis authentication (`requirepass <strong_password>`).
+
+### E. GitHub Repository Settings
+- [ ] Enable **Secret Scanning** and **Push Protection** in GitHub repository security settings.
+- [ ] Enable **Dependabot Alerts** and **Dependabot Security Updates**.
+- [ ] Enable branch protection rules on `main` branch (require pull request reviews, disallow force-pushing, require CI security workflow checks).
+- [ ] Enforce **Two-Factor Authentication (2FA)** for all GitHub organization members and cloud dashboard administrators.
+
+---
+
+## 3. Database Backup & Disaster Recovery Procedures
+
+### PostgreSQL
+- **Automated Nightly Backup**:
+  ```bash
+  pg_dump -U aios_user -d aios_db -Fc -f /backups/postgres/aios_db_$(date +%Y%m%d_%H%M%S).dump
+  ```
+- **Restore**:
+  ```bash
+  pg_restore -U aios_user -d aios_db -c -v /backups/postgres/<filename>.dump
+  ```
+
+### Neo4j Property Graph
+- **Backup**:
+  ```bash
+  neo4j-admin database dump aios --to-path=/backups/neo4j/
+  ```
+- **Restore**:
+  ```bash
+  neo4j-admin database load aios --from-path=/backups/neo4j/ --overwrite-destination=true
+  ```
+
+### Qdrant Vector Store
+- **Snapshot Creation**:
+  ```bash
+  curl -X POST "http://localhost:6333/collections/aios_knowledge/snapshots"
+  ```
+- **Snapshot Restore**:
+  ```bash
+  curl -X POST "http://localhost:6333/collections/aios_knowledge/snapshots/upload" \
+       -H "Content-Type:multipart/form-data" \
+       -F "snapshot=@aios_knowledge_snapshot.snapshot"
+  ```
+
+---
+
+## 4. Git History Scrubbing Plan (`git-filter-repo`)
+
+> **IMPORTANT**: In accordance with the Rules of Engagement, history rewriting is **NOT** performed automatically. The user must review and approve this command sequence before execution, as rewriting git history changes commit SHAs across all historical commits.
 
 ### History Scrubbing Proposal
-To permanently remove previous commits that referenced placeholder keys or sensitive defaults from git history:
+To permanently remove prior commits that contained sensitive default values or placeholder strings:
 
 1. **Install `git-filter-repo`**:
    ```bash
@@ -50,8 +129,7 @@ To permanently remove previous commits that referenced placeholder keys or sensi
    ```bash
    git clone --mirror https://github.com/harshchavan009/AIOS.git AIOS-backup.git
    ```
-3. **Run replacement/filtering expressions**:
-   Create `expressions.txt`:
+3. **Create replacement expressions file `expressions.txt`**:
    ```text
    aios_neo4j_password_2026==>[REDACTED_SECRET]
    aios_secure_pass_2026==>[REDACTED_SECRET]
@@ -60,12 +138,13 @@ To permanently remove previous commits that referenced placeholder keys or sensi
    Admin@12345==>[REDACTED_PASSWORD]
    Engineer@12345==>[REDACTED_PASSWORD]
    whsec_98a72b1c3d4e5f==>[REDACTED_SECRET]
+   aios_live_sec_98a72b1c==>[REDACTED_API_KEY]
    ```
 4. **Execute history scrub**:
    ```bash
    git filter-repo --replace-text expressions.txt
    ```
-5. **Coordinate with team before force-push**:
+5. **Coordinate with engineering team before force-push**:
    ```bash
    git push origin --force --all
    git push origin --force --tags
@@ -73,23 +152,18 @@ To permanently remove previous commits that referenced placeholder keys or sensi
 
 ---
 
-## 3. Cloud Provider & Infrastructure Settings Checklist
+## 5. Verification Status
 
-- [ ] **Vercel Dashboard (`aios-opal.vercel.app`)**:
-  - Add backend proxy environment variable `VITE_DEV_BACKEND_URL` and `VITE_API_URL` to point to production backend.
-  - Verify that **NO** backend secrets (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `POSTGRES_PASSWORD`, `SECRET_KEY`) are defined in Vercel environment variables under `VITE_` prefixes.
-  - Enable Vercel Attack Challenge Mode / Rate Limiting in Security settings.
-- [ ] **Render / Cloud Backend Environment**:
-  - Set `ENVIRONMENT=production` (disables all automatic dev seeding).
-  - Set `SECRET_KEY` to high-entropy 64-char random hex string.
-  - Set `DEBUG=False`.
-  - Set `BACKEND_CORS_ORIGINS` strictly to `["https://aios-opal.vercel.app"]`.
-  - Set `API_KEY_ENCRYPTION_KEY` to a 32-byte url-safe base64 key (`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`).
-- [ ] **Database & Network Exposure**:
-  - In production docker-compose or Kubernetes, ensure ports `5432` (Postgres), `6379` (Redis), `6333` (Qdrant), and `7687` (Neo4j) are **NOT** bound to `0.0.0.0` on the public host. Bind them only to internal bridge network (`127.0.0.1` or internal Docker network).
-  - Enable authentication with strong passwords for Redis (`requirepass`).
-  - Configure TLS for PostgreSQL, Neo4j, and Qdrant.
-- [ ] **GitHub Repository Settings**:
-  - Enable **Secret Scanning** and **Push Protection** in GitHub repository settings.
-  - Enable **Dependabot Alerts** and **Dependabot Security Updates**.
-  - Enable branch protection rules on `main` (require PR reviews and status checks to pass before merging).
+| Item | Status | Verification Detail |
+|---|---|---|
+| Hardcoded secrets in working tree | **VERIFIED RESOLVED** | Removed and replaced with environment variables |
+| Password hashing (bcrypt cost 12, salt) | **VERIFIED RESOLVED** | Verified in `backend/app/core/security.py` & automated tests |
+| Account lockout & timing mitigation | **VERIFIED RESOLVED** | Verified in `test_auth.py` and live dynamic curl check |
+| Tenant isolation / IDOR prevention | **VERIFIED RESOLVED** | Verified in `test_organization.py` (22 automated tests) |
+| File upload magic bytes & size limits | **VERIFIED RESOLVED** | Verified in `test_disallowed_file_upload_rejected` |
+| Security headers (HSTS, CSP, COOP) | **VERIFIED RESOLVED** | Verified in `test_security_headers_present` & live curl |
+| Rate limiting (429 & Retry-After) | **VERIFIED RESOLVED** | Verified in `test_rate_limiter_brute_force_protection` & live curl |
+| Production OpenAPI/docs disabling | **VERIFIED RESOLVED** | Verified conditionally disabled when `ENVIRONMENT=production` |
+| Cloud Dashboard Settings & 2FA | **REQUIRES MANUAL ACTION** | Must be configured in Vercel/Render/OAuth/Stripe dashboards |
+| Cloud Key Rotation | **REQUIRES MANUAL ACTION** | Must be rotated in provider dashboards as detailed in Section 1 |
+| Git History Rewrite | **AWAITING USER APPROVAL** | Prepared in Section 4, not executed without explicit authorization |
