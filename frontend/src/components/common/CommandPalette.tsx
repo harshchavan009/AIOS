@@ -367,7 +367,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'user-harsh',
       title: 'Harsh Chavan',
-      subtitle: 'harsh@aios.ai — Platform Owner & Chief Architect (Admin)',
+      subtitle: 'harsh@aios.ai: Platform Owner (Admin)',
       category: 'Users',
       icon: User,
       action: () => handleNavigate('/settings'),
@@ -375,7 +375,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'user-sarah',
       title: 'Sarah Chen',
-      subtitle: 'sarah.chen@aios.ai — Lead AI & Multi-Agent Engineer',
+      subtitle: 'sarah.chen@aios.ai: Lead AI Engineer',
       category: 'Users',
       icon: User,
       action: () => handleNavigate('/settings'),
@@ -383,7 +383,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'user-alex',
       title: 'Alex Rivera',
-      subtitle: 'alex.rivera@aios.ai — SecOps & Compliance Lead',
+      subtitle: 'alex.rivera@aios.ai: SecOps & Compliance',
       category: 'Users',
       icon: User,
       action: () => handleNavigate('/settings'),
@@ -391,7 +391,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'user-system-bot',
       title: 'AIOS System Worker Bot',
-      subtitle: 'system-bot@aios.internal — Automated Celery Worker Account',
+      subtitle: 'system-bot@aios.internal: Automated Celery Worker',
       category: 'Users',
       icon: UsersIcon,
       action: () => handleNavigate('/settings'),
@@ -401,7 +401,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     {
       id: 'api-upload-stream',
       title: 'POST /api/v1/rag/upload/stream',
-      subtitle: 'Stream 9-stage Graph RAG upload pipeline (OCR ➔ Neo4j ➔ Qdrant)',
+      subtitle: 'Stream 9-stage Graph RAG upload pipeline (OCR -> Neo4j -> Qdrant)',
       category: 'APIs',
       icon: Code2,
       action: () => handleNavigate('/api-explorer'),

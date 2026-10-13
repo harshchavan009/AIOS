@@ -92,11 +92,11 @@ export interface QueryResult {
 const PIPELINE_STEPS: { id: PipelineStepId; label: string; icon: React.ReactNode; desc: string; color: string; progressTarget: number }[] = [
   { id: 'UPLOAD',    label: '1. Ingest Payload',   icon: <Upload className="w-4 h-4 text-sky-400" />,     desc: 'Receiving File / GitHub Repo Payload', color: '#38bdf8', progressTarget: 11 },
   { id: 'OCR',       label: '2. OCR Extract',      icon: <FileText className="w-4 h-4 text-amber-400" />,  desc: 'Optical character & layout extraction', color: '#f59e0b', progressTarget: 22 },
-  { id: 'CHUNK',     label: '3. Semantic Chunk',   icon: <Layers className="w-4 h-4 text-purple-400" />,   desc: '512-token overlap windowing',         color: '#a78bfa', progressTarget: 33 },
+  { id: 'CHUNK',     label: '3. Semantic Chunk',   icon: <Layers className="w-4 h-4 text-teal-400" />,   desc: '512-token overlap windowing',         color: '#14b8a6', progressTarget: 33 },
   { id: 'EMBEDDING', label: '4. 1536d Embed',      icon: <Cpu className="w-4 h-4 text-blue-400" />,       desc: 'text-embedding-3-small vectors',     color: '#60a5fa', progressTarget: 44 },
   { id: 'NEO4J',     label: '5. Neo4j Graph',      icon: <Network className="w-4 h-4 text-emerald-400" />, desc: 'Extracting entity & relationship triples', color: '#34d399', progressTarget: 55 },
   { id: 'QDRANT',    label: '6. Qdrant HNSW',      icon: <Database className="w-4 h-4 text-pink-400" />,  desc: 'Upserting to HNSW vector collection',color: '#f472b6', progressTarget: 66 },
-  { id: 'SEARCH',    label: '7. Hybrid Search',    icon: <Search className="w-4 h-4 text-indigo-400" />,  desc: 'Cosine similarity + 3-hop traversal', color: '#818cf8', progressTarget: 77 },
+  { id: 'SEARCH',    label: '7. Hybrid Search',    icon: <Search className="w-4 h-4 text-cyan-400" />,  desc: 'Cosine similarity + 3-hop traversal', color: '#06b6d4', progressTarget: 77 },
   { id: 'ANSWER',    label: '8. LLM Synthesis',    icon: <Sparkles className="w-4 h-4 text-yellow-400" />, desc: 'Synthesizing multi-model response', color: '#facc15', progressTarget: 88 },
   { id: 'CITATION',  label: '9. Grounded Citations',icon:<CheckCircle2 className="w-4 h-4 text-teal-400" />,desc:'Precision snippet citation extraction',color: '#2dd4bf', progressTarget: 100 },
 ];
@@ -522,7 +522,7 @@ export const GraphRAGPage: React.FC = () => {
                   <GitCommit className="w-4 h-4" />
                   <span>Extracted Entity Knowledge Graph</span>
                 </span>
-                <Badge variant="success">Indexing Done ✓</Badge>
+                <Badge variant="success">Indexing Complete</Badge>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -577,14 +577,14 @@ export const GraphRAGPage: React.FC = () => {
 
                 {/* Relationships */}
                 <div className="p-3 rounded-xl bg-muted/20 border border-border/40 space-y-2">
-                  <div className="font-bold text-purple-400 flex items-center space-x-1.5">
+                  <div className="font-bold text-teal-400 flex items-center space-x-1.5">
                     <Link2 className="w-3.5 h-3.5" />
                     <span>Relationships ({entities.relationships.length})</span>
                   </div>
                   <div className="space-y-1 font-mono text-[10px]">
                     {entities.relationships.map((r, i) => (
                       <div key={i} className="truncate text-gray-300">
-                        <span className="text-blue-300">{r.source}</span> → <span className="text-purple-300 font-bold">{r.relation}</span> → <span className="text-emerald-300">{r.target}</span>
+                        <span className="text-blue-300">{r.source}</span>{' -> '}<span className="text-teal-300 font-bold">{r.relation}</span>{' -> '}<span className="text-emerald-300">{r.target}</span>
                       </div>
                     ))}
                   </div>
@@ -652,13 +652,13 @@ export const GraphRAGPage: React.FC = () => {
                           y1={sy}
                           x2={tx}
                           y2={ty}
-                          stroke="#6366f1"
+                          stroke="#0d9488"
                           strokeWidth="1.5"
                           strokeDasharray="4 2"
                           className="animate-pulse"
                         />
-                        <rect x={mx - 32} y={my - 9} width="64" height="18" rx="4" fill="#090d16" stroke="#4f46e5" strokeWidth="0.8" />
-                        <text x={mx} y={my + 3} textAnchor="middle" fill="#a5b4fc" fontSize="8" fontFamily="monospace" fontWeight="bold">
+                        <rect x={mx - 32} y={my - 9} width="64" height="18" rx="4" fill="#090d16" stroke="#14b8a6" strokeWidth="0.8" />
+                        <text x={mx} y={my + 3} textAnchor="middle" fill="#99f6e4" fontSize="8" fontFamily="monospace" fontWeight="bold">
                           {edge.relation}
                         </text>
                       </g>
@@ -673,12 +673,12 @@ export const GraphRAGPage: React.FC = () => {
                     const isPeople = node.type === 'people';
                     const isDate = node.type === 'date';
 
-                    const fillColor = isCompany ? '#34d399' : isPeople ? '#38bdf8' : isDate ? '#f59e0b' : '#a78bfa';
-                    const bgColor = isCompany ? '#0a1f18' : isPeople ? '#061325' : isDate ? '#1e1500' : '#170d2e';
+                    const fillColor = isCompany ? '#34d399' : isPeople ? '#38bdf8' : isDate ? '#f59e0b' : '#14b8a6';
+                    const bgColor = isCompany ? '#0a1f18' : isPeople ? '#061325' : isDate ? '#1e1500' : '#042f2e';
 
                     return (
                       <g key={node.id} className="cursor-pointer hover:opacity-90 transition-opacity">
-                        <title>{`${node.label} (${node.type}) — ${node.connections} connections`}</title>
+                        <title>{`${node.label} (${node.type}): ${node.connections} connections`}</title>
                         <circle cx={nx} cy={ny} r="26" fill={bgColor} stroke={fillColor} strokeWidth="1.5" />
                         <text x={nx} y={ny - 2} textAnchor="middle" fill="#ffffff" fontSize="9" fontFamily="sans-serif" fontWeight="600">
                           {node.label.length > 10 ? node.label.slice(0, 9) + '…' : node.label}

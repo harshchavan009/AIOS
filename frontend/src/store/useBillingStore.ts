@@ -94,7 +94,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     features: [
       '2 Million Monthly LLM Tokens',
       '10 Active Agent Swarms',
-      '3 Workspaces (My Startup, Team Labs)',
+      '3 Workspaces (Development, Staging, Production)',
       'Standard API Keys & Email Support',
       'Prompt Studio Template Library'
     ],

@@ -234,7 +234,7 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
 ];
 
 const DEFAULT_VARIABLE_VALUES: Record<string, Record<string, string>> = {
-  'p-101': { company: 'Acme Corp', industry: 'Healthcare', country: 'United States' },
+  'p-101': { company: 'Apex Bio', industry: 'Healthcare', country: 'United States' },
   'p-102': { entity_type: 'Customer', relationship_type: 'PURCHASED', max_depth: '3' },
   'p-103': { company: 'Tesla Inc', quarter: '2', country: 'USA' }
 };
@@ -355,7 +355,7 @@ export const PromptStudioPage: React.FC = () => {
       executionHistory: []
     };
     setTemplates(prev => [blank, ...prev]);
-    DEFAULT_VARIABLE_VALUES[blank.id] = { company: 'Acme Health', industry: 'Healthcare', country: 'USA' };
+    DEFAULT_VARIABLE_VALUES[blank.id] = { company: 'Apex Health', industry: 'Healthcare', country: 'USA' };
     setNewPromptModal(false);
     setNewTitle('');
     addNotification({
@@ -785,7 +785,7 @@ export const PromptStudioPage: React.FC = () => {
               <button
                 onClick={handleRunEvaluation}
                 disabled={evaluating}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold hover:bg-purple-500/20 transition-all"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold hover:bg-teal-500/20 transition-all"
               >
                 {evaluating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FlaskConical className="w-3.5 h-3.5" />}
                 <span>{evaluating ? 'Evaluating…' : 'Evaluate RAGAS'}</span>
@@ -795,7 +795,7 @@ export const PromptStudioPage: React.FC = () => {
               <button
                 onClick={handleRunTestExecution}
                 disabled={executingTest}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
               >
                 {executingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 <span>{executingTest ? 'Executing…' : 'Test Run'}</span>
@@ -809,7 +809,7 @@ export const PromptStudioPage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'bg-surface text-foreground font-semibold shadow-xs'
                     : 'text-muted-foreground hover:text-foreground hover:bg-surface/50'
@@ -829,9 +829,9 @@ export const PromptStudioPage: React.FC = () => {
                 {[
                   { label: 'Faithfulness Score', value: activeVersion.faithfulness, color: 'text-emerald-400', bar: 'bg-emerald-500' },
                   { label: 'Groundedness Score', value: activeVersion.groundedness, color: 'text-blue-400', bar: 'bg-blue-500' },
-                  { label: 'Relevance Score', value: activeVersion.relevance, color: 'text-indigo-400', bar: 'bg-indigo-500' },
+                  { label: 'Relevance Score', value: activeVersion.relevance, color: 'text-teal-400', bar: 'bg-teal-500' },
                 ].map(m => (
-                  <div key={m.label} className="glass-card p-4 rounded-2xl space-y-2 text-center">
+                  <div key={m.label} className="glass-card p-4 rounded-xl space-y-2 text-center">
                     <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{m.label}</div>
                     <div className={`text-xl font-extrabold font-mono ${m.color}`}>{(m.value * 100).toFixed(0)}%</div>
                     <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
@@ -846,7 +846,7 @@ export const PromptStudioPage: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {isEditing ? 'Drafting New Version Commit' : `Prompt Content — ${activeVersion.version}`}
+                      {isEditing ? 'Drafting New Version Commit' : `Prompt Content: ${activeVersion.version}`}
                     </span>
                     {!isEditing && (
                       <span className="text-[10px] font-mono text-muted-foreground/60">
@@ -921,7 +921,7 @@ export const PromptStudioPage: React.FC = () => {
                   </div>
                   <span className="text-[10px] font-mono text-emerald-400 font-bold">Substituted with current variables</span>
                 </div>
-                <div className="p-4 rounded-xl bg-gradient-to-br from-[#090d16] to-[#0f1620] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
+                <div className="p-4 rounded-xl bg-[#090d16] border border-emerald-500/20 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
                   {interpolated}
                 </div>
               </div>
@@ -998,10 +998,10 @@ export const PromptStudioPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-1.5 shrink-0">
                           {isPublished && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">PUBLISHED</span>
+                            <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">PUBLISHED</span>
                           )}
                           {isActive && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 text-[9px] font-bold">ACTIVE</span>
+                            <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/30 text-[9px] font-bold">ACTIVE</span>
                           )}
                         </div>
                       </div>
@@ -1051,7 +1051,7 @@ export const PromptStudioPage: React.FC = () => {
                       className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-foreground focus:outline-none"
                     >
                       {selected.versions.map(v => (
-                        <option key={v.version} value={v.version}>{v.version} — {v.changeNote.slice(0, 32)}...</option>
+                        <option key={v.version} value={v.version}>{v.version}: {v.changeNote.slice(0, 32)}...</option>
                       ))}
                     </select>
                   </div>
@@ -1303,11 +1303,11 @@ export const PromptStudioPage: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-3 pt-2">
-              <button onClick={() => setNewPromptModal(false)} className="flex-1 py-2.5 rounded-xl border border-border/60 text-xs font-semibold hover:bg-muted">Cancel</button>
+              <button onClick={() => setNewPromptModal(false)} className="flex-1 py-2 rounded-md border border-border/60 text-xs font-medium hover:bg-muted">Cancel</button>
               <button
                 onClick={createNewPrompt}
                 disabled={!newTitle.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs disabled:opacity-40"
+                className="flex-1 py-2 rounded-md bg-primary hover:bg-primary/90 text-white font-medium text-xs disabled:opacity-40"
               >
                 Create Prompt
               </button>
@@ -1322,7 +1322,7 @@ export const PromptStudioPage: React.FC = () => {
           <div className="glass-card p-6 rounded-2xl w-full max-w-md space-y-4 border border-border/60 shadow-2xl">
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <h3 className="text-base font-bold flex items-center space-x-2">
-                <Share2 className="w-5 h-5 text-indigo-400" />
+                <Share2 className="w-5 h-5 text-teal-400" />
                 <span>Share Prompt Registry Link</span>
               </h3>
               <X className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-white" onClick={() => setShareModalOpen(false)} />
@@ -1332,17 +1332,17 @@ export const PromptStudioPage: React.FC = () => {
               Shareable production link for prompt <strong className="text-white">{selected.title}</strong> ({activeVersion.version}).
             </p>
 
-            <div className="p-3 rounded-xl bg-black/50 border border-border/60 font-mono text-xs text-emerald-400 break-all">
-              https://aios.enterprise/prompt-studio?id={selected.id}&version={activeVersion.version}
+            <div className="p-3 rounded-md bg-black/50 border border-border/60 font-mono text-xs text-emerald-400 break-all">
+              {window.location.origin}/prompt-studio?id={selected.id}&version={activeVersion.version}
             </div>
 
             <button
               onClick={() => {
-                navigator.clipboard.writeText(`https://aios.enterprise/prompt-studio?id=${selected.id}&version=${activeVersion.version}`);
+                navigator.clipboard.writeText(`${window.location.origin}/prompt-studio?id=${selected.id}&version=${activeVersion.version}`);
                 alert('Prompt registry link copied to clipboard!');
                 setShareModalOpen(false);
               }}
-              className="w-full py-2.5 rounded-xl bg-primary text-white font-semibold text-xs flex items-center justify-center space-x-2 shadow-lg"
+              className="w-full py-2.5 rounded-md bg-primary text-white font-medium text-xs flex items-center justify-center space-x-2 shadow-lg"
             >
               <Copy className="w-4 h-4" />
               <span>Copy Share Link</span>

@@ -35,6 +35,7 @@ import {
   Brain,
   Bot,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -523,7 +524,7 @@ export const SettingsPage: React.FC = () => {
           <div className="pt-6 border-t border-rose-500/30 space-y-3">
             <h4 className="text-sm font-extrabold text-rose-400 flex items-center space-x-2">
               <Trash2 className="w-4 h-4" />
-              <span>Danger Zone — Delete Account</span>
+              <span>Danger Zone: Delete Account</span>
             </h4>
             <p className="text-xs text-muted-foreground">
               Permanently delete your user account, revoke active sessions, and remove access token authorizations.
@@ -531,7 +532,7 @@ export const SettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-400 text-xs font-bold transition-all"
+              className="px-4 py-2 rounded-md bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-400 text-xs font-bold transition-all"
             >
               Delete Account...
             </button>
@@ -734,7 +735,7 @@ export const SettingsPage: React.FC = () => {
               <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono space-y-2 animate-fade-in">
                 <div className="flex items-center space-x-2 text-emerald-400 font-bold">
                   <Check className="w-4 h-4" />
-                  <span>New Secret API Key Generated (Copy now — this secret will never be displayed again):</span>
+                  <span>New Secret API Key Generated (Copy now: this secret will never be displayed again):</span>
                 </div>
                 <div className="p-3 rounded-xl bg-black/60 border border-white/10 text-white font-bold break-all flex items-center justify-between">
                   <span>{generatedKey}</span>
@@ -770,7 +771,7 @@ export const SettingsPage: React.FC = () => {
                         <div className="font-extrabold text-sm text-foreground flex items-center space-x-2">
                           <span>{k.name}</span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                            k.env === 'Production' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' : 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
+                            k.env === 'Production' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' : 'bg-teal-500/10 text-teal-400 border border-teal-500/30'
                           }`}>
                             {k.env}
                           </span>
@@ -841,7 +842,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => setShowCreateKeyModal(false)}
                     className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
                   >
-                    ✕
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
@@ -979,7 +980,7 @@ export const SettingsPage: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md">
+                    <div className="w-10 h-10 rounded-full bg-surface border border-border text-foreground font-extrabold text-xs flex items-center justify-center shadow-sm">
                       {m.avatar}
                     </div>
                     <div>
@@ -1004,9 +1005,9 @@ export const SettingsPage: React.FC = () => {
                         setMembersList(membersList.map(item => item.id === m.id ? { ...item, role: newRole } : item));
                         addNotification({ type: 'workflow', title: 'Role Updated', description: `${m.name}'s role updated to ${newRole}.` });
                       }}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold focus:outline-none ${
+                      className={`px-3 py-1.5 rounded-md border text-xs font-mono font-bold focus:outline-none ${
                         m.role === 'Owner'
-                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                          ? 'bg-teal-500/10 text-teal-400 border-teal-500/30'
                           : m.role === 'Admin'
                           ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                           : m.role === 'Developer'
@@ -1016,11 +1017,11 @@ export const SettingsPage: React.FC = () => {
                           : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
                       }`}
                     >
-                      <option value="Owner" className="bg-[#0E121B] text-purple-400">👑 Owner</option>
-                      <option value="Admin" className="bg-[#0E121B] text-blue-400">🛡️ Admin</option>
-                      <option value="Developer" className="bg-[#0E121B] text-emerald-400">💻 Developer</option>
-                      <option value="Analyst" className="bg-[#0E121B] text-amber-400">📊 Analyst</option>
-                      <option value="Viewer" className="bg-[#0E121B] text-gray-400">👁️ Viewer</option>
+                      <option value="Owner" className="bg-[#0E121B] text-teal-400">Owner</option>
+                      <option value="Admin" className="bg-[#0E121B] text-blue-400">Admin</option>
+                      <option value="Developer" className="bg-[#0E121B] text-emerald-400">Developer</option>
+                      <option value="Analyst" className="bg-[#0E121B] text-amber-400">Analyst</option>
+                      <option value="Viewer" className="bg-[#0E121B] text-gray-400">Viewer</option>
                     </select>
 
                     <button
@@ -1029,7 +1030,7 @@ export const SettingsPage: React.FC = () => {
                         setMembersList(membersList.filter(item => item.id !== m.id));
                         addNotification({ type: 'workflow', title: 'Member Removed', description: `Removed ${m.name} from organization.` });
                       }}
-                      className="p-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors"
+                      className="p-2 rounded-md hover:bg-rose-500/20 text-rose-400 transition-colors"
                       title="Remove Member"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1084,11 +1085,11 @@ export const SettingsPage: React.FC = () => {
                 <thead>
                   <tr className={`border-b ${isLight ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-white/5'}`}>
                     <th className="p-3 text-muted-foreground font-bold">Permission Scope</th>
-                    <th className="p-3 text-purple-400 font-bold text-center">👑 Owner</th>
-                    <th className="p-3 text-blue-400 font-bold text-center">🛡️ Admin</th>
-                    <th className="p-3 text-emerald-400 font-bold text-center">💻 Developer</th>
-                    <th className="p-3 text-amber-400 font-bold text-center">📊 Analyst</th>
-                    <th className="p-3 text-gray-400 font-bold text-center">👁️ Viewer</th>
+                    <th className="p-3 text-teal-400 font-bold text-center">Owner</th>
+                    <th className="p-3 text-blue-400 font-bold text-center">Admin</th>
+                    <th className="p-3 text-emerald-400 font-bold text-center">Developer</th>
+                    <th className="p-3 text-amber-400 font-bold text-center">Analyst</th>
+                    <th className="p-3 text-gray-400 font-bold text-center">Viewer</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1135,7 +1136,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => setShowInviteModal(false)}
                     className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
                   >
-                    ✕
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
@@ -1308,8 +1309,8 @@ export const SettingsPage: React.FC = () => {
                 ip: '192.168.1.45',
                 severity: 'info',
                 icon: UserPlus,
-                color: 'text-purple-400',
-                bg: 'bg-purple-500/10',
+                color: 'text-teal-400',
+                bg: 'bg-teal-500/10',
               },
               {
                 id: 'aud-5',
@@ -1581,7 +1582,7 @@ export const SettingsPage: React.FC = () => {
                   </div>
 
                   <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                    <div className="flex items-center space-x-1.5 text-purple-400 font-bold">
+                    <div className="flex items-center space-x-1.5 text-teal-400 font-bold">
                       <Bot className="w-3.5 h-3.5" />
                       <span>Agents</span>
                     </div>

@@ -14,6 +14,8 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ServerErrorPage } from './pages/ServerErrorPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { TermsPage } from './pages/TermsPage';
 
 // Eagerly loaded Studio Modules for Instant Rendering
 import { DashboardPage } from './pages/DashboardPage';
@@ -71,6 +73,8 @@ export const App: React.FC = () => {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/500" element={<ServerErrorPage />} />
 
             {/* Protected AI Platform Studio Routes */}

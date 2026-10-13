@@ -96,11 +96,11 @@ const NODE_META: Record<AgentNodeType, {
   category: string;
 }> = {
   input:     { icon: <Globe className="w-4 h-4" />,       color: '#38bdf8', bg: '#0c1a2e', border: '#38bdf8', glow: '0 0 18px #38bdf840', category: 'I/O' },
-  planner:   { icon: <Brain className="w-4 h-4" />,       color: '#a78bfa', bg: '#160d2e', border: '#a78bfa', glow: '0 0 18px #a78bfa40', category: 'Agent' },
+  planner:   { icon: <Brain className="w-4 h-4" />,       color: '#14b8a6', bg: '#042f2e', border: '#14b8a6', glow: '0 0 18px #14b8a640', category: 'Agent' },
   retriever: { icon: <Database className="w-4 h-4" />,    color: '#34d399', bg: '#0a1f18', border: '#34d399', glow: '0 0 18px #34d39940', category: 'RAG' },
   reasoning: { icon: <Cpu className="w-4 h-4" />,         color: '#f59e0b', bg: '#1e1500', border: '#f59e0b', glow: '0 0 18px #f59e0b40', category: 'LLM' },
   python:    { icon: <Terminal className="w-4 h-4" />,    color: '#fb923c', bg: '#1e0d00', border: '#fb923c', glow: '0 0 18px #fb923c40', category: 'Tool' },
-  memory:    { icon: <MemoryStick className="w-4 h-4" />, color: '#c084fc', bg: '#1a0d2e', border: '#c084fc', glow: '0 0 18px #c084fc40', category: 'Memory' },
+  memory:    { icon: <MemoryStick className="w-4 h-4" />, color: '#06b6d4', bg: '#082f49', border: '#06b6d4', glow: '0 0 18px #06b6d440', category: 'Memory' },
   tool:      { icon: <Zap className="w-4 h-4" />,         color: '#f472b6', bg: '#1e0a18', border: '#f472b6', glow: '0 0 18px #f472b640', category: 'Tool' },
   router:    { icon: <GitMerge className="w-4 h-4" />,    color: '#4ade80', bg: '#061a0d', border: '#4ade80', glow: '0 0 18px #4ade8040', category: 'Logic' },
   response:  { icon: <MessageSquare className="w-4 h-4" />, color: '#60a5fa', bg: '#060e1f', border: '#60a5fa', glow: '0 0 18px #60a5fa40', category: 'I/O' },
@@ -197,10 +197,10 @@ const INITIAL_NODES: Node<AgentNodeData>[] = [
 ];
 
 const INITIAL_EDGES: Edge[] = [
-  { id: 'e1', source: 'n-input',     target: 'n-planner',   animated: true,  markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#a78bfa', strokeWidth: 2 } },
+  { id: 'e1', source: 'n-input',     target: 'n-planner',   animated: true,  markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#14b8a6', strokeWidth: 2 } },
   { id: 'e2', source: 'n-planner',   target: 'n-retriever', animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#34d399', strokeWidth: 1.5 } },
   { id: 'e3', source: 'n-planner',   target: 'n-python',    animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#fb923c', strokeWidth: 1.5 } },
-  { id: 'e4', source: 'n-retriever', target: 'n-memory',    animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#c084fc', strokeWidth: 1.5 } },
+  { id: 'e4', source: 'n-retriever', target: 'n-memory',    animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#06b6d4', strokeWidth: 1.5 } },
   { id: 'e5', source: 'n-retriever', target: 'n-reasoning', animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#f59e0b', strokeWidth: 1.5 } },
   { id: 'e6', source: 'n-python',    target: 'n-reasoning', animated: false, markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#f59e0b', strokeWidth: 1.5 } },
   { id: 'e7', source: 'n-reasoning', target: 'n-response',  animated: true,  markerEnd: { type: MarkerType.ArrowClosed }, style: { stroke: '#60a5fa', strokeWidth: 2 } },
@@ -325,7 +325,7 @@ function AgentBuilderInner() {
       ...params,
       animated: true,
       markerEnd: { type: MarkerType.ArrowClosed },
-      style: { stroke: meta?.color || '#6366f1', strokeWidth: 1.8 },
+      style: { stroke: meta?.color || '#14b8a6', strokeWidth: 1.8 },
     }, edges);
     setEdges(newEdges);
     saveStateToHistory(nodes, newEdges);
@@ -529,7 +529,7 @@ function AgentBuilderInner() {
             target: eg.target,
             animated: true,
             markerEnd: { type: MarkerType.ArrowClosed },
-            style: { stroke: '#6366f1', strokeWidth: 1.8 },
+            style: { stroke: '#14b8a6', strokeWidth: 1.8 },
           }));
           setNodes(importedNodes);
           setEdges(importedEdges);
@@ -665,7 +665,7 @@ function AgentBuilderInner() {
         disabled={deploying}
         leftIcon={<Sparkles className="w-3.5 h-3.5 text-accent" />}
       >
-        {deployed ? 'Deployed ✓' : 'Deploy'}
+        {deployed ? 'Deployed' : 'Deploy'}
       </Button>
 
       <Button
@@ -875,14 +875,14 @@ function AgentBuilderInner() {
                 <div className="flex space-x-2 pt-1">
                   <button
                     onClick={duplicateSelectedNode}
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-xl text-[11px] font-bold text-purple-300 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 transition-all"
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-md text-[11px] font-bold text-teal-300 border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 transition-all"
                   >
                     <Copy className="w-3.5 h-3.5" />
                     <span>Duplicate</span>
                   </button>
                   <button
                     onClick={deleteSelectedNode}
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-xl text-[11px] font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-md text-[11px] font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Delete</span>
@@ -911,7 +911,7 @@ function AgentBuilderInner() {
             <div className="font-bold text-white text-[11px] mb-2 uppercase tracking-wider">Deployment Pipeline</div>
             <div className="flex items-center space-x-1 text-primary font-bold"><span>1. Deploy Workflow</span></div>
             <div className="pl-3 text-[9px]">↓</div>
-            <div className="flex items-center space-x-1 text-purple-400 font-bold"><span>2. LangGraph Compilation</span></div>
+            <div className="flex items-center space-x-1 text-teal-400 font-bold"><span>2. LangGraph Compilation</span></div>
             <div className="pl-3 text-[9px]">↓</div>
             <div className="flex items-center space-x-1 text-blue-400 font-bold"><span>3. FastAPI Backend</span></div>
             <div className="pl-3 text-[9px]">↓</div>
@@ -972,10 +972,10 @@ function AgentBuilderInner() {
 
               {/* Step 2: LangGraph */}
               <div className={`p-3.5 rounded-xl border transition-all flex items-center justify-between ${
-                deployStage >= 2 ? 'bg-purple-500/10 border-purple-500 text-white' : 'bg-muted/10 border-border/40 text-muted-foreground'
+                deployStage >= 2 ? 'bg-teal-500/10 border-teal-500 text-white' : 'bg-muted/10 border-border/40 text-muted-foreground'
               }`}>
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${deployStage >= 2 ? 'bg-purple-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                  <div className={`p-2 rounded-lg ${deployStage >= 2 ? 'bg-teal-500 text-white' : 'bg-muted text-muted-foreground'}`}>
                     <Brain className="w-4 h-4" />
                   </div>
                   <div>
@@ -986,7 +986,7 @@ function AgentBuilderInner() {
                 {deployStage > 2 ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 ) : deployStage === 2 ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
                 ) : (
                   <span className="text-[10px] font-mono opacity-50">Pending</span>
                 )}
@@ -1036,7 +1036,7 @@ function AgentBuilderInner() {
                   </div>
                 </div>
                 {deployStage >= 4 ? (
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/40">LIVE</span>
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/40">LIVE</span>
                 ) : (
                   <span className="text-[10px] font-mono opacity-50">Pending</span>
                 )}
@@ -1050,7 +1050,7 @@ function AgentBuilderInner() {
                   <span className="truncate pr-2">POST /api/v1/agents/execute-dag</span>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('https://aios.enterprise/api/v1/agents/execute-dag');
+                      navigator.clipboard.writeText(`${window.location.origin}/api/v1/agents/execute-dag`);
                       setCopiedEndpoint(true);
                       setTimeout(() => setCopiedEndpoint(false), 1500);
                     }}

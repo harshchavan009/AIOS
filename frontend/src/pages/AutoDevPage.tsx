@@ -95,27 +95,27 @@ export const AutoDevPage: React.FC = () => {
         <Card variant="glass" className="lg:col-span-8 p-6 space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <div className="flex items-center space-x-2">
-              <Code2 className="w-5 h-5 text-indigo-400" />
+              <Code2 className="w-5 h-5 text-teal-400" />
               <span className="text-sm font-bold font-mono">{activeFile}</span>
             </div>
             <Button
               onClick={handleAudit}
               disabled={analyzing}
-              variant="gradient"
+              variant="primary"
               size="sm"
               leftIcon={analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             >
-              {analyzing ? 'Analyzing AST...' : 'Run AI Code Audit'}
+              {analyzing ? 'Analyzing AST...' : 'Run Code Audit'}
             </Button>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#090d16] border border-border/60 font-mono text-xs text-gray-300 leading-relaxed overflow-x-auto">
+          <div className="p-4 rounded-md bg-[#090d16] border border-border/60 font-mono text-xs text-gray-300 leading-relaxed overflow-x-auto">
             <pre className="text-emerald-400"># AutoDev Repository Analysis Context</pre>
             <pre className="text-gray-400">class PlannerAgent(BaseAgent):</pre>
             <pre className="text-gray-400">    async def decompose_goal(self, goal: str) -&gt; DAGGraph:</pre>
-            <pre className="text-blue-400">        """Decomposes enterprise goals into executable LangGraph state nodes."""</pre>
+            <pre className="text-blue-400">        """Decomposes goals into executable LangGraph state nodes."""</pre>
             <pre className="text-gray-400">        nodes = await self.llm.generate_plan(goal)</pre>
-            <pre className="text-purple-400">        return self.graph_builder.compile(nodes)</pre>
+            <pre className="text-teal-400">        return self.graph_builder.compile(nodes)</pre>
           </div>
 
           {auditResult ? (

@@ -51,9 +51,10 @@ export const LandingPage: React.FC = () => {
 
             <nav className="hidden md:flex items-center space-x-5 text-xs text-muted-foreground">
               <a href="#capabilities" className="hover:text-foreground transition-colors">Capabilities</a>
-              <a href="#architecture" className="hover:text-foreground transition-colors">Architecture</a>
+              <a href="#architecture" className="hover:text-foreground transition-colors">How It Works</a>
               <a href="#security" className="hover:text-foreground transition-colors">Deployment</a>
               <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+              <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
               <button
                 type="button"
                 onClick={() => navigate('/api-explorer')}
@@ -97,9 +98,8 @@ export const LandingPage: React.FC = () => {
       {/* ───────────────────────────────────────────────────────────── */}
       <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 px-4 sm:px-6 border-b border-border/60">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-border bg-secondary/60 text-xs font-medium text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>AIOS Enterprise Runtime v1.0 Released</span>
+          <div className="inline-flex items-center px-2.5 py-1 rounded border border-border bg-secondary text-xs font-medium text-foreground">
+            AIOS Production Runtime v1.0
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground leading-[1.12]">
@@ -107,7 +107,7 @@ export const LandingPage: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Orchestrate stateful LangGraph agent swarms, query knowledge with hybrid Graph RAG, and monitor LLM execution with deterministic observability.
+            AIOS is an execution runtime for engineering teams building autonomous multi-agent systems and hybrid Graph RAG pipelines. Deploy your first agent workflow in under two minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -117,14 +117,14 @@ export const LandingPage: React.FC = () => {
               onClick={() => navigate('/register')}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Start Free Trial
+              Get Started
             </Button>
             <Button
               variant="secondary"
               size="md"
               onClick={() => navigate('/dashboard')}
             >
-              Live Demo Workspace
+              Explore Demo Workspace
             </Button>
           </div>
         </div>
@@ -139,12 +139,11 @@ export const LandingPage: React.FC = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-border" />
               <span className="w-2.5 h-2.5 rounded-full bg-border" />
               <span className="w-2.5 h-2.5 rounded-full bg-border" />
-              <span className="ml-3 font-mono text-xs text-foreground/80">aios.enterprise / execution-run-8492</span>
+              <span className="ml-3 font-mono text-xs text-foreground/80">aios.production / execution-run-8492</span>
             </div>
             <div className="flex items-center space-x-3 text-xs">
-              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                State: Completed
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                Status: Succeeded
               </span>
               <span className="font-mono text-muted-foreground">340ms • 1,280 tok • $0.0031</span>
             </div>
@@ -219,7 +218,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <div className="text-muted-foreground text-[11px]">Active Workspace</div>
-                <div className="font-mono text-foreground text-xs">Acme / Production</div>
+                <div className="font-mono text-foreground text-xs">Default / Production</div>
               </div>
               <div className="space-y-1.5">
                 <div className="text-muted-foreground text-[11px]">Retrieved Citations</div>
@@ -227,7 +226,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <div className="text-muted-foreground text-[11px]">Groundedness Score</div>
-                <div className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold text-xs">0.96 / 1.0 (RAGAS Verified)</div>
+                <div className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold text-xs">0.96 / 1.0 (RAGAS Groundedness)</div>
               </div>
               <div className="pt-2">
                 <Button
@@ -273,6 +272,15 @@ export const LandingPage: React.FC = () => {
               <Shield className="w-4 h-4 text-primary" strokeWidth={1.5} />
               OpenTelemetry Tracing
             </span>
+            <a
+              href="https://github.com/harshchavan009/AIOS"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+            >
+              <Terminal className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              GitHub Repository
+            </a>
           </div>
         </div>
       </section>
@@ -741,7 +749,7 @@ export const LandingPage: React.FC = () => {
                 <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> Unlimited seats</li>
                 <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> Dedicated VPC or on-prem deployment</li>
                 <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> Custom LLM gateway routing & BYOK</li>
-                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> 99.99% uptime SLA</li>
+                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> Guaranteed enterprise SLA</li>
                 <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-foreground shrink-0" /> Dedicated engineering channel</li>
               </ul>
             </div>
@@ -750,7 +758,70 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 8. Production Footer */}
+      {/* 8. Frequently Asked Questions & Limitations */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-16 sm:py-20 px-4 sm:px-6 border-b border-border/60">
+        <div className="max-w-4xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+              Frequently asked questions.
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
+              Concrete answers on architecture, deployment requirements, and platform capabilities.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-5 rounded-lg border border-border bg-card space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                How does AIOS differ from prompt orchestration libraries?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Libraries like LangChain run transiently inside process memory. AIOS is a stateful runtime with PostgreSQL checkpointing, Celery distributed worker tasks, hybrid vector and graph retrieval (Qdrant + Neo4j), and multi-tenant workspace isolation. Workflows can pause for days waiting for human input and resume without losing state.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-border bg-card space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Can AIOS run in private, air-gapped VPCs without internet access?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Yes. AIOS ships as standard Docker Compose and Kubernetes manifests. In air-gapped environments, you can point AIOS to locally hosted models (such as Ollama or vLLM endpoints) and local Neo4j and Qdrant instances with zero data egress.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-border bg-card space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                What are the current limitations of AIOS?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                AIOS requires persistent backend services (FastAPI, Redis, Celery, PostgreSQL, Neo4j, and Qdrant). It is not designed to run purely on serverless platforms such as AWS Lambda without dedicated worker instances. Real-time audio streaming is currently in development and scheduled for a future release.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-border bg-card space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Does AIOS train on our data, documents, or prompts?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Never. AIOS does not train models on customer queries, workspace documents, or agent outputs. When you connect your API keys (OpenAI, Anthropic, Google), requests flow directly between your deployment and the respective provider under your enterprise agreements.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-border bg-card space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                How do I get started locally?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Clone the repository, configure your environment variables in .env, and run docker compose up. The frontend interface and backend APIs will be immediately available at localhost.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 9. Production Footer */}
       {/* ───────────────────────────────────────────────────────────── */}
       <footer className="py-12 px-4 sm:px-6 bg-card border-t border-border text-xs text-muted-foreground">
         <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
@@ -770,26 +841,26 @@ export const LandingPage: React.FC = () => {
               <li><button type="button" onClick={() => navigate('/api-explorer')} className="hover:text-foreground">OpenAPI Explorer</button></li>
               <li><a href="#architecture" className="hover:text-foreground">Architecture Specs</a></li>
               <li><button type="button" onClick={() => navigate('/dashboard')} className="hover:text-foreground">Live Workspace</button></li>
-              <li><a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-foreground">GitHub Repository</a></li>
+              <li><a href="https://github.com/harshchavan009/AIOS" target="_blank" rel="noreferrer" className="hover:text-foreground">GitHub Repository</a></li>
             </ul>
           </div>
 
           <div className="space-y-2.5">
-            <div className="font-semibold text-foreground">Security</div>
+            <div className="font-semibold text-foreground">Legal & Security</div>
             <ul className="space-y-1.5">
-              <li><a href="#security" className="hover:text-foreground">Private VPC Peering</a></li>
-              <li><a href="#security" className="hover:text-foreground">Self-Hosted Kubernetes</a></li>
-              <li><a href="#security" className="hover:text-foreground">Data Privacy Policy</a></li>
-              <li><a href="#security" className="hover:text-foreground">Zero Retention Guarantee</a></li>
+              <li><a href="/privacy" className="hover:text-foreground">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-foreground">Terms and Conditions</a></li>
+              <li><a href="#security" className="hover:text-foreground">Security Controls</a></li>
+              <li><a href="#security" className="hover:text-foreground">Deployment Specs</a></li>
             </ul>
           </div>
 
           <div className="space-y-2.5">
-            <div className="font-semibold text-foreground">Company</div>
+            <div className="font-semibold text-foreground">Contact</div>
             <ul className="space-y-1.5">
-              <li><a href="mailto:contact@aios.dev" className="hover:text-foreground">Contact Sales</a></li>
-              <li><a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-foreground">Open Source</a></li>
-              <li><a href="/login" className="hover:text-foreground">Customer Sign In</a></li>
+              <li><a href="mailto:support@aios.ai" className="hover:text-foreground">support@aios.ai</a></li>
+              <li><a href="https://github.com/harshchavan009/AIOS" target="_blank" rel="noreferrer" className="hover:text-foreground">Report an Issue</a></li>
+              <li><a href="/login" className="hover:text-foreground">Sign In</a></li>
             </ul>
           </div>
         </div>
@@ -803,9 +874,14 @@ export const LandingPage: React.FC = () => {
             <span>• © {new Date().getFullYear()} All rights reserved.</span>
           </div>
 
-          <div className="flex items-center space-x-2 text-[11px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-foreground">All systems operational</span>
+          <div className="flex items-center space-x-4 text-[11px] text-muted-foreground">
+            <a href="/privacy" className="hover:text-foreground">Privacy</a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-foreground">Terms</a>
+            <span>•</span>
+            <a href="mailto:support@aios.ai" className="hover:text-foreground">Contact</a>
+            <span>•</span>
+            <span className="font-mono text-foreground/80">v1.0.0</span>
           </div>
         </div>
       </footer>

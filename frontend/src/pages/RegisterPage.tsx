@@ -188,6 +188,13 @@ export const RegisterPage: React.FC = () => {
               required
             />
 
+            <p className="text-[11px] text-muted-foreground text-center leading-normal">
+              By creating an account you agree to the{' '}
+              <Link to="/terms" className="text-primary hover:underline font-medium">Terms and Conditions</Link>
+              {' '}and{' '}
+              <Link to="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>.
+            </p>
+
             <Button
               type="submit"
               variant="primary"

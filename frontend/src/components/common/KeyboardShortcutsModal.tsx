@@ -28,7 +28,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
+            <div className="p-2 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400">
               <Keyboard className="w-5 h-5" />
             </div>
             <div>

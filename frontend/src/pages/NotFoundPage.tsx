@@ -15,24 +15,24 @@ export const NotFoundPage: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-mono font-bold border border-blue-500/20">
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-mono font-medium border border-blue-500/20">
             <span>ERROR 404</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Workflow Not Found</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Route Not Found</h1>
           <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-            The target LangGraph DAG workflow route, agent node, or resource does not exist in your AIOS workspace.
+            The requested workflow route, agent node, or resource does not exist in your AIOS workspace.
           </p>
         </div>
 
         <div className="pt-2">
           <Button
-            variant="gradient"
+            variant="primary"
             size="lg"
-            className="w-full shadow-xl shadow-blue-500/25"
+            className="w-full"
             onClick={() => navigate('/dashboard')}
             leftIcon={<LayoutDashboard className="w-4 h-4" />}
           >
-            Go Dashboard
+            Return to Dashboard
           </Button>
         </div>
       </div>

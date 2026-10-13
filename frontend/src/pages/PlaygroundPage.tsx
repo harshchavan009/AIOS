@@ -123,17 +123,17 @@ export interface ModelOutput {
 }
 
 const ALL_MODELS: ModelConfig[] = [
-  { id: 'gpt-4o', name: 'OpenAI GPT-4o', provider: 'OpenAI', color: 'from-emerald-500 to-teal-500', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/40', textColor: 'text-emerald-400', checked: true, contextWindow: '128k', pricing: '$2.50 / 1M' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', color: 'from-orange-500 to-amber-500', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/40', textColor: 'text-orange-400', checked: true, contextWindow: '200k', pricing: '$3.00 / 1M' },
-  { id: 'gemini-1-5-pro', name: 'Gemini 1.5 Pro', provider: 'Google AI', color: 'from-blue-500 to-cyan-500', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/40', textColor: 'text-blue-400', checked: true, contextWindow: '2M', pricing: '$1.25 / 1M' },
-  { id: 'llama-3-70b', name: 'Llama 3 70B', provider: 'Meta / Groq', color: 'from-violet-500 to-purple-500', bgColor: 'bg-violet-500/10', borderColor: 'border-violet-500/40', textColor: 'text-violet-400', checked: false, contextWindow: '8k', pricing: '$0.50 / 1M' },
-  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', color: 'from-cyan-500 to-sky-500', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/40', textColor: 'text-cyan-400', checked: false, contextWindow: '64k', pricing: '$0.14 / 1M' },
+  { id: 'gpt-4o', name: 'OpenAI GPT-4o', provider: 'OpenAI', color: 'bg-emerald-500', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/40', textColor: 'text-emerald-400', checked: true, contextWindow: '128k', pricing: '$2.50 / 1M' },
+  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', color: 'bg-orange-500', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/40', textColor: 'text-orange-400', checked: true, contextWindow: '200k', pricing: '$3.00 / 1M' },
+  { id: 'gemini-1-5-pro', name: 'Gemini 1.5 Pro', provider: 'Google AI', color: 'bg-blue-500', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/40', textColor: 'text-blue-400', checked: true, contextWindow: '2M', pricing: '$1.25 / 1M' },
+  { id: 'llama-3-70b', name: 'Llama 3 70B', provider: 'Meta / Groq', color: 'bg-teal-500', bgColor: 'bg-teal-500/10', borderColor: 'border-teal-500/40', textColor: 'text-teal-400', checked: false, contextWindow: '8k', pricing: '$0.50 / 1M' },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', color: 'bg-cyan-500', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/40', textColor: 'text-cyan-400', checked: false, contextWindow: '64k', pricing: '$0.14 / 1M' },
 ];
 
 const INITIAL_FOLDERS: FolderItem[] = [
   { id: 'f-architecture', name: 'Architecture & DAGs', color: 'text-blue-400' },
   { id: 'f-audits', name: 'Code Audits & Security', color: 'text-emerald-400' },
-  { id: 'f-rag', name: 'Graph RAG Benchmarks', color: 'text-purple-400' },
+  { id: 'f-rag', name: 'Graph RAG Benchmarks', color: 'text-teal-400' },
 ];
 
 const INITIAL_THREADS: ConversationThread[] = [
@@ -267,34 +267,34 @@ const RichContentRenderer: React.FC<{
 
       if (part.type === 'mermaid') {
         return (
-          <div key={idx} className="my-3 p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/20 space-y-3">
-            <div className="flex items-center justify-between font-mono text-[11px] text-indigo-300 border-b border-indigo-500/30 pb-2">
+          <div key={idx} className="my-3 p-4 rounded-xl border border-teal-500/40 bg-teal-950/20 space-y-3">
+            <div className="flex items-center justify-between font-mono text-[11px] text-teal-300 border-b border-teal-500/30 pb-2">
               <span className="font-bold flex items-center space-x-1.5">
-                <Brain className="w-3.5 h-3.5 text-indigo-400" />
+                <Brain className="w-3.5 h-3.5 text-teal-400" />
                 <span>Mermaid Architecture Graph</span>
               </span>
               <Badge variant="info">Visual Flowchart</Badge>
             </div>
             {/* Visual Representation of Diagram Nodes */}
-            <div className="p-4 rounded-xl bg-black/40 border border-indigo-500/20 text-xs font-mono space-y-2 text-indigo-200">
+            <div className="p-4 rounded-md bg-black/40 border border-teal-500/20 text-xs font-mono space-y-2 text-teal-200">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-blue-500/20 border border-blue-400/40 text-blue-300 font-bold">
+                <span className="px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-400/40 text-blue-300 font-bold">
                   User Goal
                 </span>
-                <span>➔</span>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-400/40 text-purple-300 font-bold">
+                <span>-&gt;</span>
+                <span className="px-2.5 py-1 rounded-md bg-teal-500/20 border border-teal-400/40 text-teal-300 font-bold">
                   Planner Agent
                 </span>
-                <span>➔</span>
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold">
+                <span>-&gt;</span>
+                <span className="px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold">
                   Retriever (Qdrant + Neo4j)
                 </span>
-                <span>➔</span>
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold">
+                <span>-&gt;</span>
+                <span className="px-2.5 py-1 rounded-md bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold">
                   Critic Validation
                 </span>
               </div>
-              <pre className="text-[10px] text-muted-foreground pt-2 border-t border-indigo-500/20 font-mono">
+              <pre className="text-[10px] text-muted-foreground pt-2 border-t border-teal-500/20 font-mono">
                 {(part.code || '').trim()}
               </pre>
             </div>
@@ -906,7 +906,7 @@ Execution complete with 0.0% hallucination risk.`;
                             >
                               {att.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-blue-400" />}
                               {att.type === 'pdf' && <FileText className="w-3.5 h-3.5 text-rose-400" />}
-                              {att.type === 'docx' && <FileCode className="w-3.5 h-3.5 text-indigo-400" />}
+                              {att.type === 'docx' && <FileCode className="w-3.5 h-3.5 text-teal-400" />}
                               {att.type === 'csv' && <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />}
                               <span className="truncate max-w-[130px]">{att.name}</span>
                               <span className="text-[9px] opacity-60">({att.sizeStr})</span>
@@ -921,18 +921,18 @@ Execution complete with 0.0% hallucination risk.`;
                           <textarea
                             value={editingText}
                             onChange={(e) => setEditingText(e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-black/60 border border-blue-500 text-xs font-mono focus:outline-none"
+                            className="w-full p-2.5 rounded-md bg-black/60 border border-blue-500 text-xs font-mono focus:outline-none"
                           />
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => setEditingMsgId('')}
-                              className="px-2.5 py-1 rounded-lg bg-white/5 border text-[10px] font-semibold"
+                              className="px-2.5 py-1 rounded-md bg-white/5 border text-[10px] font-semibold"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => handleSaveEditPrompt(msg.id)}
-                              className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-bold"
+                              className="px-3 py-1 rounded-md bg-blue-600 text-white text-[10px] font-bold"
                             >
                               Save & Resubmit
                             </button>
@@ -974,7 +974,7 @@ Execution complete with 0.0% hallucination risk.`;
                             </button>
                             <button
                               onClick={() => handleContinueResponse(msg.id)}
-                              className="hover:text-purple-400 flex items-center space-x-1"
+                              className="hover:text-teal-400 flex items-center space-x-1"
                             >
                               <PlayCircle className="w-3 h-3" />
                               <span>Continue</span>
@@ -997,7 +997,7 @@ Execution complete with 0.0% hallucination risk.`;
 
                     {/* Telemetry Indicator */}
                     {msg.latency_ms && (
-                      <div className="flex items-center space-x-3 text-[10px] font-mono text-muted-foreground bg-muted/20 px-3 py-1 rounded-full border border-border/40">
+                      <div className="flex items-center space-x-3 text-[10px] font-mono text-muted-foreground bg-muted/20 px-2.5 py-1 rounded-md border border-border/40">
                         <span className="flex items-center space-x-1">
                           <Clock className="w-3 h-3 text-pink-400" />
                           <span>{msg.latency_ms}ms</span>
@@ -1021,10 +1021,10 @@ Execution complete with 0.0% hallucination risk.`;
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
                   {attachments.map((att) => (
-                    <div key={att.id} className="flex items-center space-x-2 px-3 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs font-mono text-blue-400">
+                    <div key={att.id} className="flex items-center space-x-2 px-3 py-1 rounded-md bg-blue-500/10 border border-blue-500/30 text-xs font-mono text-blue-400">
                       {att.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-blue-400" />}
                       {att.type === 'pdf' && <FileText className="w-3.5 h-3.5 text-rose-400" />}
-                      {att.type === 'docx' && <FileCode className="w-3.5 h-3.5 text-indigo-400" />}
+                      {att.type === 'docx' && <FileCode className="w-3.5 h-3.5 text-teal-400" />}
                       {att.type === 'csv' && <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />}
                       <span className="truncate max-w-[150px]">{att.name}</span>
                       <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-400" onClick={() => setAttachments(prev => prev.filter(a => a.id !== att.id))} />
@@ -1092,7 +1092,7 @@ Execution complete with 0.0% hallucination risk.`;
               {/* Hyperparameter Controls */}
               <div className="glass-card p-5 rounded-2xl space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60 pb-2 flex items-center space-x-2">
-                  <Sliders className="w-4 h-4 text-purple-400" />
+                  <Sliders className="w-4 h-4 text-teal-400" />
                   <span>Inference Parameters</span>
                 </h3>
 
@@ -1115,7 +1115,7 @@ Execution complete with 0.0% hallucination risk.`;
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs font-mono">
                     <span>Top-P Sampling</span>
-                    <span className="text-purple-400 font-bold">{topP}</span>
+                    <span className="text-teal-400 font-bold">{topP}</span>
                   </div>
                   <input
                     type="range"
@@ -1124,7 +1124,7 @@ Execution complete with 0.0% hallucination risk.`;
                     step="0.05"
                     value={topP}
                     onChange={(e) => setTopP(parseFloat(e.target.value))}
-                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-purple-500"
+                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-teal-500"
                   />
                 </div>
 
