@@ -1,5 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
+import json
+import hmac
+import hashlib
+import time
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies.auth_deps import get_current_user, RequireRole
@@ -219,12 +223,52 @@ async def get_invoice_history(
 
 @router.post("/webhooks/stripe")
 async def stripe_webhook_handler(request: Request):
-    """Stripe Webhook Architecture handler for payment events with signature verification."""
-    signature = request.headers.get("stripe-signature")
-    if settings.ENVIRONMENT == "production" and not signature:
-        raise UnauthorizedException("Missing required Stripe webhook signature header.")
+    """Stripe Webhook Architecture handler for payment events with cryptographic signature verification."""
+    signature_header = request.headers.get("stripe-signature")
+    raw_body = await request.body()
 
-    payload = await request.json()
+    if settings.STRIPE_WEBHOOK_SECRET or settings.ENVIRONMENT.lower() == "production":
+        if not signature_header:
+            raise UnauthorizedException("Missing required Stripe webhook signature header.")
+
+        if settings.STRIPE_WEBHOOK_SECRET:
+            # Parse Stripe signature components: t=<timestamp>,v1=<sig>
+            sig_dict = {}
+            for item in signature_header.split(","):
+                if "=" in item:
+                    k, v = item.split("=", 1)
+                    sig_dict[k.strip()] = v.strip()
+
+            timestamp = sig_dict.get("t")
+            v1_sig = sig_dict.get("v1")
+
+            if not timestamp or not v1_sig:
+                raise UnauthorizedException("Malformed Stripe webhook signature header format.")
+
+            # Validate timestamp tolerance (5 minutes) against replay attacks
+            try:
+                ts_int = int(timestamp)
+                if abs(time.time() - ts_int) > 300:
+                    raise UnauthorizedException("Stripe webhook signature timestamp expired (replay attack mitigation).")
+            except ValueError:
+                raise UnauthorizedException("Invalid timestamp in Stripe webhook signature header.")
+
+            # Compute HMAC-SHA256 signature
+            signed_payload = f"{timestamp}.".encode("utf-8") + raw_body
+            expected_sig = hmac.new(
+                settings.STRIPE_WEBHOOK_SECRET.encode("utf-8"),
+                signed_payload,
+                hashlib.sha256
+            ).hexdigest()
+
+            if not hmac.compare_digest(expected_sig, v1_sig):
+                raise UnauthorizedException("Invalid Stripe webhook signature verification failed.")
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8")) if raw_body else {}
+    except Exception:
+        payload = {}
+
     event_type = payload.get("type", "unknown")
     return {
         "status": "processed",

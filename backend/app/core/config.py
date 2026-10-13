@@ -69,7 +69,14 @@ class Settings(BaseSettings):
     STORAGE_LOCAL_DIR: str = Field(default="data/uploads", description="Directory for local storage")
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "aios_minio_admin"
+    MINIO_SECRET_KEY: str = "aios_minio_secure_secret"
     MINIO_BUCKET_DOCUMENTS: str = "aios-documents"
+
+    # Stripe Webhook Configuration
+    STRIPE_WEBHOOK_SECRET: Optional[str] = Field(
+        default=None,
+        description="Stripe webhook endpoint signing secret for cryptographic HMAC verification"
+    )
 
     # Python Execution Sandbox
     PYTHON_SANDBOX_ENABLED: bool = Field(
@@ -134,6 +141,9 @@ class Settings(BaseSettings):
 
             if self.NEO4J_PASSWORD in {"aios_neo4j_password_2026", "replace_with_neo4j_password", "neo4j"}:
                 raise ValueError("CRITICAL SECURITY CONFIGURATION ERROR: In production, NEO4J_PASSWORD must not use default or placeholder credentials!")
+
+            if self.MINIO_SECRET_KEY in {"aios_minio_secure_secret", "replace_with_minio_secret"}:
+                raise ValueError("CRITICAL SECURITY CONFIGURATION ERROR: In production, MINIO_SECRET_KEY must not use default or placeholder credentials!")
 
         return self
 

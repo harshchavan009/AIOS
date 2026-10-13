@@ -11,7 +11,7 @@
 
 A comprehensive application security audit and defense-in-depth hardening was performed across the entire AIOS platform codebase. The assessment covered credential security, authentication mechanisms, authorization and multi-tenant isolation, injection prevention, Cross-Site Scripting (XSS), API hygiene, rate limiting, transport headers, container configuration, and dependency supply chains.
 
-All discovered critical and high vulnerabilities in the repository code have been **remediated, automated with regression test suites (26 automated security and functional tests passing), and verified via live dynamic runtime checks**. 
+All discovered critical and high vulnerabilities in the repository code have been **remediated, automated with regression test suites (28 automated security and functional tests passing), and verified via live dynamic runtime checks**. 
 
 ---
 
@@ -20,9 +20,9 @@ All discovered critical and high vulnerabilities in the repository code have bee
 | Finding ID | Severity | Location | Vulnerability Description | Status | Verification Method |
 |---|---|---|---|---|---|
 | **SEC-001** | **CRITICAL** | `config.py`, `docker-compose.yml`, `LoginPage.tsx` | Hardcoded default secrets, passwords, and admin credentials in codebase and UI | **FIXED** | Startup validator fails fast on defaults; credentials stripped from code/UI; seed accounts strictly restricted to `ENVIRONMENT=development`. |
-| **SEC-002** | **CRITICAL** | `backend/app/api/v1/workspaces.py` | Broken Object Level Authorization (IDOR): Any authenticated user could create or access workspaces in any organization | **FIXED** | Enforced organization membership check (`verify_caller_organization_access`) on workspace creation and querying; verified with 22 automated tests in `test_organization.py`. |
+| **SEC-002** | **CRITICAL** | `backend/app/api/v1/workspaces.py` | Broken Object Level Authorization (IDOR): Any authenticated user could create or access workspaces in any organization | **FIXED** | Enforced organization membership check (`_verify_org_access`) on workspace creation and querying; demo org bypass strictly gated to `ENVIRONMENT=development`; verified with automated IDOR tests in `test_organization.py`. |
 | **SEC-003** | **HIGH** | `backend/app/api/v1/api_keys.py` | Broken Authorization (IDOR & RBAC): Any authenticated user could list, generate, and revoke organization API keys | **FIXED** | Restricted API key management strictly to Owner/Admin roles with active organization membership verification. |
-| **SEC-004** | **HIGH** | `backend/app/api/v1/billing.py` | Unprotected subscription upgrade & missing Stripe webhook signature verification | **FIXED** | Added Owner/Admin RBAC check on upgrade endpoint and cryptographic Stripe webhook signature verification (`stripe.Webhook.construct_event`). |
+| **SEC-004** | **HIGH** | `backend/app/api/v1/billing.py` | Unprotected subscription upgrade & missing Stripe webhook signature verification | **FIXED** | Added Owner/Admin RBAC check on upgrade endpoint and cryptographic Stripe HMAC-SHA256 signature verification with 5-minute replay mitigation; verified with automated tests in `test_security_and_performance.py`. |
 | **SEC-005** | **HIGH** | `backend/app/api/v1/auth.py` | Account enumeration & brute-force vulnerability (no lockout, non-constant-time comparison, verbose error messages) | **FIXED** | Implemented 15-minute account lockout after 5 failed attempts; unified error responses to prevent user enumeration; added dummy timing hash against timing attacks. |
 | **SEC-006** | **HIGH** | `backend/app/core/security.py` | Password hashing and JWT security gaps (default cost factor, no password strength enforcement, unpinned JWT algorithms) | **FIXED** | Enforced bcrypt cost factor 12, blocked common passwords, enforced length ≥ 12, pinned JWT algorithm to HS256, added standard claims (`iss`, `aud`, `nbf`, `iat`, `exp`), and rotating refresh tokens with replay revocation. |
 | **SEC-007** | **HIGH** | `backend/app/tools/sandbox.py` | Unrestricted in-process Python execution tool without AST containment or isolation flags | **FIXED** | Added `PYTHON_SANDBOX_ENABLED` flag; added AST syntax inspection forbidding imports, dunder attributes (`__class__`, `__subclasses__`), and dangerous callables (`eval`, `exec`, `open`). |
@@ -147,7 +147,7 @@ All discovered critical and high vulnerabilities in the repository code have bee
    - Created GitHub Actions security scanning workflow `.github/workflows/security.yml` (Gitleaks, npm audit, pip-audit, CodeQL).
 
 8. **Phase 8 (Verification & Automated Testing)**:
-   - Expanded backend automated test suite to 26 passing tests covering security headers, rate limiting (429 & Retry-After), disallowed uploads, RBAC denial, and tenant isolation IDOR.
+   - Expanded backend automated test suite to 28 passing tests covering security headers, rate limiting (429 & Retry-After), disallowed uploads, RBAC denial, tenant isolation IDOR, cryptographic Stripe webhook HMAC-SHA256 signature verification, and CORS origin policy.
    - Verified live server responses dynamically via curl.
 
 ---
