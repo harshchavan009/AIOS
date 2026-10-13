@@ -161,6 +161,7 @@ To permanently remove prior commits that contained sensitive default values or p
 | Account lockout & timing mitigation | **VERIFIED RESOLVED** | Verified in `test_auth.py` and live dynamic curl check |
 | Tenant isolation / IDOR prevention | **VERIFIED RESOLVED** | Verified in `test_organization.py` (22 automated tests) |
 | File upload magic bytes & size limits | **VERIFIED RESOLVED** | Verified in `test_disallowed_file_upload_rejected` |
+| Stripe Webhook HMAC verification | **VERIFIED RESOLVED** | Verified in `test_stripe_webhook_hmac_signature_verification` |
 | Security headers (HSTS, CSP, COOP) | **VERIFIED RESOLVED** | Verified in `test_security_headers_present` & live curl |
 | Rate limiting (429 & Retry-After) | **VERIFIED RESOLVED** | Verified in `test_rate_limiter_brute_force_protection` & live curl |
 | Production OpenAPI/docs disabling | **VERIFIED RESOLVED** | Verified conditionally disabled when `ENVIRONMENT=production` |
@@ -197,10 +198,10 @@ Update client configurations to reflect the custom domain:
 ### C. Legal Pages & Placeholders Review (Gate D)
 > **LEGAL NOTICE**: The drafted `/privacy` and `/terms` pages are comprehensive technical drafts reflecting the actual data architecture of AIOS (incorporating Indian Digital Personal Data Protection Act 2023, EU GDPR, LLM processing by OpenAI/Anthropic/Google, and vector embeddings in Qdrant/Neo4j). However, **these documents are drafts and should be reviewed by a qualified lawyer before official launch**.
 
-The following `[[FILL_ME]]` placeholders must be provided and replaced in production:
-- [ ] `[[LEGAL_ENTITY_NAME]]`: Full registered legal name of entity or individual operator.
-- [ ] `[[CONTACT_EMAIL]]`: Monitored support and privacy inquiry email (e.g., `support@yourdomain.com`).
-- [ ] `[[POSTAL_ADDRESS]]`: Registered business address or headquarters.
-- [ ] `[[GOVERNING_JURISDICTION]]`: Jurisdiction for dispute resolution and governing law (e.g., "Courts of Mumbai, India" or "State of Delaware, USA").
+The following `[[FILL_ME_*]]` placeholders are documented in `frontend/src/pages/PrivacyPage.tsx` and `frontend/src/pages/TermsPage.tsx`. Supply these values before going live:
+- [ ] `[[FILL_ME_LEGAL_ENTITY]]`: Full registered legal company name or individual business operator.
+- [ ] `[[FILL_ME_SUPPORT_EMAIL]]`: Real monitored contact email for privacy and legal inquiries (e.g., `support@aios.ai`).
+- [ ] `[[FILL_ME_LEGAL_ADDRESS]]`: Registered postal address of business or legal entity.
+- [ ] `[[FILL_ME_JURISDICTION]]`: Jurisdiction for dispute resolution and governing law (e.g., "Courts of Mumbai, Maharashtra, India" or "State of Delaware, USA").
 
-*(A build-time guard in `npm run launch:check` verifies that no `[[FILL_ME]]` placeholders exist when running in production mode).*
+*(A build-time guard in `STRICT_LAUNCH=true npm run launch:check` verifies that zero `[[FILL_ME_*]]` tokens remain before final deployment).*

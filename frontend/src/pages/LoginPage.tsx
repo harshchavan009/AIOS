@@ -227,6 +227,12 @@ export const LoginPage: React.FC = () => {
             Create an account
           </Link>
         </p>
+
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+          <Link to="/terms" className="hover:underline">Terms of Service</Link>
+          {' '}&bull;{' '}
+          <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );

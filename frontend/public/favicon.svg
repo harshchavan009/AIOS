@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    :root {
+      --bg: #0B0C0E;
+      --accent: #14b8a6;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --accent: #0f766e;
+      }
+    }
+    .bg { fill: var(--bg); }
+    .accent { fill: var(--accent); }
+  </style>
+  <rect width="64" height="64" rx="14" class="bg" />
+  <path d="M 32 13 L 48 49 L 39.5 49 L 35.5 40 L 28.5 40 L 24.5 49 L 16 49 Z M 32 23.5 L 27.2 34 L 36.8 34 Z" class="accent" />
+</svg>

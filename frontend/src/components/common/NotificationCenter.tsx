@@ -88,7 +88,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'document_indexed':
         return <Database className="w-4 h-4 text-sky-400" />;
       case 'workflow_completed':
-        return <CheckCheck className="w-4 h-4 text-purple-400" />;
+        return <CheckCheck className="w-4 h-4 text-teal-400" />;
       case 'model_unavailable':
         return <WifiOff className="w-4 h-4 text-red-400" />;
       case 'token_limit':

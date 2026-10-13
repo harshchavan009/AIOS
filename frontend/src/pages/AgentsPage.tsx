@@ -74,16 +74,16 @@ const SWARM_AGENTS: AgentMeta[] = [
     role: 'Task Decomposition & DAG Router',
     model: 'GPT-4o',
     icon: <Brain className="w-4 h-4" />,
-    color: '#a78bfa',
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/40',
-    textColor: 'text-purple-400',
+    color: '#14b8a6',
+    bgColor: 'bg-teal-500/10',
+    borderColor: 'border-teal-500/40',
+    textColor: 'text-teal-400',
     defaultLogs: [
       'Initializing LangGraph DAG state graph...',
       'Decomposing user goal into 4 subtasks...',
-      'Mapping execution dependencies (Retriever → Tool → Reasoning → Critic)...',
+      'Mapping execution dependencies (Retriever -> Tool -> Reasoning -> Critic)...',
       'Topological plan compiled cleanly.',
-      'Done ✓'
+      'Complete'
     ]
   },
   {
@@ -102,7 +102,7 @@ const SWARM_AGENTS: AgentMeta[] = [
       'Querying Qdrant HNSW vector collection...',
       'Ranking 8 relevant document citations...',
       'Context groundedness score: 98.4%',
-      'Done ✓'
+      'Complete'
     ]
   },
   {
@@ -117,10 +117,10 @@ const SWARM_AGENTS: AgentMeta[] = [
     textColor: 'text-orange-400',
     defaultLogs: [
       'Spawning isolated MCP Python sandbox...',
-      'Injecting variables: company="Acme Corp", jurisdiction="SEC"',
+      'Injecting variables: workspace="ActiveWorkspace", jurisdiction="SEC"',
       'Executing code verification script...',
       'Execution complete: 0 errors, 3 matrices computed',
-      'Done ✓'
+      'Complete'
     ]
   },
   {
@@ -138,7 +138,7 @@ const SWARM_AGENTS: AgentMeta[] = [
       'Cross-referencing Neo4j graph nodes with Python tool outputs...',
       'Performing self-reflection consistency pass...',
       'Factual confidence: 99.4%',
-      'Done ✓'
+      'Complete'
     ]
   },
   {
@@ -156,7 +156,7 @@ const SWARM_AGENTS: AgentMeta[] = [
       'Faithfulness: 99.2% | Groundedness: 98.6% | Relevance: 97.8%',
       'Checking hallucination guardrails... 0 detected',
       'Quality Benchmark: PASSED (0.98)',
-      'Done ✓'
+      'Complete'
     ]
   },
   {
@@ -174,7 +174,7 @@ const SWARM_AGENTS: AgentMeta[] = [
       'Formatting IEEE Markdown citations & audit checklist...',
       'Initializing SSE token stream at 124 tokens/sec...',
       'Response output complete.',
-      'Done ✓'
+      'Complete'
     ]
   }
 ];
@@ -375,7 +375,7 @@ export const AgentsPage: React.FC = () => {
                   : 'bg-elevated border-border text-muted-foreground hover:bg-surface hover:text-foreground'
               }`}
             >
-              ⚡ {q.slice(0, 65)}...
+              {q.slice(0, 65)}...
             </button>
           ))}
         </div>
@@ -384,7 +384,7 @@ export const AgentsPage: React.FC = () => {
       {/* Main Grid: Sequential Node Boxes & Output Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Left Col: Step-by-Step Per-Node Log Box Stream (Planner → Retriever → Python → Reasoning → Critic → Response) */}
+        {/* Left Col: Step-by-Step Per-Node Log Box Stream (Planner -> Retriever -> Python -> Reasoning -> Critic -> Response) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between pb-1 border-b border-border/40">
             <span>LangGraph Multi-Agent Pipeline</span>
@@ -401,7 +401,7 @@ export const AgentsPage: React.FC = () => {
               return (
                 <div key={agent.id} className="space-y-3">
                   <div
-                    className={`glass-card p-4 rounded-2xl border transition-all ${
+                    className={`glass-card p-4 rounded-xl border transition-all ${
                       isRunning
                         ? `${agent.borderColor} ${agent.bgColor} ring-2 ring-current shadow-lg shadow-current/10`
                         : isDone
@@ -411,7 +411,7 @@ export const AgentsPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between pb-2 border-b border-border/40">
                       <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-xl ${agent.bgColor} ${agent.textColor}`}>
+                        <div className={`p-2 rounded-md ${agent.bgColor} ${agent.textColor}`}>
                           {agent.icon}
                         </div>
                         <div>
@@ -426,19 +426,19 @@ export const AgentsPage: React.FC = () => {
                       {/* Status Badges */}
                       <div className="flex items-center space-x-2">
                         {isRunning && (
-                          <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold flex items-center space-x-1.5">
+                          <span className="px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold flex items-center space-x-1.5">
                             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                             <span>Running...</span>
                           </span>
                         )}
                         {isDone && (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center space-x-1">
+                          <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center space-x-1">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Done</span>
                           </span>
                         )}
                         {isPending && (
-                          <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-muted-foreground text-[10px] font-mono font-bold">
+                          <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-muted-foreground text-[10px] font-mono font-bold">
                             Waiting
                           </span>
                         )}
@@ -452,8 +452,8 @@ export const AgentsPage: React.FC = () => {
                           <Clock className="w-3 h-3 text-amber-400" />
                           <span>{state.executionTimeMs || 45}ms</span>
                         </span>
-                        <span className="text-purple-300 font-semibold flex items-center space-x-1">
-                          <Brain className="w-3 h-3 text-purple-400" />
+                        <span className="text-teal-300 font-semibold flex items-center space-x-1">
+                          <Brain className="w-3 h-3 text-teal-400" />
                           <span>{state.modelUsed || agent.model}</span>
                         </span>
                         <span className="text-blue-300 font-semibold flex items-center space-x-1">
@@ -472,14 +472,14 @@ export const AgentsPage: React.FC = () => {
                     )}
 
                     {/* Per-Node Live Streaming Terminal Logs Window */}
-                    <div className="mt-3 p-3 rounded-xl bg-[#080c14] border border-border/60 font-mono text-[11px] min-h-[90px] max-h-40 overflow-y-auto space-y-1">
+                    <div className="mt-3 p-3 rounded-md bg-[#080c14] border border-border/60 font-mono text-[11px] min-h-[90px] max-h-40 overflow-y-auto space-y-1">
                       {state.logs.length === 0 ? (
                         <div className="text-muted-foreground/40 text-[10px]">Awaiting DAG execution dispatch...</div>
                       ) : (
                         state.logs.map((log, lIdx) => (
                           <div key={lIdx} className="flex items-start space-x-2 leading-relaxed">
                             <span className="text-[9px] text-muted-foreground/60 shrink-0">[{log.timestamp}]</span>
-                            <span className={log.text.includes('Done') ? 'text-emerald-400 font-bold' : 'text-gray-200'}>
+                            <span className={log.text.includes('Complete') ? 'text-emerald-400 font-bold' : 'text-gray-200'}>
                               {log.text}
                             </span>
                           </div>
@@ -508,7 +508,7 @@ export const AgentsPage: React.FC = () => {
           
           {/* Execution Telemetry Summary */}
           {executionStats && (
-            <div className="glass-card p-5 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 space-y-3 animate-fade-in shadow-xl">
+            <div className="glass-card p-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 space-y-3 animate-fade-in shadow-xl">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
                   <Trophy className="w-4 h-4 text-yellow-400" />

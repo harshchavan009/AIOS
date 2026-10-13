@@ -83,3 +83,8 @@ jobs:
           cd frontend
           npm ci
           npm run build
+
+      - name: Run Launch Guard Automated Audit
+        run: |
+          cd frontend
+          npm run launch:check -- --all

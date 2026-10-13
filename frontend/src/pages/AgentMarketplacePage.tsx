@@ -110,9 +110,10 @@ export const AgentMarketplacePage: React.FC = () => {
                       <div className="text-xs text-muted-foreground font-mono">{agent.author}</div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1 text-amber-400 font-bold text-xs">
-                    <Star className="w-4 h-4 fill-amber-400" />
-                    <span>{agent.rating}</span>
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground font-mono">
+                    <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] border border-border/40 font-mono">
+                      {agent.category}
+                    </span>
                   </div>
                 </div>
 
@@ -122,21 +123,21 @@ export const AgentMarketplacePage: React.FC = () => {
 
                 <div className="flex flex-wrap gap-1.5 mt-4">
                   {agent.tags.map(t => (
-                    <span key={t} className="px-2.5 py-0.5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground border border-border/40">
-                      #{t}
+                    <span key={t} className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-mono text-muted-foreground border border-border/40">
+                      {t}
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="pt-3 border-t border-border/40 flex items-center justify-between">
-                <span className="text-xs font-mono text-muted-foreground">{agent.installs.toLocaleString()} Installs</span>
+                <span className="text-[11px] font-mono text-muted-foreground">Catalog Item</span>
                 <button
-                  onClick={() => alert(`Cloned ${agent.name} into your workspace!`)}
-                  className="px-4 py-2 rounded-xl bg-primary text-white font-semibold text-xs shadow-md shadow-primary/20 hover:bg-primary/90 transition-colors flex items-center space-x-1.5"
+                  onClick={() => alert(`Selected ${agent.name} for workspace integration.`)}
+                  className="px-3 py-1.5 rounded-md bg-primary text-white font-medium text-xs hover:bg-primary/90 transition-colors flex items-center space-x-1.5"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Install Agent</span>
+                  <span>Select Model</span>
                 </button>
               </div>
             </div>

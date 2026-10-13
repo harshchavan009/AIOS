@@ -80,7 +80,7 @@ const TYPE_BADGES: Record<string, string> = {
   efficient: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
   legacy: 'bg-elevated text-muted border-border',
   local: 'bg-orange-500/10 text-orange-400 border-orange-500/25',
-  reasoning: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/25',
+  reasoning: 'bg-teal-500/10 text-teal-300 border-teal-500/25',
   new: 'bg-accent/20 text-accent border-accent/40',
 };
 
@@ -91,7 +91,7 @@ const CAP_COLORS: Record<string, string> = {
   video: 'bg-elevated text-rose-400 border border-border',
   function_calling: 'bg-elevated text-accent border border-border',
   json_mode: 'bg-elevated text-cyan-400 border border-border',
-  reasoning: 'bg-elevated text-indigo-400 border border-border',
+  reasoning: 'bg-elevated text-teal-400 border border-border',
   local: 'bg-elevated text-orange-400 border border-border',
 };
 
@@ -100,7 +100,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'openai',
     provider_name: 'OpenAI',
-    logo: '🟢',
+    logo: 'OAI',
     color: '#10b981',
     health_url: 'https://api.openai.com/v1/models',
     docs_url: 'https://platform.openai.com',
@@ -114,7 +114,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'anthropic',
     provider_name: 'Anthropic',
-    logo: '🔶',
+    logo: 'ANT',
     color: '#f59e0b',
     health_url: 'https://api.anthropic.com/v1/models',
     docs_url: 'https://docs.anthropic.com',
@@ -127,7 +127,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'google',
     provider_name: 'Google AI',
-    logo: '🔵',
+    logo: 'GOO',
     color: '#3b82f6',
     health_url: 'https://generativelanguage.googleapis.com',
     docs_url: 'https://ai.google.dev',
@@ -140,8 +140,8 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'groq',
     provider_name: 'Groq',
-    logo: '⚡',
-    color: '#8b5cf6',
+    logo: 'GRQ',
+    color: '#14b8a6',
     health_url: 'https://api.groq.com/openai/v1/models',
     docs_url: 'https://console.groq.com',
     models: [
@@ -153,7 +153,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'together',
     provider_name: 'Together AI',
-    logo: '🤝',
+    logo: 'TOG',
     color: '#06b6d4',
     health_url: 'https://api.together.xyz/v1/models',
     docs_url: 'https://docs.together.ai',
@@ -166,7 +166,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'openrouter',
     provider_name: 'OpenRouter',
-    logo: '🔀',
+    logo: 'OPR',
     color: '#ec4899',
     health_url: 'https://openrouter.ai/api/v1/models',
     docs_url: 'https://openrouter.ai/docs',
@@ -178,7 +178,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'ollama',
     provider_name: 'Ollama (Local)',
-    logo: '🦙',
+    logo: 'OLL',
     color: '#8A9099',
     health_url: 'http://localhost:11434/api/tags',
     docs_url: 'https://ollama.ai',
@@ -191,7 +191,7 @@ const SEED_PROVIDERS: ProviderEntry[] = [
   {
     provider_id: 'lmstudio',
     provider_name: 'LM Studio (Local)',
-    logo: '🖥️',
+    logo: 'LMS',
     color: '#8A9099',
     health_url: 'http://localhost:1234/v1/models',
     docs_url: 'https://lmstudio.ai',
@@ -332,7 +332,7 @@ function ProviderCard({
                       : 'bg-surface border-border text-muted/60'
                   }`}
                 >
-                  150–300ms Normal {health!.latency_ms >= 150 && health!.latency_ms <= 300 ? '●' : ''}
+                  150-300ms Normal {health!.latency_ms >= 150 && health!.latency_ms <= 300 ? '●' : ''}
                 </div>
                 <div
                   className={`p-1.5 rounded-md text-center text-[10px] font-mono border transition-colors ${
@@ -569,28 +569,28 @@ export const ModelManagementPage: React.FC = () => {
           {[
             {
               label: 'Online',
-              value: globalStatus === 'idle' ? '—' : onlineCount,
+              value: globalStatus === 'idle' ? '-' : onlineCount,
               color: 'text-accent',
               icon: <CheckCircle2 className="w-4 h-4 text-accent" />,
               sub: `/ ${providers.length} providers`,
             },
             {
               label: 'Offline',
-              value: globalStatus === 'idle' ? '—' : offlineCount,
+              value: globalStatus === 'idle' ? '-' : offlineCount,
               color: 'text-rose-400',
               icon: <XCircle className="w-4 h-4 text-rose-400" />,
               sub: 'providers',
             },
             {
               label: 'Avg Latency',
-              value: avgLatency > 0 ? `${Math.round(avgLatency)}ms` : '—',
+              value: avgLatency > 0 ? `${Math.round(avgLatency)}ms` : '-',
               color: latencyColor(avgLatency),
               icon: <Clock className="w-4 h-4 text-muted" />,
               sub: 'cloud avg',
             },
             {
               label: 'Fastest',
-              value: fastestProvider ? `${fastestProvider[1].latency_ms}ms` : '—',
+              value: fastestProvider ? `${fastestProvider[1].latency_ms}ms` : '-',
               color: 'text-accent',
               icon: <Zap className="w-4 h-4 text-accent" />,
               sub: fastestProvider
@@ -620,7 +620,7 @@ export const ModelManagementPage: React.FC = () => {
         {lastChecked && (
           <div className="text-xs font-mono text-muted flex items-center justify-between">
             <span>Last checked: {lastChecked.toLocaleTimeString()}</span>
-            <span>Thresholds: &lt;150ms Fast · 150–300ms Normal · &gt;300ms Slow</span>
+            <span>Thresholds: &lt;150ms Fast · 150-300ms Normal · &gt;300ms Slow</span>
           </div>
         )}
 
@@ -644,7 +644,7 @@ export const ModelManagementPage: React.FC = () => {
             <div className="space-y-1">
               <div className="text-muted uppercase tracking-wider font-semibold mb-1">Latency Tiers</div>
               <div className="text-accent">&lt; 150ms · Fast</div>
-              <div className="text-amber-400">150–300ms · Normal</div>
+              <div className="text-amber-400">150-300ms · Normal</div>
               <div className="text-rose-400">&gt; 300ms · Slow</div>
             </div>
             <div className="space-y-1">
@@ -663,7 +663,7 @@ export const ModelManagementPage: React.FC = () => {
               <div className="text-muted uppercase tracking-wider font-semibold mb-1">Model Types</div>
               <div className="text-accent">flagship = best quality</div>
               <div className="text-emerald-400">efficient = cost-optimized</div>
-              <div className="text-indigo-400">reasoning = chain-of-thought</div>
+              <div className="text-teal-400">reasoning = chain-of-thought</div>
               <div className="text-muted">local = self-hosted</div>
             </div>
           </div>

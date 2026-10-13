@@ -145,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded border border-border bg-secondary text-xs text-foreground hover:bg-muted transition-colors"
           >
             <Building2 className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
-            <span className="font-normal text-muted-foreground">{currentOrganization?.name || 'Acme Enterprise'}</span>
+            <span className="font-normal text-muted-foreground">{currentOrganization?.name || 'Organization'}</span>
             <span className="text-muted-foreground/40">/</span>
             <span className="font-medium text-foreground">{currentWorkspace?.name || 'Production'}</span>
             <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" strokeWidth={1.5} />
@@ -159,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-xs text-muted-foreground">{workspaces.length} total</span>
               </div>
 
-              {/* Workspaces List: My Startup, OpenAI Team, Finance Team, Healthcare, Research Lab */}
+              {/* Workspaces List */}
               <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {workspaces.map((ws) => {
                   const isSelected = currentWorkspace?.id === ws.id;
@@ -233,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setIsWorkspaceOpen(false);
                         navigate('/second-brain');
                       }}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                      className="p-2 rounded-md bg-white/5 hover:bg-teal-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-teal-400 transition-colors"
                     >
                       <Brain className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Documents</span>
@@ -245,9 +245,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setIsWorkspaceOpen(false);
                         navigate('/agents');
                       }}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                      className="p-2 rounded-md bg-white/5 hover:bg-teal-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-teal-400 transition-colors"
                     >
-                      <Bot className="w-3.5 h-3.5 text-purple-400" />
+                      <Bot className="w-3.5 h-3.5 text-teal-400" />
                       <span>Agents</span>
                     </button>
 
@@ -257,7 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setIsWorkspaceOpen(false);
                         navigate('/settings');
                       }}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-blue-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                      className="p-2 rounded-md bg-white/5 hover:bg-teal-500/10 border border-white/5 text-left flex items-center space-x-2 text-gray-300 hover:text-teal-400 transition-colors"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
                       <span>Settings</span>

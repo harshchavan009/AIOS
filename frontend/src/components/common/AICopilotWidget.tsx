@@ -39,7 +39,7 @@ export const AICopilotWidget: React.FC = () => {
     {
       id: 'm-1',
       sender: 'assistant',
-      text: "👋 Hi! I'm your AIOS Enterprise Copilot. How can I assist your agent orchestration workflow today?",
+      text: "Welcome. I am your AIOS Copilot. How can I assist your agent orchestration workflow today?",
       timestamp: 'Just now',
     },
   ]);
@@ -96,41 +96,41 @@ export const AICopilotWidget: React.FC = () => {
 
       if (qLower.includes('graph rag') || qLower.includes('rag pipeline')) {
         botResponse =
-          "### 🕸️ Graph RAG Pipeline Configured\n\nI've generated a 9-stage Graph RAG architecture unifying **Qdrant Vector Mesh** & **Neo4j Knowledge Graph**:\n\n1. **Ingestion**: PDF, DOCX, TXT, MD, CSV & GitHub Repositories\n2. **OCR Extract**: Character & layout parsing\n3. **Semantic Chunk**: 512-token overlap windowing\n4. **1536d Embed**: text-embedding-3-small vectors\n5. **Neo4j Graph**: Entity nodes & relationship triples\n6. **Qdrant Store**: HNSW vector collection\n7. **Hybrid Search**: Cosine distance + 3-hop traversal\n8. **Answer Synthesis**: Multi-model LLM generation\n9. **Citations**: Clickable source cards & confidence scores.";
+          "### Graph RAG Pipeline Configured\n\nI have generated a 9-stage Graph RAG architecture unifying **Qdrant Vector Mesh** and **Neo4j Knowledge Graph**:\n\n1. **Ingestion**: PDF, DOCX, TXT, MD, CSV and GitHub Repositories\n2. **OCR Extract**: Character and layout parsing\n3. **Semantic Chunk**: 512-token overlap windowing\n4. **1536d Embed**: text-embedding-3-small vectors\n5. **Neo4j Graph**: Entity nodes and relationship triples\n6. **Qdrant Store**: HNSW vector collection\n7. **Hybrid Search**: Cosine distance + 3-hop traversal\n8. **Answer Synthesis**: Multi-model LLM generation\n9. **Citations**: Clickable source cards and confidence scores.";
         actionUrl = '/graph-rag';
-        actionText = 'Navigate to Graph RAG Studio →';
+        actionText = 'Navigate to Graph RAG Studio';
       } else if (qLower.includes('create prompt') || qLower.includes('prompt')) {
         botResponse =
-          "### 📝 Optimized System Prompt Template\n\nI've generated an enterprise system prompt template for your agent:\n\n```markdown\nSYSTEM ROLE: Autonomous AIOS Enterprise Compliance Agent\nCONTEXT: Execute SOC-2 Type II audit verification across microservices.\nRULES:\n1. Ground all responses in indexed Neo4j graph nodes and Qdrant citations.\n2. Refuse unverified assumptions (RAGAS faithfulness threshold >= 0.90).\n3. Return structured JSON payload with confidence score & citations.\n```";
+          "### Optimized System Prompt Template\n\nI have generated an enterprise system prompt template for your agent:\n\n```markdown\nSYSTEM ROLE: Autonomous AIOS Compliance Agent\nCONTEXT: Execute audit verification across microservices.\nRULES:\n1. Ground all responses in indexed Neo4j graph nodes and Qdrant citations.\n2. Refuse unverified assumptions (RAGAS faithfulness threshold >= 0.90).\n3. Return structured JSON payload with confidence score and citations.\n```";
         actionUrl = '/prompts';
-        actionText = 'Open Prompt Studio →';
+        actionText = 'Open Prompt Studio';
       } else if (qLower.includes('generate workflow') || qLower.includes('workflow')) {
         botResponse =
-          "### ⚡ Synthesized LangGraph DAG Workflow\n\nI've generated a multi-agent execution DAG workflow:\n\n```\nUser Goal ➔ Planner Agent ➔ Retriever (Qdrant + Neo4j) ➔ Python MCP Tool ➔ Reasoning Engine ➔ Critic Evaluation ➔ Response Output\n```\n\nAll 6 nodes are configured with model bindings (`GPT-4o`, `Claude 3.5 Sonnet`, `DeepSeek R1`, `Llama 3 70B`) and edge transition logic.";
+          "### Synthesized LangGraph DAG Workflow\n\nI have generated a multi-agent execution DAG workflow:\n\n```\nUser Goal -> Planner Agent -> Retriever (Qdrant + Neo4j) -> Python MCP Tool -> Reasoning Engine -> Critic Evaluation -> Response Output\n```\n\nAll 6 nodes are configured with model bindings (`GPT-4o`, `Claude 3.5 Sonnet`, `DeepSeek R1`, `Llama 3 70B`) and edge transition logic.";
         actionUrl = '/agent-builder';
-        actionText = 'Open Visual Agent Builder →';
+        actionText = 'Open Visual Agent Builder';
       } else if (qLower.includes('explain dashboard') || qLower.includes('dashboard')) {
         botResponse =
-          "### 📊 Real-Time AIOS System Telemetry\n\n• **Redis Cache**: Connected (`PING` active, 0.4ms latency)\n• **Neo4j Knowledge Graph**: Active (14,820 entity nodes, 28,400 edges)\n• **Qdrant Vector Store**: Active (HNSW collection `aios_knowledge`, ef=200)\n• **System Load**: CPU 14.2%, RAM 4.8 GB / 16 GB utilized\n• **Celery Swarm**: 6 worker nodes online, 0 backlog queue\n• **API Gateway**: Sub-5ms response duration across `/api/v1/` routes";
+          "### Real-Time AIOS System Telemetry\n\n• **Redis Cache**: Connected (`PING` active, 0.4ms latency)\n• **Neo4j Knowledge Graph**: Active (14,820 entity nodes, 28,400 edges)\n• **Qdrant Vector Store**: Active (HNSW collection `aios_knowledge`, ef=200)\n• **System Load**: CPU 14.2%, RAM 4.8 GB / 16 GB utilized\n• **Celery Swarm**: 6 worker nodes online, 0 backlog queue\n• **API Gateway**: Sub-5ms response duration across `/api/v1/` routes";
         actionUrl = '/dashboard';
-        actionText = 'View Dashboard Metrics →';
+        actionText = 'View Dashboard Metrics';
       } else if (qLower.includes('search documentation') || qLower.includes('documentation') || qLower.includes('docs')) {
         botResponse =
-          "### 📚 AIOS Platform Documentation & API Reference\n\nKey documentation topics available:\n\n• **Authentication**: JWT refresh tokens, OAuth2 (Google & GitHub)\n• **Graph RAG API**: `/api/v1/rag/upload/stream`, `/api/v1/rag/github`, `/api/v1/rag/query`\n• **Multi-Tenant Workspaces**: Scoped API keys, members, prompts, & token billing\n• **MCP Protocol**: Model Context Protocol tool execution & sandboxing";
+          "### AIOS Platform Documentation and API Reference\n\nKey documentation topics available:\n\n• **Authentication**: JWT refresh tokens, OAuth2 (Google and GitHub)\n• **Graph RAG API**: `/api/v1/rag/upload/stream`, `/api/v1/rag/github`, `/api/v1/rag/query`\n• **Multi-Tenant Workspaces**: Scoped API keys, members, prompts, and token billing\n• **MCP Protocol**: Model Context Protocol tool execution and sandboxing";
         actionUrl = '/api-explorer';
-        actionText = 'Explore API Documentation →';
+        actionText = 'Explore API Documentation';
       } else if (qLower.includes('find errors') || qLower.includes('error')) {
         botResponse =
-          "### 🔍 System Diagnostics & Error Report\n\n• **System Error Rate**: `0.00%` (0 critical errors in last 24h)\n• **Celery Task Execution**: 1,420 tasks executed cleanly\n• **Hallucination Risk**: 0 detected (Critic Guardrail score 98.6%)\n• **Database Health**: PostgreSQL, Redis, Neo4j, Qdrant all 100% healthy\n\nNo active system faults or memory leaks detected.";
+          "### System Diagnostics and Error Report\n\n• **System Error Rate**: `0.00%` (0 critical errors in last 24h)\n• **Celery Task Execution**: 1,420 tasks executed cleanly\n• **Hallucination Risk**: 0 detected (Critic Guardrail score 98.6%)\n• **Database Health**: PostgreSQL, Redis, Neo4j, Qdrant all healthy\n\nNo active system faults or memory leaks detected.";
         actionUrl = '/analytics';
-        actionText = 'Open Analytics & Logs →';
+        actionText = 'Open Analytics and Logs';
       } else if (qLower.includes('create api') || qLower.includes('api')) {
         botResponse =
-          "### 🛠️ Generated FastAPI Endpoint Snippet\n\n```python\n@router.post(\"/api/v1/agent/execute\")\nasync def execute_custom_agent(request: AgentRequest):\n    result = await swarm.run(prompt=request.prompt, model=\"gpt-4o\")\n    return {\"status\": \"success\", \"result\": result}\n```\n\ncURL Request:\n```bash\ncurl -X POST http://localhost:8000/api/v1/rag/query \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"query\":\"SOC-2 compliance\", \"top_k\":5}'\n```";
+          "### Generated FastAPI Endpoint Snippet\n\n```python\n@router.post(\"/api/v1/agent/execute\")\nasync def execute_custom_agent(request: AgentRequest):\n    result = await swarm.run(prompt=request.prompt, model=\"gpt-4o\")\n    return {\"status\": \"success\", \"result\": result}\n```\n\ncURL Request:\n```bash\ncurl -X POST http://localhost:8000/api/v1/rag/query \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"query\":\"compliance check\", \"top_k\":5}'\n```";
         actionUrl = '/api-explorer';
-        actionText = 'Open API Explorer →';
+        actionText = 'Open API Explorer';
       } else {
-        botResponse = `I've processed your query "${query}". I can help you create a Graph RAG pipeline, generate prompt templates, build agent workflows, explain dashboard telemetry, search documentation, find system errors, or create FastAPI endpoints.`;
+        botResponse = `I have processed your query "${query}". I can help you create a Graph RAG pipeline, generate prompt templates, build agent workflows, explain dashboard telemetry, search documentation, find system errors, or create FastAPI endpoints.`;
       }
 
       const botMsg: ChatMessage = {

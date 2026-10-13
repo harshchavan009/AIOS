@@ -257,7 +257,7 @@ export const ApiExplorerPage: React.FC = () => {
 
       addNotification({
         type: 'workflow',
-        title: `200 OK — ${selectedEndpoint.method} ${selectedEndpoint.path}`,
+        title: `200 OK: ${selectedEndpoint.method} ${selectedEndpoint.path}`,
         description: `Executed live API request in ${Math.round(endTime - startTime + 85)}ms.`,
       });
     }, 450);
@@ -429,7 +429,7 @@ print(f"Answer: {response.final_answer}")`}
                       <td className="p-2.5">POST /api/v1/workflows, POST /api/v1/execute</td>
                     </tr>
                     <tr>
-                      <td className="p-2.5 text-purple-400 font-bold">admin:keys</td>
+                      <td className="p-2.5 text-teal-400 font-bold">admin:keys</td>
                       <td className="p-2.5">Full Admin</td>
                       <td className="p-2.5">POST /api/v1/api-keys, DELETE /api/v1/webhooks</td>
                     </tr>
@@ -479,7 +479,7 @@ print(f"Answer: {response.final_answer}")`}
           <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6">
             <div className="space-y-2">
               <h2 className="text-xl font-extrabold tracking-tight flex items-center space-x-2">
-                <Bot className="w-5 h-5 text-purple-400" />
+                <Bot className="w-5 h-5 text-teal-400" />
                 <span>LangGraph Swarm Nodes</span>
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -496,7 +496,7 @@ print(f"Answer: {response.final_answer}")`}
               ].map((ag) => (
                 <div key={ag.name} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-purple-400">{ag.name}</span>
+                    <span className="font-bold text-teal-400">{ag.name}</span>
                     <Badge variant="info">{ag.model}</Badge>
                   </div>
                   <div className="text-[11px] font-bold text-foreground">{ag.role}</div>
@@ -563,17 +563,17 @@ print(f"Answer: {response.final_answer}")`}
             <div className="glass-card p-6 md:p-8 rounded-3xl space-y-4 border border-white/10">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
                 <div className="flex items-center space-x-3">
-                  <span className="px-3 py-1 rounded-xl bg-blue-500/20 text-blue-400 font-mono font-extrabold text-xs border border-blue-500/40">
+                  <span className="px-3 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs border border-blue-500/40">
                     {selectedEndpoint.method}
                   </span>
-                  <span className="font-mono text-sm font-extrabold text-foreground">{selectedEndpoint.path}</span>
+                  <span className="font-mono text-sm font-bold text-foreground">{selectedEndpoint.path}</span>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleTestRequest}
                   disabled={isExecuting}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50"
+                  className="px-4 py-2 rounded-md bg-primary hover:bg-primary/90 text-white font-medium text-xs flex items-center space-x-2 transition-all disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{isExecuting ? 'Sending Request...' : 'Send Test Request'}</span>

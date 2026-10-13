@@ -1,6 +1,17 @@
 User-agent: *
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /api-explorer
+Disallow: /prompt-studio
+Disallow: /graph-rag
+Disallow: /model-management
+Disallow: /agent-builder
+Disallow: /playground
 Disallow: /api/
-Disallow: /admin/
-Disallow: /settings/
-Disallow: /billing/
 Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /login
+Allow: /register
+
+Sitemap: https://aios.dev/sitemap.xml

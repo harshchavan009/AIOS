@@ -22,21 +22,21 @@ export const ServerErrorPage: React.FC<{ errorDetails?: string }> = ({
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-mono font-bold border border-rose-500/20">
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 text-xs font-mono font-medium border border-rose-500/20">
             <span>ERROR 500</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Agent Crashed</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Internal Server Error</h1>
           <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-            An unhandled exception occurred in the agent worker thread or multi-model LLM router.
+            An unhandled exception occurred in the agent runtime or worker process.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           <Button
-            variant="gradient"
+            variant="destructive"
             size="lg"
-            className="w-full shadow-lg shadow-rose-500/20"
+            className="w-full"
             onClick={handleRetry}
             leftIcon={<RefreshCw className="w-4 h-4" />}
           >
@@ -46,7 +46,7 @@ export const ServerErrorPage: React.FC<{ errorDetails?: string }> = ({
           <button
             type="button"
             onClick={() => setShowLogs(!showLogs)}
-            className="px-4 py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all"
+            className="px-4 py-3 rounded-md border border-white/10 hover:bg-white/5 text-white font-medium text-xs flex items-center justify-center space-x-2 transition-all"
           >
             <Terminal className="w-4 h-4 text-amber-400" />
             <span>View Logs</span>

@@ -37,8 +37,8 @@ const INITIAL_EVENTS: TimelineEvent[] = [
     category: 'system',
     status: 'completed',
     icon: FileText,
-    color: 'text-indigo-400',
-    bg: 'bg-indigo-500/10',
+    color: 'text-zinc-300',
+    bg: 'bg-zinc-500/10',
   },
   {
     id: 'ev-4',
@@ -70,8 +70,8 @@ const INITIAL_EVENTS: TimelineEvent[] = [
     category: 'retrieval',
     status: 'running',
     icon: Database,
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10',
+    color: 'text-zinc-400',
+    bg: 'bg-zinc-500/10',
   },
   {
     id: 'ev-1',
@@ -81,8 +81,8 @@ const INITIAL_EVENTS: TimelineEvent[] = [
     category: 'agent',
     status: 'completed',
     icon: Brain,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10',
+    color: 'text-teal-400',
+    bg: 'bg-teal-500/10',
   },
 ];
 
@@ -186,7 +186,7 @@ export const ActivityTimelinePanel: React.FC = () => {
       </div>
 
       {/* Timeline Stream */}
-      <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-blue-500 before:via-teal-500/50 before:to-gray-700/20">
+      <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-border">
         {filteredEvents.length === 0 ? (
           <div className="py-8 text-center text-xs text-muted-foreground">
             No events match the selected category

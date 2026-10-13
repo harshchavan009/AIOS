@@ -44,14 +44,14 @@ export const ToastContainer: React.FC = () => {
   };
 
   const getIcon = (type: NotificationItem['type'], title: string) => {
-    if (title.startsWith('✓') || title.toLowerCase().includes('created')) {
+    if (title.toLowerCase().startsWith('success') || title.toLowerCase().includes('created')) {
       return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
     }
     switch (type) {
       case 'agent':
-        return <Bot className="w-4 h-4 text-indigo-400" />;
+        return <Bot className="w-4 h-4 text-teal-400" />;
       case 'document':
-        return <Sparkles className="w-4 h-4 text-purple-400" />;
+        return <Sparkles className="w-4 h-4 text-sky-400" />;
       case 'knowledge':
         return <Database className="w-4 h-4 text-teal-400" />;
       case 'key':
@@ -72,14 +72,14 @@ export const ToastContainer: React.FC = () => {
       {activeToasts.map((toast) => (
         <div
           key={toast.id}
-          className={`p-3.5 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all transform duration-300 animate-slide-up flex items-start space-x-3 ${
+          className={`p-3.5 rounded-lg border shadow-xl backdrop-blur-xl transition-all transform duration-200 animate-slide-up flex items-start space-x-3 ${
             isLight
               ? 'bg-white/95 border-gray-200 text-gray-900 shadow-blue-500/10'
               : 'bg-[#0E121B]/95 border-white/10 text-white shadow-black/80'
           }`}
         >
           <div
-            className={`p-2 rounded-xl border shrink-0 ${
+            className={`p-2 rounded-md border shrink-0 ${
               isLight ? 'bg-blue-50 border-blue-100' : 'bg-white/5 border-white/10'
             }`}
           >
