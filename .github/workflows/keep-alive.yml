@@ -1,0 +1,25 @@
+name: Backend Keep-Alive Ping
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free instance from sleeping (15-min idle timeout)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Keep Render Warm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping AIOS Health Endpoint
+        run: |
+          echo "Pinging AIOS backend on Render via Vercel..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://aios-opal.vercel.app/healthz)
+          echo "Health check HTTP status: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Service returned non-200. Retrying once after cold start..."
+            sleep 15
+            curl -s -f --max-time 45 https://aios-opal.vercel.app/healthz
+          else
+            echo "AIOS backend is active and warm."
+          fi

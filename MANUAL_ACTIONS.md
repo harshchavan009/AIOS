@@ -46,6 +46,11 @@ The following secrets and default credentials were discovered in the repository'
   - Verify security headers are active (defined in `vercel.json`).
 
 ### B. Render / Production Backend Host
+- [ ] **Enable Always-On Instance** (Eliminates 30-50s cold-start delays):
+  - In [Render Dashboard](https://dashboard.render.com), navigate to web service `aios-1-wc28`.
+  - Go to **Settings** > **Instance Type**.
+  - Upgrade from **Free** to **Starter** ($7/month) to keep the container permanently running with zero cold starts.
+  - *(Note: A zero-cost keep-alive workflow is also provided in `.github/workflows/keep-alive.yml` which pings the health endpoint every 10 minutes).*
 - [ ] Set `ENVIRONMENT=production` (enforces startup validation and disables OpenAPI docs /dev seeding).
 - [ ] Set `SECRET_KEY` to high-entropy 64-character random hex string (`openssl rand -hex 32`).
 - [ ] Set `API_KEY_ENCRYPTION_KEY` to a 32-byte Fernet key:
