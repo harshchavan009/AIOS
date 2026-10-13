@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from app.core.config import settings
 from app.core.dependencies.auth_deps import get_current_user
 from app.core.exceptions import ForbiddenException
 from app.database.session import get_db
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/workspaces", tags=["Workspaces"])
 
 
 async def _verify_org_access(db: AsyncSession, org_id: str, user: User, min_roles: List[str] = None) -> None:
-    if user.is_superuser or org_id == "org-acme":
+    if user.is_superuser or (settings.ENVIRONMENT.lower() == "development" and org_id == "org-acme"):
         return
     stmt = select(OrganizationMember).where(
         OrganizationMember.organization_id == org_id,

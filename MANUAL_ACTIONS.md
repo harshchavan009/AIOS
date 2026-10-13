@@ -161,6 +161,7 @@ To permanently remove prior commits that contained sensitive default values or p
 | Account lockout & timing mitigation | **VERIFIED RESOLVED** | Verified in `test_auth.py` and live dynamic curl check |
 | Tenant isolation / IDOR prevention | **VERIFIED RESOLVED** | Verified in `test_organization.py` (22 automated tests) |
 | File upload magic bytes & size limits | **VERIFIED RESOLVED** | Verified in `test_disallowed_file_upload_rejected` |
+| Stripe Webhook HMAC verification | **VERIFIED RESOLVED** | Verified in `test_stripe_webhook_hmac_signature_verification` |
 | Security headers (HSTS, CSP, COOP) | **VERIFIED RESOLVED** | Verified in `test_security_headers_present` & live curl |
 | Rate limiting (429 & Retry-After) | **VERIFIED RESOLVED** | Verified in `test_rate_limiter_brute_force_protection` & live curl |
 | Production OpenAPI/docs disabling | **VERIFIED RESOLVED** | Verified conditionally disabled when `ENVIRONMENT=production` |

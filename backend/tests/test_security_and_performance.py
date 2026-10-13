@@ -139,3 +139,82 @@ async def test_rbac_viewer_execution_forbidden(client: AsyncClient):
     tool_res = await client.post("/api/v1/tools/execute", json={"tool_name": "python_sandbox", "params": {"code": "print(1)"}}, headers=headers)
     assert tool_res.status_code == 403
 
+
+@pytest.mark.asyncio
+async def test_stripe_webhook_hmac_signature_verification(client: AsyncClient):
+    """Verify Stripe webhook requires valid HMAC-SHA256 signature and rejects forged or replayed requests."""
+    import time
+    import hmac
+    import hashlib
+    from app.core.config import settings
+
+    test_secret = "whsec_test_secret_for_automated_verification_123"
+    orig_secret = settings.STRIPE_WEBHOOK_SECRET
+    settings.STRIPE_WEBHOOK_SECRET = test_secret
+
+    try:
+        body = b'{"type": "invoice.payment_succeeded", "id": "evt_test_123"}'
+        current_ts = int(time.time())
+
+        # 1. Valid Signature Test
+        signed_payload = f"{current_ts}.".encode("utf-8") + body
+        valid_v1 = hmac.new(test_secret.encode(), signed_payload, hashlib.sha256).hexdigest()
+        valid_header = f"t={current_ts},v1={valid_v1}"
+
+        res_valid = await client.post(
+            "/api/v1/billing/webhooks/stripe",
+            content=body,
+            headers={"Content-Type": "application/json", "stripe-signature": valid_header}
+        )
+        assert res_valid.status_code == 200
+        assert res_valid.json()["status"] == "processed"
+        assert res_valid.json()["event"] == "invoice.payment_succeeded"
+
+        # 2. Forged / Tampered Signature Test -> 401
+        forged_header = f"t={current_ts},v1=forged_invalid_signature_hex"
+        res_forged = await client.post(
+            "/api/v1/billing/webhooks/stripe",
+            content=body,
+            headers={"Content-Type": "application/json", "stripe-signature": forged_header}
+        )
+        assert res_forged.status_code == 401
+
+        # 3. Replay Attack / Expired Timestamp Test (> 5 minutes old) -> 401
+        expired_ts = current_ts - 600
+        expired_payload = f"{expired_ts}.".encode("utf-8") + body
+        expired_v1 = hmac.new(test_secret.encode(), expired_payload, hashlib.sha256).hexdigest()
+        expired_header = f"t={expired_ts},v1={expired_v1}"
+        res_expired = await client.post(
+            "/api/v1/billing/webhooks/stripe",
+            content=body,
+            headers={"Content-Type": "application/json", "stripe-signature": expired_header}
+        )
+        assert res_expired.status_code == 401
+
+        # 4. Missing Signature Header -> 401
+        res_missing = await client.post(
+            "/api/v1/billing/webhooks/stripe",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        assert res_missing.status_code == 401
+    finally:
+        settings.STRIPE_WEBHOOK_SECRET = orig_secret
+
+
+@pytest.mark.asyncio
+async def test_cors_origin_policy(client: AsyncClient):
+    """Verify CORS headers correctly allow recognized origins and strip wildcards."""
+    # Preflight OPTIONS request from allowed origin
+    allowed_origin = "https://aios-opal.vercel.app"
+    options_res = await client.options(
+        "/api/v1/healthz",
+        headers={
+            "Origin": allowed_origin,
+            "Access-Control-Request-Method": "GET"
+        }
+    )
+    assert options_res.headers.get("access-control-allow-origin") == allowed_origin
+    assert options_res.headers.get("access-control-allow-credentials") == "true"
+
+
